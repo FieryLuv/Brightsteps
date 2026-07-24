@@ -80,51 +80,21 @@ const pages = {
             </div>
         </div>
     `,
-    development: `
+  development: `
     <h2 style="color: var(--dark-green);">📈 Development Tracking</h2>
-    <p style="margin-bottom: 2rem; color: #555;">Track Physical, Cognitive, Language, Social-Emotional, Fine & Gross Motor development with AI support.</p>
+    <p style="margin-bottom: 2rem; color: #555;">Click on a child to view detailed progress charts.</p>
 
     <div class="card">
-        <h3>Select Child to Track</h3>
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <button class="btn" onclick="openChildDevelopment(1)">Amina Khalid (4y 3m)</button>
-            <button class="btn" onclick="openChildDevelopment(2)">Omar Ahmed (3y 10m)</button>
-            <button class="btn btn-blue" onclick="alert('Full list of children would appear here')">All Children</button>
-        </div>
+        <h3>Select a Child</h3>
+        <button class="btn" onclick="showChildProgress('Amina Khalid', 'amina')">Amina Khalid</button>
+        <button class="btn" onclick="showChildProgress('Omar Ahmed', 'omar')">Omar Ahmed</button>
     </div>
 
-    <div class="card">
-        <h3>AI-Generated Developmental Insights</h3>
-        <p>The system has identified <strong>4 children</strong> who may benefit from targeted interventions this month.</p>
-        <button class="btn" onclick="showDevelopmentAIModal()">View AI Recommendations</button>
-    </div>
+    <div id="child-progress-container" style="margin-top:2rem;"></div>
 
-    <div class="card">
-        <h3>Overall Class Development Summary</h3>
-        <table style="width:100%; border-collapse:collapse;">
-            <tr style="background:#f0f0f0;">
-                <th style="padding:10px; text-align:left;">Domain</th>
-                <th style="padding:10px;">Average Progress</th>
-                <th style="padding:10px;">Status</th>
-            </tr>
-            <tr>
-                <td style="padding:10px;">Physical Development</td>
-                <td style="padding:10px; text-align:center;">89%</td>
-                <td style="padding:10px; color:#4CAF50;">On Track</td>
-            </tr>
-            <tr>
-                <td style="padding:10px;">Cognitive Development</td>
-                <td style="padding:10px; text-align:center;">93%</td>
-                <td style="padding:10px; color:#4CAF50;">On Track</td>
-            </tr>
-            <tr>
-                <td style="padding:10px;">Language Development</td>
-                <td style="padding:10px; text-align:center;">86%</td>
-                <td style="padding:10px; color:#FF9800;">Monitor</td>
-            </tr>
-        </table>
-    </div>
+    
 `,
+
 health: `
     <h2 style="color: #2196F3;">❤️ Health Monitoring</h2>
     <p style="margin-bottom: 2rem; color: #555;">Track children's height, weight, growth, nutrition, and medical records.</p>
@@ -328,6 +298,18 @@ function navigate(page) {
         item.classList.remove('active');
         if (item.getAttribute('onclick').includes(`'${page}'`)) item.classList.add('active');
     });
+
+    // === ADD THIS BLOCK ===
+    if (page === 'development') {
+        // Create charts for Amina
+        createDomainCharts('amina-charts', 'amina-missing', [
+            {name: "Physical", percent: 92, color: "#4CAF50"},
+            {name: "Cognitive", percent: 96, color: "#2196F3"},
+            {name: "Language", percent: 89, color: "#FF9800"},
+            {name: "Social-Emotional", percent: 97, color: "#9C27B0"},
+            {name: "Fine Motor", percent: 84, color: "#00BCD4"}
+        ]);
+    }
 }
 
 // Feeding Program Modal
@@ -628,6 +610,140 @@ function showDevelopmentAIModal() {
     document.body.insertAdjacentHTML('beforeend', html);
 
 }
+function showChildProgress(name, id) {
+    const data = {
+        amina: [
+            {name: "Physical", percent: 92, color: "#4CAF50"},
+            {name: "Cognitive", percent: 96, color: "#2196F3"},
+            {name: "Language", percent: 89, color: "#FF9800"},
+            {name: "Social-Emotional", percent: 97, color: "#9C27B0"},
+            {name: "Fine Motor", percent: 84, color: "#00BCD4"}
+        ],
+        omar: [
+            {name: "Physical", percent: 78, color: "#4CAF50"},
+            {name: "Cognitive", percent: 85, color: "#2196F3"},
+            {name: "Language", percent: 72, color: "#FF9800"},
+            {name: "Social-Emotional", percent: 81, color: "#9C27B0"},
+            {name: "Fine Motor", percent: 65, color: "#00BCD4"}
+        ]
+    };
+
+    const container = document.getElementById('child-progress-container');
+    container.innerHTML = `
+        <div class="card">
+            <h3>${name} - Domain Progress</h3>
+            <div style="display:flex; flex-wrap:wrap; gap:2rem; align-items:start;">
+                <div id="${id}-charts" style="display:flex; flex-wrap:wrap; gap:1.8rem;"></div>
+                <div style="min-width:280px;">
+                    <h4 style="color:#d32f2f;">Areas Needing Attention</h4>
+                    <ul id="${id}-missing" style="line-height:2.2;"></ul>
+                </div>
+            </div>
+        </div>
+    `;
+
+    createDomainCharts(`${id}-charts`, `${id}-missing`, data[id]);
+}
+// Individual Pie Chart
+function showChildProgressChart(id) {
+    const names = {1: "Amina Khalid", 2: "Omar Ahmed"};
+    const name = names[id] || "Child";
+
+    const html = `
+        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
+            <div style="background:white;padding:2rem;border-radius:16px;max-width:800px;width:90%;">
+                <h2>${name} - Progress Overview</h2>
+                <canvas id="pieChart" width="500" height="400"></canvas>
+                <button class="btn" onclick="closeCurrentModal()" style="margin-top:15px;">Close</button>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    // Create Pie Chart
+    setTimeout(() => {
+        const ctx = document.getElementById('pieChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Physical', 'Cognitive', 'Language', 'Social-Emotional', 'Fine Motor'],
+                datasets: [{
+                    data: [92, 96, 89, 97, 84],
+                    backgroundColor: ['#4CAF50', '#2196F3', '#FF9800', '#9C27B0', '#00BCD4']
+                }]
+            },
+            options: { responsive: true }
+        });
+    }, 100);
+}
+
+// Class Bar Chart
+window.onload = function() {
+    // This will run after the page loads
+    if (document.getElementById('classChart')) {
+        const ctx = document.getElementById('classChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Physical', 'Cognitive', 'Language', 'Social-Emotional', 'Fine Motor'],
+                datasets: [{
+                    label: 'Class Average %',
+                    data: [89, 93, 86, 94, 85],
+                    backgroundColor: '#4CAF50'
+                }]
+            },
+            options: { responsive: true, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+    }
+};
+function createDomainCharts(containerId, missingId, data) {
+    const container = document.getElementById(containerId);
+    const missingList = document.getElementById(missingId);
+    if (!container || !missingList) return;
+
+    container.innerHTML = '';
+    missingList.innerHTML = '';
+
+    data.forEach(domain => {
+        const div = document.createElement('div');
+        div.style.textAlign = 'center';
+        div.innerHTML = `
+            <div style="font-weight:600; margin-bottom:5px;">${domain.name}</div>
+            <canvas width="140" height="140"></canvas>
+            <div style="margin-top:5px; font-size:1.1em; font-weight:bold;">${domain.percent}%</div>
+        `;
+        container.appendChild(div);
+
+        // Draw Pie Chart
+        const ctx = div.querySelector('canvas').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                datasets: [{
+                    data: [domain.percent, 100 - domain.percent],
+                    backgroundColor: [domain.color, '#f0f0f0'],
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                cutout: '70%',
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Missing items
+        if (domain.percent < 90) {
+            const li = document.createElement('li');
+            li.textContent = `${domain.name} - ${100 - domain.percent}% gap`;
+            missingList.appendChild(li);
+        }
+    });
+}
+
+// Call this after loading the development page
+// Example usage in navigate or onload
 // Improved AI Modal
 function showAIModal() {
     const html = `
