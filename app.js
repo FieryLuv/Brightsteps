@@ -71,7 +71,7 @@ const pages = {
         
         <div style="display:grid; grid-template-columns: repeat(auto-fill, minmax(300px,1fr)); gap:1.5rem;">
             <div class="card" onclick="openChildProfile(1)" style="cursor:pointer;">
-                <strong>Amina Khalid</strong> (4y 3m) - Sunshine Group<br>
+                <strong>Amina Khalid</strong> (2y 8m) - Sunshine Group<br>
                 <span style="color:#4CAF50">Development: On Track</span>
             </div>
             <div class="card" onclick="openChildProfile(2)" style="cursor:pointer;">
@@ -84,15 +84,31 @@ const pages = {
     <h2 style="color: var(--dark-green);">📈 Development Tracking</h2>
     <p style="margin-bottom: 2rem; color: #555;">Click on a child to view detailed progress charts.</p>
 
+    <!-- Sample Classes / Sections -->
     <div class="card">
-        <h3>Select a Child</h3>
-        <button class="btn" onclick="showChildProgress('Amina Khalid', 'amina')">Amina Khalid</button>
-        <button class="btn" onclick="showChildProgress('Omar Ahmed', 'omar')">Omar Ahmed</button>
+        <h3>Current Classes / Sections</h3>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+            <button class="btn" onclick="alert('Switched to Little Explorers (2-3 yrs)')">Little Explorers (2-3 yrs)</button>
+            <button class="btn" onclick="alert('Switched to Little Stars (3-4 yrs)')">Little Stars (3-4 yrs)</button>
+            <button class="btn btn-blue" onclick="alert('Switched to Sunshine Group (4-5 yrs)')">Sunshine Group (4-5 yrs)</button>
+        </div>
     </div>
 
-    <div id="child-progress-container" style="margin-top:2rem;"></div>
+    <!-- Individual Progress -->
+    <div class="card">
+        <h3>Individual Child Progress</h3>
+        <button class="btn" onclick="showChildProgress('Amina Khalid', 'amina')">Amina Khalid (2y 8m)</button>
+        <button class="btn" onclick="showChildProgress('Omar Ahmed', 'omar')">Omar Ahmed (4y 2m)</button>
+    </div>
 
-    
+<div id="child-progress-container" style="margin-top:2rem;"></div>
+
+    <!-- Overall Class Charts (Auto shown) -->
+    <div class="card">
+        <h3>Overall Class Development (Sunshine Group)</h3>
+        <div id="class-overall-charts" style="display:flex; flex-wrap:wrap; gap:2rem; justify-content:center;"></div>
+    </div>
+
 `,
 
 health: `
@@ -301,6 +317,9 @@ function navigate(page) {
 
     // === ADD THIS BLOCK ===
     if (page === 'development') {
+    
+        setTimeout(() => createClassOverallCharts(), 300);   // Auto show class charts
+
         // Create charts for Amina
         createDomainCharts('amina-charts', 'amina-missing', [
             {name: "Physical", percent: 92, color: "#4CAF50"},
@@ -340,19 +359,147 @@ function closeAllChildrenModal() {
 
 // === FULL CHILD PROFILE MODAL ===
 function openChildProfile(id) {
-    const childData = {
-        1: { name: "Amina Khalid", age: "4 years 3 months", class: "Sunshine Group", status: "On Track" },
-        2: { name: "Omar Ahmed", age: "3 years 10 months", class: "Little Stars", status: "Needs Support" }
-    };
+    // Example in openChildProfile or showChildProgress
+const childData = {
+    1: { 
+        name: "Amina Khalid", 
+        age: "2 years 8 months", 
+        class: "Little Explorers",
+        type: 1   // 0-3 years
+    },
+    2: { 
+        name: "Omar Ahmed", 
+        age: "4 years 2 months", 
+        class: "Sunshine Group",
+        type: 2   // 3+ years
+    }
+};
 
-    const child = childData[id] || { name: "Child" };
+    const child = childData[id] || { name: "Child", age: "", class: "", type: 1 };
+
+    let checklistHTML = '';
+
+if (child.type === 1) {// Checklist 1 - 0-3 years (6 columns)
+    
+checklistHTML = `
+    <h3>ECCD Checklist - Gross Motor Domain Example</h3>
+    <table style="width:100%; border-collapse:collapse; margin-top:1rem; font-size:0.95em;">
+        <thead>
+            <tr style="background:#1a1a1a; color:white;">
+                <th style="padding:12px; text-align:left;">Gross Motor</th>
+                <th style="padding:12px; text-align:left;">Material/Procedure</th>
+                <th colspan="6" style="text-align:center;">Present</th>
+                <th style="padding:12px; text-align:left;">Comments</th>
+            </tr>
+            <tr style="background:#f0f0f0;">
+                <th></th>
+                <th></th>
+                <th>1st</th><th>2nd</th><th>3rd</th><th>4th</th><th>5th</th><th>6th</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1. Infant lifts head when held standing</td>
+                <td>PROCEDURE: Hold the child in an upright position and carefully remove your hand from the child's neck according to his ability to lift his head and keep it erect. <strong>Credit if the child occasionally lifts his head free of support.</strong> Parental report will suffice.</td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox" checked></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="text" placeholder="Comments..." style="width:100%;"></td>
+            </tr>
+            <!-- Add more rows following the same format -->
+        </tbody>
+    <thead>
+            <tr style="background:#1a1a1a; color:white;">
+                <th style="padding:12px; text-align:left;">Gross Motor</th>
+                <th style="padding:12px; text-align:left;">Material/Procedure</th>
+                <th colspan="6" style="text-align:center;">Present</th>
+                <th style="padding:12px; text-align:left;">Comments</th>
+            </tr>
+            <tr style="background:#f0f0f0;">
+                <th></th>
+                <th></th>
+                <th>1st</th><th>2nd</th><th>3rd</th><th>4th</th><th>5th</th><th>6th</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1. Infant lifts head when held standing</td>
+                <td>PROCEDURE: Hold the child in an upright position and carefully remove your hand from the child's neck according to his ability to lift his head and keep it erect. <strong>Credit if the child occasionally lifts his head free of support.</strong> Parental report will suffice.</td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox" checked></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="text" placeholder="Comments..." style="width:100%;"></td>
+            </tr>
+            <!-- Add more rows following the same format -->
+        </tbody>
+    </table>
+   <button class="btn" onclick="saveChecklist()" style="margin-top:1.5rem;">💾 Save ECCD Checklist</button>
+    <button class="btn btn-blue" onclick="closeCurrentModal()" style="margin-left:10px;">Close</button>
+</div>
+
+
+                    
+                </div>
+            </div>
+        </div>
+    `;
+    } else {
+        // Checklist 2 - 3+ years (3 columns)
+        checklistHTML = `
+            <h3>ECCD Checklist 2 (3+ years)</h3>
+            <table style="width:100%; border-collapse:collapse; margin-top:1rem; font-size:0.95em;">
+                <thead>
+                    <tr style="background:#1a1a1a; color:white;">
+                        <th style="padding:12px; text-align:left;">Domain</th>
+                        <th style="padding:12px; text-align:left;">Material/Procedure</th>
+                        <th colspan="3" style="text-align:center;">Present</th>
+                        <th style="padding:12px; text-align:left;">Comments</th>
+                    </tr>
+                    <tr style="background:#f0f0f0;">
+                        <th></th><th></th>
+                        <th>1st</th><th>2nd</th><th>3rd</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Gross Motor</td>
+                        <td>Runs and jumps with both feet</td>
+                        <td><input type="checkbox"></td><td><input type="checkbox" checked></td><td><input type="checkbox"></td>
+                        <td><input type="text" placeholder="Comments..." style="width:100%;"></td>
+                    </tr>
+                    <tr>
+                        <td>Fine Motor</td>
+                        <td>Draws simple shapes</td>
+                        <td><input type="checkbox"></td><td><input type="checkbox"></td><td><input type="checkbox" checked></td>
+                        <td><input type="text" placeholder="Comments..." style="width:100%;"></td>
+                    </tr>
+                    <tr>
+                        <td>Language</td>
+                        <td>Uses 4-5 word sentences</td>
+                        <td><input type="checkbox" checked></td><td><input type="checkbox"></td><td><input type="checkbox"></td>
+                        <td><input type="text" placeholder="Comments..." style="width:100%;"></td>
+                    </tr>
+                    <!-- Add more domains: Self-Help, Receptive Language, Expressive Language, Cognitive, Social-Emotional -->
+                </tbody>
+            </table>
+        `;
+    }
 
     const modalHTML = `
        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
             <div style="background:white;width:95%;max-width:1100px;border-radius:16px;max-height:94vh;overflow:auto;">
                 <!-- Header -->
                 <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
-                    <h2>${child.name || 'Child'}</h2>
+                    <h2>${child.name} (${child.age})</h2>
                     <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
                 </div>
 
@@ -447,77 +594,22 @@ function openChildProfile(id) {
                             <label>Child's Birth Order (1st, 2nd, 3rd, etc.):</label><br>
                             <input type="text" value="1st" style="width:100%; padding:8px;">
                         </div>
-                    </div>
-<div class="card">
-    <h3>ECCD Checklist - Gross Motor Domain Example</h3>
-    <table style="width:100%; border-collapse:collapse; margin-top:1rem; font-size:0.95em;">
-        <thead>
-            <tr style="background:#1a1a1a; color:white;">
-                <th style="padding:12px; text-align:left;">Gross Motor</th>
-                <th style="padding:12px; text-align:left;">Material/Procedure</th>
-                <th colspan="6" style="text-align:center;">Present</th>
-                <th style="padding:12px; text-align:left;">Comments</th>
-            </tr>
-            <tr style="background:#f0f0f0;">
-                <th></th>
-                <th></th>
-                <th>1st</th><th>2nd</th><th>3rd</th><th>4th</th><th>5th</th><th>6th</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>1. Infant lifts head when held standing</td>
-                <td>PROCEDURE: Hold the child in an upright position and carefully remove your hand from the child's neck according to his ability to lift his head and keep it erect. <strong>Credit if the child occasionally lifts his head free of support.</strong> Parental report will suffice.</td>
-                <td><input type="checkbox"></td>
-                <td><input type="checkbox"></td>
-                <td><input type="checkbox" checked></td>
-                <td><input type="checkbox"></td>
-                <td><input type="checkbox"></td>
-                <td><input type="checkbox"></td>
-                <td><input type="text" placeholder="Comments..." style="width:100%;"></td>
-            </tr>
-            <!-- Add more rows following the same format -->
-        </tbody>
-    <thead>
-            <tr style="background:#1a1a1a; color:white;">
-                <th style="padding:12px; text-align:left;">Gross Motor</th>
-                <th style="padding:12px; text-align:left;">Material/Procedure</th>
-                <th colspan="6" style="text-align:center;">Present</th>
-                <th style="padding:12px; text-align:left;">Comments</th>
-            </tr>
-            <tr style="background:#f0f0f0;">
-                <th></th>
-                <th></th>
-                <th>1st</th><th>2nd</th><th>3rd</th><th>4th</th><th>5th</th><th>6th</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td>1. Infant lifts head when held standing</td>
-                <td>PROCEDURE: Hold the child in an upright position and carefully remove your hand from the child's neck according to his ability to lift his head and keep it erect. <strong>Credit if the child occasionally lifts his head free of support.</strong> Parental report will suffice.</td>
-                <td><input type="checkbox"></td>
-                <td><input type="checkbox"></td>
-                <td><input type="checkbox" checked></td>
-                <td><input type="checkbox"></td>
-                <td><input type="checkbox"></td>
-                <td><input type="checkbox"></td>
-                <td><input type="text" placeholder="Comments..." style="width:100%;"></td>
-            </tr>
-            <!-- Add more rows following the same format -->
-        </tbody>
-    </table>
-   <button class="btn" onclick="saveChecklist()" style="margin-top:1.5rem;">💾 Save ECCD Checklist</button>
-    <button class="btn btn-blue" onclick="closeCurrentModal()" style="margin-left:10px;">Close</button>
-</div>
 
-                    
+                        <div style="padding:1.5rem; text-align:center; border-top:1px solid #ddd;">
+                           <button class="btn" onclick="saveChecklist()">💾 Save Profile</button>
+                        </div>
+                    </div>
+                    ${checklistHTML}
                 </div>
+                <div style="padding:1.5rem; text-align:center; border-top:1px solid #ddd;">
+                           <button class="btn" onclick="saveChecklist()">💾 Save Checklist</button>
+                           <button class="btn btn-blue" onclick="closeCurrentModal()">Close</button>
+                        </div>
             </div>
         </div>
-    `;
+`
     document.body.insertAdjacentHTML('beforeend', modalHTML);
+
 }
 
 function saveChecklist() {
@@ -610,23 +702,26 @@ function showDevelopmentAIModal() {
     document.body.insertAdjacentHTML('beforeend', html);
 
 }
+let currentViewedChildId = null;
 function showChildProgress(name, id) {
-    const data = {
-        amina: [
-            {name: "Physical", percent: 92, color: "#4CAF50"},
-            {name: "Cognitive", percent: 96, color: "#2196F3"},
-            {name: "Language", percent: 89, color: "#FF9800"},
-            {name: "Social-Emotional", percent: 97, color: "#9C27B0"},
-            {name: "Fine Motor", percent: 84, color: "#00BCD4"}
-        ],
-        omar: [
-            {name: "Physical", percent: 78, color: "#4CAF50"},
-            {name: "Cognitive", percent: 85, color: "#2196F3"},
-            {name: "Language", percent: 72, color: "#FF9800"},
-            {name: "Social-Emotional", percent: 81, color: "#9C27B0"},
-            {name: "Fine Motor", percent: 65, color: "#00BCD4"}
-        ]
-    };
+    currentViewedChildId = id;
+    const data = id === 'amina' ? [
+    {name: "Gross Motor", percent: 72, color: "#4CAF50"},
+    {name: "Fine Motor", percent: 65, color: "#2196F3"},
+    {name: "Self-Help", percent: 88, color: "#FF9800"},
+    {name: "Receptive Language", percent: 60, color: "#9C27B0"},
+    {name: "Expressive Language", percent: 67, color: "#00BCD4"},
+    {name: "Cognitive", percent: 74, color: "#FF5722"},
+    {name: "Social-Emotional", percent: 66, color: "#8BC34A"}
+] : [
+    {name: "Gross Motor", percent: 72, color: "#4CAF50"},
+    {name: "Fine Motor", percent: 85, color: "#2196F3"},
+    {name: "Self-Help", percent: 78, color: "#FF9800"},
+    {name: "Receptive Language", percent: 80, color: "#9C27B0"},
+    {name: "Expressive Language", percent: 87, color: "#00BCD4"},
+    {name: "Cognitive", percent: 94, color: "#FF5722"},
+    {name: "Social-Emotional", percent: 96, color: "#8BC34A"}
+];
 
     const container = document.getElementById('child-progress-container');
     container.innerHTML = `
@@ -639,10 +734,22 @@ function showChildProgress(name, id) {
                     <ul id="${id}-missing" style="line-height:2.2;"></ul>
                 </div>
             </div>
+            <div style="margin-top:1.5rem;">
+                <button class="btn btn-blue" onclick="openCurrentChildProfile()">📋 Open Full Child Profile & ECCD Checklist</button>
+            </div>
         </div>
     `;
 
-    createDomainCharts(`${id}-charts`, `${id}-missing`, data[id]);
+    createDomainCharts(`${id}-charts`, `${id}-missing`, data);
+}
+function openCurrentChildProfile() {
+    if (currentViewedChildId === 'amina') {
+        openChildProfile(1);   // Amina
+    } else if (currentViewedChildId === 'omar') {
+        openChildProfile(2);   // Omar
+    } else {
+        openChildProfile(1);
+    }
 }
 // Individual Pie Chart
 function showChildProgressChart(id) {
@@ -741,7 +848,43 @@ function createDomainCharts(containerId, missingId, data) {
         }
     });
 }
+function createClassOverallCharts() {
+    const container = document.getElementById('class-overall-charts');
+    if (!container) return;
 
+    const classData = [
+        {name: "Physical", percent: 89, color: "#4CAF50"},
+        {name: "Cognitive", percent: 93, color: "#2196F3"},
+        {name: "Language", percent: 86, color: "#FF9800"},
+        {name: "Social-Emotional", percent: 94, color: "#9C27B0"},
+        {name: "Fine Motor", percent: 85, color: "#00BCD4"}
+    ];
+
+    container.innerHTML = '';
+    classData.forEach(domain => {
+        const div = document.createElement('div');
+        div.style.textAlign = 'center';
+        div.innerHTML = `
+            <div style="font-weight:600; margin-bottom:6px;">${domain.name}</div>
+            <canvas width="160" height="160"></canvas>
+            <div style="margin-top:8px; font-size:1.2em; font-weight:bold;">${domain.percent}%</div>
+        `;
+        container.appendChild(div);
+
+        const ctx = div.querySelector('canvas').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                datasets: [{
+                    data: [domain.percent, 100 - domain.percent],
+                    backgroundColor: [domain.color, '#f0f0f0'],
+                    borderWidth: 4
+                }]
+            },
+            options: { cutout: '70%', plugins: { legend: { display: false } } }
+        });
+    });
+}
 // Call this after loading the development page
 // Example usage in navigate or onload
 // Improved AI Modal
