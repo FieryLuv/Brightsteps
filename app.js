@@ -136,12 +136,18 @@ attendance: `
     <h2 style="color: #2196F3;">📅 Attendance Management</h2>
     <p style="margin-bottom: 2rem; color: #555;">Daily attendance recording, monthly reports, and absence alerts.</p>
 
+   <!-- Sections on top -->
     <div class="card">
-        <h3>Today's Attendance</h3>
-        <h2 style="color:#4CAF50; font-size: 2.8rem;">26 / 28</h2>
-        <p><strong>2 children absent</strong> - Reason: Sick</p>
-        <button class="btn" onclick="markAttendanceDemo()">Mark / Update Attendance</button>
+        <h3>Select Class / Section</h3>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+            <button class="btn" onclick="showAttendanceSection('explorers')">Little Explorers (2–3 yrs)</button>
+            <button class="btn" onclick="showAttendanceSection('stars')">Little Stars (3–4 yrs)</button>
+            <button class="btn btn-blue" onclick="showAttendanceSection('sunshine')">Sunshine Group (4–5 yrs)</button>
+        </div>
     </div>
+
+    <!-- Children of selected section -->
+    <div id="attendance-section-container" style="margin-top:1.5rem;"></div>
 
     <div class="card">
         <h3>Monthly Attendance Summary</h3>
@@ -159,7 +165,7 @@ attendance: `
     </div>
 `,
 reports: `
-    <h2 style="color: var(--dark-green);">📊 Reports & AI Insights</h2>
+    <h2 style="color: var(--dark-green);">📊 Reports</h2>
     <p style="margin-bottom: 2rem; color: #555;">Generate and view various reports for children, class, and center performance.</p>
 
     <div class="card">
@@ -1134,8 +1140,107 @@ function drawGrowthChart() {
         });
     }, 100);
 }
-function markAttendanceDemo() {
-    alert("✅ Attendance marked successfully!\n\nYou can record individual child attendance here with notes.");
+function showAttendanceSection(section) {
+    const container = document.getElementById('attendance-section-container');
+    container.innerHTML = '';
+
+
+    if (section === 'explorers') {
+        openAttendanceSheet(className = "explorers")
+    } 
+    else if (section === 'stars') {
+        openAttendanceSheet(className = "stars")
+    } 
+    else if (section === 'sunshine') {
+       openAttendanceSheet(className = "sunshine")
+    }
+
+    container.innerHTML = html;
+}
+
+function openAttendanceSheet(section) {
+    const sectionChildren = {
+        explorers: [
+            { name: "Amina Khalid", status: "present" },
+            { name: "Laila Yusuf", status: "present" },
+            { name: "Rayan Malik", status: "absent", reason: "Sick" }
+        ],
+        stars: [
+            { name: "Sara Ali", status: "present" },
+            { name: "Hassan Noor", status: "present" },
+            { name: "Maya Khan", status: "absent", reason: "Family trip" }
+        ],
+        sunshine: [
+            { name: "Omar Ahmed", status: "present" },
+            { name: "Yusuf Hassan", status: "present" },
+            { name: "Zainab Faris", status: "absent", reason: "Sick" },
+            { name: "Ibrahim Saleh", status: "present" }
+        ]
+    };
+
+    const children = sectionChildren[section] || sectionChildren.sunshine;
+    const sectionNames = {
+        explorers: "Little Explorers (2–3 yrs)",
+        stars: "Little Stars (3–4 yrs)",
+        sunshine: "Sunshine Group (4–5 yrs)"
+    };
+
+    let rows = '';
+    children.forEach((child, index) => {
+        rows += `
+            <tr>
+                <td style="padding:10px;">${index + 1}</td>
+                <td>${child.name}</td>
+                <td style="text-align:center;">
+                    <input type="checkbox" ${child.status === 'present' ? 'checked' : ''}>
+                </td>
+                <td style="text-align:center;">
+                    <input type="checkbox" ${child.status === 'absent' ? 'checked' : ''}>
+                </td>
+                <td>
+                    <input type="text" value="${child.reason || ''}" placeholder="Remarks..." style="width:100%; padding:6px;">
+                </td>
+            </tr>
+        `;
+    });
+
+    const html = `
+        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
+            <div style="background:white;width:95%;max-width:1100px;border-radius:16px;max-height:94vh;overflow:auto;">
+                
+                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                    <h2>Attendance Sheet – ${sectionNames[section]}</h2>
+                    <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
+                </div>
+
+                <div style="padding:2rem;">
+                    <div class="card">
+                        <table style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="padding:12px; text-align:left;">#</th>
+                                    <th style="padding:12px; text-align:left;">Child Name</th>
+                                    <th style="padding:12px; text-align:center;">Present</th>
+                                    <th style="padding:12px; text-align:center;">Absent</th>
+                                    <th style="padding:12px; text-align:left;">Reason / Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${rows}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="padding:1.5rem; text-align:center; border-top:1px solid #ddd;">
+                    <button class="btn" onclick="alert('Attendance saved successfully!')">💾 Save Attendance</button>
+                    <button class="btn btn-blue" onclick="closeCurrentModal()" style="margin-left:15px;">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+
 }
 
 function showAbsenceModal() {
