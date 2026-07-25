@@ -75,7 +75,7 @@ const pages = {
                 <span style="color:#4CAF50">Development: On Track</span>
             </div>
             <div class="card" onclick="openChildProfile(2)" style="cursor:pointer;">
-                <strong>Omar Ahmed</strong> (3y 10m) - Little Stars<br>
+                <strong>Omar Ahmed</strong> (4y 2m) - Little Stars<br>
                 <span style="color:#FF9800">Fine Motor: Needs Support</span>
             </div>
         </div>
@@ -86,27 +86,25 @@ const pages = {
 
     <!-- Sample Classes / Sections -->
     <div class="card">
-        <h3>Current Classes / Sections</h3>
+        <h3>Select Class / Section</h3>
         <div style="display:flex; gap:1rem; flex-wrap:wrap;">
-            <button class="btn" onclick="alert('Switched to Little Explorers (2-3 yrs)')">Little Explorers (2-3 yrs)</button>
-            <button class="btn" onclick="alert('Switched to Little Stars (3-4 yrs)')">Little Stars (3-4 yrs)</button>
-            <button class="btn btn-blue" onclick="alert('Switched to Sunshine Group (4-5 yrs)')">Sunshine Group (4-5 yrs)</button>
+            <button class="btn" onclick="showSectionChildren('explorers')">Little Explorers (2–3 yrs)</button>
+            <button class="btn" onclick="showSectionChildren('stars')">Little Stars (3–4 yrs)</button>
+            <button class="btn btn-blue" onclick="showSectionChildren('sunshine')">Sunshine Group (4–5 yrs)</button>
         </div>
     </div>
 
+    <!-- Children will appear here after clicking a section -->
+    <div id="section-children-container" style="margin-top:1.5rem;"></div>
+
     <!-- Individual Progress -->
-    <div class="card">
-        <h3>Individual Child Progress</h3>
-        <button class="btn" onclick="showChildProgress('Amina Khalid', 'amina')">Amina Khalid (2y 8m)</button>
-        <button class="btn" onclick="showChildProgress('Omar Ahmed', 'omar')">Omar Ahmed (4y 2m)</button>
-    </div>
+    <div id="child-progress-container" style="margin-top:2rem;"></div>
 
-<div id="child-progress-container" style="margin-top:2rem;"></div>
-
-    <!-- Overall Class Charts (Auto shown) -->
+    
+    <!-- Overall Class Charts -->
     <div class="card">
-        <h3>Overall Class Development (Sunshine Group)</h3>
-        <div id="class-overall-charts" style="display:flex; flex-wrap:wrap; gap:2rem; justify-content:center;"></div>
+    <h3>Overall Class Development Snapshot</h3>
+    <div id="class-overall-charts" style="display:flex; justify-content:center; margin-top:1rem;"></div>
     </div>
 
 `,
@@ -118,9 +116,8 @@ health: `
     <div class="card">
         <h3>Select Child</h3>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <button class="btn" onclick="openHealthProfile(1)">Amina Khalid</button>
-            <button class="btn" onclick="openHealthProfile(2)">Omar Ahmed</button>
-            <button class="btn btn-blue" onclick="alert('Full health list would appear here')">All Children</button>
+            <button class="btn" onclick="openHealthProfile(1)">Amina Khalid (2y 8m)</button>
+        <button class="btn" onclick="openHealthProfile(2)">Omar Ahmed (4y 2m)</button><button class="btn btn-blue" onclick="alert('Full health list would appear here')">All Children</button>
         </div>
     </div>
 
@@ -702,6 +699,46 @@ function showDevelopmentAIModal() {
     document.body.insertAdjacentHTML('beforeend', html);
 
 }
+
+function showSectionChildren(section) {
+
+    document.getElementById('section-children-container').innerHTML = '';
+    document.getElementById('child-progress-container').innerHTML = '';
+
+    let html = '';
+
+    if (section === 'explorers') {
+        html = `
+            <div class="card">
+                <h3>Little Explorers (2–3 years) – Checklist Type 1</h3>
+                <button class="btn" onclick="showChildProgress('Amina Khalid', 'amina')">
+                    Amina Khalid (2y 8m)
+                </button>
+            </div>
+        `;
+    } 
+    else if (section === 'stars') {
+        html = `
+            <div class="card">
+                <h3>Little Stars (3–4 years)</h3>
+                <p style="color:#777;">No sample children yet.</p>
+            </div>
+        `;
+    } 
+    else if (section === 'sunshine') {
+        html = `
+            <div class="card">
+                <h3>Sunshine Group (4–5 years) – Checklist Type 2</h3>
+                <button class="btn" onclick="showChildProgress('Omar Ahmed', 'omar')">
+                    Omar Ahmed (4y 2m)
+                </button>
+            </div>
+        `;
+    }
+    document.getElementById('section-children-container').innerHTML = html;
+    createClassOverallCharts(section);
+}
+
 let currentViewedChildId = null;
 function showChildProgress(name, id) {
     currentViewedChildId = id;
@@ -848,42 +885,54 @@ function createDomainCharts(containerId, missingId, data) {
         }
     });
 }
-function createClassOverallCharts() {
+function createClassOverallCharts(section = 'sunshine') {
     const container = document.getElementById('class-overall-charts');
     if (!container) return;
 
-    const classData = [
-        {name: "Physical", percent: 89, color: "#4CAF50"},
-        {name: "Cognitive", percent: 93, color: "#2196F3"},
-        {name: "Language", percent: 86, color: "#FF9800"},
-        {name: "Social-Emotional", percent: 94, color: "#9C27B0"},
-        {name: "Fine Motor", percent: 85, color: "#00BCD4"}
-    ];
+    // Sample overall percentages per section
+    const sectionData = {
+        explorers: { achieved: 78, label: "Little Explorers (2–3 yrs)" },
+        stars:     { achieved: 85, label: "Little Stars (3–4 yrs)" },
+        sunshine:  { achieved: 91, label: "Sunshine Group (4–5 yrs)" }
+    };
 
-    container.innerHTML = '';
-    classData.forEach(domain => {
-        const div = document.createElement('div');
-        div.style.textAlign = 'center';
-        div.innerHTML = `
-            <div style="font-weight:600; margin-bottom:6px;">${domain.name}</div>
-            <canvas width="160" height="160"></canvas>
-            <div style="margin-top:8px; font-size:1.2em; font-weight:bold;">${domain.percent}%</div>
-        `;
-        container.appendChild(div);
+    const data = sectionData[section] || sectionData.sunshine;
 
-        const ctx = div.querySelector('canvas').getContext('2d');
+    container.innerHTML = `
+        <div style="text-align:center;">
+            <div style="font-weight:600; margin-bottom:10px;">${data.label}</div>
+            <canvas id="overallChart" width="280" height="280"></canvas>
+            <div style="margin-top:12px; font-size:1.3em; font-weight:bold; color:#4CAF50;">
+                ${data.achieved}% Achieved
+            </div>
+            <div style="color:#777; margin-top:4px;">
+                ${100 - data.achieved}% Still in Progress
+            </div>
+        </div>
+    `;
+
+    // Draw the chart
+    setTimeout(() => {
+        const ctx = document.getElementById('overallChart').getContext('2d');
         new Chart(ctx, {
-            type: 'pie',
+            type: 'doughnut',
             data: {
+                labels: ['Achieved', 'In Progress'],
                 datasets: [{
-                    data: [domain.percent, 100 - domain.percent],
-                    backgroundColor: [domain.color, '#f0f0f0'],
-                    borderWidth: 4
+                    data: [data.achieved, 100 - data.achieved],
+                    backgroundColor: ['#4CAF50', '#e0e0e0'],
+                    borderWidth: 4,
+                    borderColor: '#fff'
                 }]
             },
-            options: { cutout: '70%', plugins: { legend: { display: false } } }
+            options: {
+                cutout: '68%',
+                plugins: {
+                    legend: { display: false }
+                }
+            }
         });
-    });
+    }, 50);
 }
 // Call this after loading the development page
 // Example usage in navigate or onload
@@ -909,30 +958,50 @@ function showAIModal() {
     document.body.insertAdjacentHTML('beforeend', html);
 }
 function openHealthProfile(id) {
-    const names = {1: "Amina Khalid", 2: "Omar Ahmed"};
-    const name = names[id] || "Child";
+    const names = {
+        1: { name: "Amina Khalid", age: "2 years 8 months" },
+        2: { name: "Omar Ahmed", age: "4 years 2 months" }
+    };
+   const child = names[id] || { name: "Child", age: "" };
 
     const html = `
         <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
             <div style="background:white;width:90%;max-width:900px;border-radius:16px;max-height:92vh;overflow:auto;">
+                <!-- Header -->
                 <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
-                    <h2>${name} - Health Record</h2>
+                    <h2>${child.name} – Health Record</h2>
                     <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
                 </div>
                 
                 <div style="padding:2rem;">
+                    <!-- Current Summary -->
                     <div class="card">
-                        <h3>Latest Measurements</h3>
-                        <p><strong>Height:</strong> 102 cm &nbsp;&nbsp; <strong>Weight:</strong> 16.5 kg &nbsp;&nbsp; <strong>BMI:</strong> Normal</p>
-                        <p><strong>Last Recorded:</strong> July 1, 2026</p>
-                    </div>
+                        <h3>Current Health Summary</h3>
+                        <p><strong>Age:</strong> ${child.age}</p>
+                        <p><strong>Height:</strong> 92 cm &nbsp;&nbsp; <strong>Weight:</strong> 13.8 kg &nbsp;&nbsp; <strong>BMI:</strong> Normal</p>
+                        <p><strong>Last Updated:</strong> July 10, 2026</p>
+                    </div>you
 
                     <div class="card">
-                        <h3>Growth Chart Summary</h3>
-                        <p>(Growth chart visualization would be displayed here)</p>
-                        <p>Consistent growth in height and weight.</p>
+                    <h3>Growth Chart Summary</h3>
+                    
+                        <div style="display:flex; gap:2rem; flex-wrap:wrap; align-items:center;">
+                            <!-- Line Chart -->
+                            <div style="flex:1; min-width:300px;">
+                                <canvas id="growthChart" height="180">${drawGrowthChart()}</canvas>
+                            </div>
+                    
+                            <!-- Summary Text -->
+                            <div style="flex:1; min-width:250px;">
+                                <p><strong>Height:</strong> 92 cm (Normal range)</p>
+                                <p><strong>Weight:</strong> 13.8 kg (Healthy)</p>
+                                <p style="margin-top:1rem; color:#4CAF50;">
+                                    <strong>Summary:</strong> Consistent growth in both height and weight.  
+                                    The child is following a healthy growth trajectory according to age standards.
+                                </p>
+                            </div>
+                        </div>
                     </div>
-
                     <div class="card">
                         <h3>Medical Information</h3>
                         <p><strong>Immunization:</strong> Up to date<br>
@@ -945,15 +1014,125 @@ function openHealthProfile(id) {
                         <p>Good appetite. Participating well in feeding program.</p>
                     </div>
                 </div>
+                     <!-- Detailed Update Form -->
+                    <div class="card">
+                        <h3>Update Health Record</h3>
 
-                <div style="padding:1.5rem; text-align:center; border-top:1px solid #ddd;">
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem;">
+                            <div>
+                                <label>Date of Measurement</label><br>
+                                <input type="date" style="width:100%; padding:8px;">
+                            </div>
+                            <div>
+                                <label>Recorded By</label><br>
+                                <input type="text" value="Teacher Maria" style="width:100%; padding:8px;">
+                            </div>
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1.5rem; margin-top:1.5rem;">
+                            <div>
+                                <label>Height (cm)</label><br>
+                                <input type="number" placeholder="e.g. 92" style="width:100%; padding:8px;">
+                            </div>
+                            <div>
+                                <label>Weight (kg)</label><br>
+                                <input type="number" step="0.1" placeholder="e.g. 13.8" style="width:100%; padding:8px;">
+                            </div>
+                            <div>
+                                <label>BMI Status</label><br>
+                                <select style="width:100%; padding:8px;">
+                                    <option>Normal</option>
+                                    <option>Underweight</option>
+                                    <option>Overweight</option>
+                                    <option>Obese</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:1.5rem;">
+                            <label>Nutrition Status</label><br>
+                            <select style="width:100%; padding:8px;">
+                                <option>Normal</option>
+                                <option>Under-nourished</option>
+                                <option>At Risk</option>
+                                <option>Over-nourished</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-top:1.5rem;">
+                            <label>Immunization Status</label><br>
+                            <select style="width:100%; padding:8px;">
+                                <option>Up to date</option>
+                                <option>Incomplete</option>
+                                <option>Not started</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-top:1.5rem;">
+                            <label>Allergies</label><br>
+                            <input type="text" placeholder="None / List allergies" style="width:100%; padding:8px;">
+                        </div>
+
+                        <div style="margin-top:1.5rem;">
+                            <label>Medical Conditions / Notes</label><br>
+                            <textarea style="width:100%; height:100px; padding:8px;" placeholder="Any medical conditions, recent illness, or observations..."></textarea>
+                        </div>
+
+                        <div style="margin-top:1.5rem;">
+                            <label>Medication Records</label><br>
+                            <textarea style="width:100%; height:80px; padding:8px;" placeholder="Current medications if any..."></textarea>
+                        </div>
+                    </div>
+                    <div style="padding:1.5rem; text-align:center; border-top:1px solid #ddd;">
                     <button class="btn" onclick="closeCurrentModal()">Close</button>
                     <button class="btn btn-blue" style="margin-left:15px;">Update Records</button>
+                    </div>
                 </div>
             </div>
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
+}
+function drawGrowthChart() {
+    setTimeout(() => {
+        const canvas = document.getElementById('growthChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Mar', 'May', 'Jul'],
+                datasets: [
+                    {
+                        label: 'Height (cm)',
+                        data: [86, 88, 90, 92],
+                        borderColor: '#4CAF50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Weight (kg)',
+                        data: [12.1, 12.7, 13.2, 13.8],
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    }, 100);
 }
 function markAttendanceDemo() {
     alert("✅ Attendance marked successfully!\n\nYou can record individual child attendance here with notes.");
