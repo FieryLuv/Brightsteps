@@ -4,7 +4,7 @@ const pages = {
    dashboard: `
     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2rem;">
         <div>
-            <h1 style="color: var(--dark-green);">Good Morning, Teacher Maria! 👋</h1>
+            <h1 style="color: var(--dark-green);">Good Morning, Teacher Irish! 👋</h1>
             <p style="color:#555;">Tuesday, July 8, 2026 | National Child Development Center - Medina</p>
         </div>
     </div>
@@ -239,48 +239,146 @@ calendar: `
     </div>
 `,
 parent: `
-    <div style="background: linear-gradient(135deg, #E3F2FD, #E8F5E9); padding: 2rem; border-radius: 16px; margin-bottom: 2rem;">
-        <h1 style="color: var(--dark-green); text-align: center;">Welcome, Mr. Khalid! 👨‍👧</h1>
-        <p style="text-align: center; color: #555;">Amina Khalid • Sunshine Group</p>
+    <div style="background: linear-gradient(135deg, #E3F2FD, #E8F5E9); padding: 2rem; border-radius: 16px; margin-bottom: 2rem; text-align:center;">
+        <h1 style="color: var(--dark-green);">Welcome, Mr. Khalid! 👨‍👧</h1>
+        <p style="color:#555;">Parent of <strong>Amina Khalid</strong> • Little Explorers (2y 8m)</p>
     </div>
 
     <div class="dashboard-grid">
-        <!-- Child Progress -->
-        <div class="card">
-            <h3>🌟 Amina's Progress</h3>
-            <p><strong>Overall Score:</strong> 93%</p>
-            <p>Strong in Social-Emotional Development</p>
-            <button class="btn" onclick="showParentProgressModal()">View Full Progress Report</button>
+
+    <div style="text-align:center; margin-bottom:2rem;">
+        <!-- Profile Picture -->
+        <div style="width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,#4CAF50,#2196F3); margin:0 auto 1rem; display:flex; align-items:center; justify-content:center; color:white; font-size:3rem; box-shadow:0 6px 20px rgba(0,0,0,0.15);">
+            👧
+        </div>
+        <h1 style="color: var(--dark-green); margin:0;">Amina Khalid</h1>
+        <p style="color:#555; margin:6px 0;">2 years 8 months • Little Explorers</p>
+        <p style="color:#777;">Parent: Mr. Khalid</p>
+    </div>
+
+        <!-- Automatic Progress Report -->
+<div class="card">
+    <h3 style="color:var(--dark-green); text-align:center;">🌟 Progress Report – July 2026</h3>
+    
+    <!-- Domain Percentages -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(110px,1fr)); gap:1rem; margin:1.5rem 0;">
+        <div style="text-align:center;">
+            <div style="font-size:1.8rem; font-weight:bold; color:#4CAF50;">92%</div>
+            <div style="font-size:0.9em;">Gross Motor</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:1.8rem; font-weight:bold; color:#2196F3;">85%</div>
+            <div style="font-size:0.9em;">Fine Motor</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:1.8rem; font-weight:bold; color:#FF9800;">88%</div>
+            <div style="font-size:0.9em;">Self-Help</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:1.8rem; font-weight:bold; color:#9C27B0;">90%</div>
+            <div style="font-size:0.9em;">Language</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:1.8rem; font-weight:bold; color:#00BCD4;">94%</div>
+            <div style="font-size:0.9em;">Cognitive</div>
+        </div>
+        <div style="text-align:center;">
+            <div style="font-size:1.8rem; font-weight:bold; color:#8BC34A;">96%</div>
+            <div style="font-size:0.9em;">Social-Emotional</div>
+        </div>
+    </div>
+
+    <!-- Teacher’s Note + Tips side by side -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-top:1.5rem;">
+        
+        <!-- Teacher’s Note -->
+        <div style="background:#f8f9fa; padding:1.2rem; border-radius:12px;">
+            <h4 style="color:var(--dark-green); margin-top:0;">👩‍🏫 Teacher’s Note</h4>
+            <p>Amina is doing wonderfully! She shows great creativity and is very kind with her friends.</p>
         </div>
 
-        <!-- AI Tips -->
-        <div class="card">
-            <h3>🤖 AI Tips for You</h3>
-            <ul style="line-height:2;">
-                <li>Practice counting games during playtime</li>
+        <!-- Tips & Activity Suggestions -->
+        <div style="background:#e8f5e9; padding:1.2rem; border-radius:12px;">
+            <h4 style="color:var(--dark-green); margin-top:0;">💡 Tips & Activity Suggestions</h4>
+            <ul style="padding-left:1.2rem; line-height:1.8; margin:0;">
+                <li>Practice counting during playtime</li>
                 <li>Read together for 15 minutes daily</li>
                 <li>Encourage sharing with siblings</li>
+                <li>Outdoor play for gross motor skills</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+        <!-- Detailed Health Report -->
+<div class="card">
+    <h3 style="color:#2196F3; text-align:center;">❤️ Health Report – July 2026</h3>
+
+    <!-- Summary Stats -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:1.2rem; margin:1.5rem 0;">
+        <div style="text-align:center; background:#f0fdf4; padding:1rem; border-radius:12px;">
+            <div style="font-size:1.6rem; font-weight:bold; color:#4CAF50;">92 cm</div>
+            <div>Height</div>
+        </div>
+        <div style="text-align:center; background:#f0f9ff; padding:1rem; border-radius:12px;">
+            <div style="font-size:1.6rem; font-weight:bold; color:#2196F3;">13.8 kg</div>
+            <div>Weight</div>
+        </div>
+        <div style="text-align:center; background:#fefce8; padding:1rem; border-radius:12px;">
+            <div style="font-size:1.6rem; font-weight:bold; color:#FF9800;">Normal</div>
+            <div>BMI Status</div>
+        </div>
+        <div style="text-align:center; background:#f5f3ff; padding:1rem; border-radius:12px;">
+            <div style="font-size:1.6rem; font-weight:bold; color:#9C27B0;">Up to date</div>
+            <div>Immunization</div>
+        </div>
+    </div>
+
+    <!-- Growth Chart Visual -->
+    <div style="margin:1.5rem 0;">
+        <h4 style="margin-bottom:0.8rem;">Growth Progress</h4>
+        <canvas id="parentGrowthChart" height="160"></canvas>
+    </div>
+
+    <!-- Additional Info -->
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.5rem; margin-top:1.5rem;">
+        <div style="background:#f8f9fa; padding:1.2rem; border-radius:12px;">
+            <h4 style="margin-top:0; color:#4CAF50;">Nutrition Status</h4>
+            <p>Good appetite. Participating well in the feeding program.</p>
+            <p style="color:#4CAF50; font-weight:600;">Status: Normal</p>
+        </div>
+        <div style="background:#f8f9fa; padding:1.2rem; border-radius:12px;">
+            <h4 style="margin-top:0; color:#2196F3;">Medical Notes</h4>
+            <p>No known allergies. No current medications.</p>
+            <p style="color:#4CAF50; font-weight:600;">Health Condition: Healthy</p>
+        </div>
+    </div>
+</div>
+
+        < !-- Attendance -->
+        <div class="card">
+            <h3>📅 Attendance This Month</h3>
+            <p><strong>Present:</strong> 18 days</p>
+            <p><strong>Absent:</strong> 2 days</p>
+            <p style="color:#4CAF50;"><strong>Rate:</strong> 90%</p>
+        </div>
+
+        <!-- Upcoming Events -->
+        <div class="card">
+            <h3>🗓️ Upcoming School Events</h3>
+            <ul style="line-height:2;">
+                <li>July 10 – Parent-Teacher Meeting</li>
+                <li>July 15 – Health Screening Day</li>
+                <li>July 28 – End of Month Celebration</li>
             </ul>
         </div>
 
-        <!-- Attendance -->
+        <!-- Announcements & Payment -->
         <div class="card">
-            <h3>📅 This Month's Attendance</h3>
-            <p><strong>26 out of 28 days present</strong></p>
-        </div>
-
-        <!-- Announcements -->
-        <div class="card">
-            <h3>📢 School Announcements</h3>
-            <p>Parent-Teacher Meeting on July 10, 2026 at 2:00 PM</p>
-            <button class="btn btn-blue">View All Announcements</button>
-        </div>
-
-        <!-- Payment -->
-        <div class="card">
-            <h3>💰 Payment Status</h3>
-            <p>Monthly Contribution for July: <strong style="color:#4CAF50">Paid ✓</strong></p>
-            <button class="btn">View Ledger</button>
+            <h3>📢 Announcements & Payments</h3>
+            <p>Monthly Contribution for July: <strong style="color:#4CAF50;">Paid ✓</strong></p>
+            <p style="margin-top:8px;">New feeding menu starts next week.</p>
+            <button class="btn btn-blue" style="margin-top:12px;">View Payment Ledger</button>
         </div>
     </div>
 `,
@@ -303,7 +401,7 @@ function loadTeacherLayout() {
     document.getElementById('main-app').innerHTML = `
         <header>
             <div class="logo">🌱 BrightSteps</div>
-            <div class="user-info">Teacher Maria • NCDC Medina</div>
+            <div class="user-info">Teacher Irish • NCDC Medina</div>
         </header>
         <div class="container">
             <aside class="sidebar">
@@ -327,9 +425,12 @@ function loadParentLayout() {
             <div class="logo">🌱 BrightSteps</div>
             <div class="user-info">Mr. Khalid • Parent of Amina</div>
         </header>
-        <div style="padding:2rem;" id="main-content"></div>
+        <div style="padding:2rem; overflow-y:auto; height:calc(100vh - 70px);" id="main-content">
+            <!-- Parent content will be loaded here -->
+        </div>
     `;
     document.getElementById('main-content').innerHTML = pages.parent;
+    drawParentGrowthChart();
 }
 
 function navigate(page) {
@@ -355,7 +456,7 @@ function navigate(page) {
     }
     if (page === 'calendar') {
     setTimeout(() => renderCalendar(), 100);
-}
+    }
 }
 
 // Feeding Program Modal
@@ -1092,7 +1193,7 @@ function openHealthProfile(id) {
                             </div>
                             <div>
                                 <label>Recorded By</label><br>
-                                <input type="text" value="Teacher Maria" style="width:100%; padding:8px;">
+                                <input type="text" value="Teacher Irish" style="width:100%; padding:8px;">
                             </div>
                         </div>
 
@@ -1683,56 +1784,48 @@ function saveEvent() {
     closeCurrentModal();
 }
 
-function showParentProgressModal() {
-    const html = `
-        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
-            <div style="background:white;padding:2rem;border-radius:20px;max-width:720px;width:90%;box-shadow:0 10px 40px rgba(0,0,0,0.2);">
-                
-                <!-- Header -->
-                <div style="text-align:center; margin-bottom:1.5rem;">
-                    <h2 style="color:var(--dark-green);">🌟 Amina Khalid's Progress Report</h2>
-                    <p style="color:#555;">July 2026 Summary</p>
-                </div>
+function drawParentGrowthChart() {
+    setTimeout(() => {
+        const canvas = document.getElementById('parentGrowthChart');
+        if (!canvas) return;
 
-                <!-- Progress Circles / Bars -->
-                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:1rem; margin-bottom:2rem;">
-                    <div style="text-align:center;">
-                        <div style="font-size:2.2rem; font-weight:bold; color:#4CAF50;">92%</div>
-                        <div>Physical</div>
-                    </div>
-                    <div style="text-align:center;">
-                        <div style="font-size:2.2rem; font-weight:bold; color:#4CAF50;">96%</div>
-                        <div>Cognitive</div>
-                    </div>
-                    <div style="text-align:center;">
-                        <div style="font-size:2.2rem; font-weight:bold; color:#2196F3;">89%</div>
-                        <div>Language</div>
-                    </div>
-                    <div style="text-align:center;">
-                        <div style="font-size:2.2rem; font-weight:bold; color:#4CAF50;">97%</div>
-                        <div>Social-Emotional</div>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <h3 style="color:var(--dark-green);">Teacher's Note</h3>
-                    <p>Amina is doing wonderfully! She shows great creativity during art activities and is very kind with her friends.</p>
-                </div>
-
-                <div class="card">
-                    <h3 style="color:var(--dark-green);">AI Suggestion for Parents</h3>
-                    <p>Continue daily reading time together. Amina especially enjoys storybooks with animals.</p>
-                </div>
-
-                <div style="text-align:center; margin-top:1.5rem;">
-                    <button class="btn" onclick="closeCurrentModal()">Close Report</button>
-                    <button class="btn btn-blue" style="margin-left:15px;" onclick="alert('Report downloaded (Demo)')">Download PDF</button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', html);
+        const ctx = canvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Mar', 'May', 'Jul'],
+                datasets: [
+                    {
+                        label: 'Height (cm)',
+                        data: [86, 88, 90, 92],
+                        borderColor: '#4CAF50',
+                        backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    },
+                    {
+                        label: 'Weight (kg)',
+                        data: [12.1, 12.7, 13.2, 13.8],
+                        borderColor: '#2196F3',
+                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'bottom' }
+                },
+                scales: {
+                    y: { beginAtZero: false }
+                }
+            }
+        });
+    }, 150);
 }
+
 // Standardized Close Function
 function closeCurrentModal() {
     const modals = document.querySelectorAll('div[style*="z-index:2000"], div[style*="z-index:1000"]');

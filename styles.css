@@ -9,7 +9,10 @@ body {
     margin: 0;
     background: linear-gradient(135deg, #E8F5E9, #E3F2FD);
     height: 100vh;
-    overflow: hidden;
+   
+    overflow-y: auto;
+    height: auto;
+
 }
 
 header {
