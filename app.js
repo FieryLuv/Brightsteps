@@ -355,23 +355,99 @@ parent: `
     </div>
 </div>
 
-        < !-- Attendance -->
-        <div class="card">
-            <h3>📅 Attendance This Month</h3>
-            <p><strong>Present:</strong> 18 days</p>
-            <p><strong>Absent:</strong> 2 days</p>
-            <p style="color:#4CAF50;"><strong>Rate:</strong> 90%</p>
-        </div>
+       <!-- Attendance Record for Parent -->
+<div class="card">
+    <h3 style="color:#2196F3; text-align:center;">📅 Attendance Record – Amina Khalid</h3>
 
-        <!-- Upcoming Events -->
-        <div class="card">
-            <h3>🗓️ Upcoming School Events</h3>
-            <ul style="line-height:2;">
-                <li>July 10 – Parent-Teacher Meeting</li>
-                <li>July 15 – Health Screening Day</li>
-                <li>July 28 – End of Month Celebration</li>
-            </ul>
+    <!-- Month Navigation -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:1.2rem 0;">
+        <button class="btn" onclick="alert('Previous month would load here')">← Previous Month</button>
+        <strong>July 2026</strong>
+        <button class="btn" onclick="alert('Next month would load here')">Next Month →</button>
+    </div>
+
+    <!-- Summary Stats -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:1.2rem; margin-bottom:1.5rem;">
+        <div style="text-align:center; background:#f0fdf4; padding:1rem; border-radius:12px;">
+            <div style="font-size:1.6rem; font-weight:bold; color:#4CAF50;">18</div>
+            <div>Days Present</div>
         </div>
+        <div style="text-align:center; background:#fef2f2; padding:1rem; border-radius:12px;">
+            <div style="font-size:1.6rem; font-weight:bold; color:#d32f2f;">2</div>
+            <div>Days Absent</div>
+        </div>
+        <div style="text-align:center; background:#f0f9ff; padding:1rem; border-radius:12px;">
+            <div style="font-size:1.6rem; font-weight:bold; color:#2196F3;">90%</div>
+            <div>Attendance Rate</div>
+        </div>
+    </div>
+
+    <!-- Monthly Attendance Grid -->
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.9em; min-width:700px;">
+            <thead>
+                <tr style="background:#1a1a1a; color:white;">
+                    <th style="padding:8px;">1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+                    <th>8</th><th>9</th><th>10</th><th>11</th><th>12</th>
+                    <th>15</th><th>16</th><th>17</th><th>18</th><th>19</th>
+                    <th>22</th><th>23</th><th>24</th><th>25</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="text-align:center; color:#4CAF50; padding:8px;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#d32f2f;">A</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#4CAF50;">P</td>
+                    <td style="text-align:center; color:#d32f2f;">A</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top:0.8rem;">
+        <strong>Legend:</strong> 
+        <span style="color:#4CAF50; font-weight:bold;">P</span> = Present &nbsp;&nbsp; 
+        <span style="color:#d32f2f; font-weight:bold;">A</span> = Absent
+    </div>
+</div>
+
+        <!-- Event Calendar for Parent -->
+<div class="card">
+    <h3 style="color:#2196F3; text-align:center;">🗓️ School Calendar</h3>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:1.2rem 0;">
+        <button class="btn" onclick="changeParentMonth(-1)">← Previous</button>
+        <h4 id="parent-calendar-title" style="margin:0;">July 2026</h4>
+        <button class="btn" onclick="changeParentMonth(1)">Next →</button>
+    </div>
+
+    <div id="parent-calendar-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:6px;"></div>
+
+    <div style="margin-top:1.5rem;">
+        <h4>Upcoming Events</h4>
+        <ul style="line-height:2;">
+            <li><strong>July 10</strong> – Parent-Teacher Meeting (2:00 PM)</li>
+            <li><strong>July 15</strong> – Health & Nutrition Screening Day</li>
+            <li><strong>July 22</strong> – Storytelling Session</li>
+            <li><strong>July 28</strong> – End of Month Celebration</li>
+        </ul>
+    </div>
+</div>
 
         <!-- Announcements & Payment -->
         <div class="card">
@@ -431,6 +507,7 @@ function loadParentLayout() {
     `;
     document.getElementById('main-content').innerHTML = pages.parent;
     drawParentGrowthChart();
+    renderParentCalendar();
 }
 
 function navigate(page) {
@@ -1825,7 +1902,113 @@ function drawParentGrowthChart() {
         });
     }, 150);
 }
+function openParentAttendanceHistory() {
+    const html = `
+        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
+            <div style="background:white;width:95%;max-width:900px;border-radius:16px;max-height:94vh;overflow:auto;">
+                
+                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                    <h2>Attendance History – Amina Khalid</h2>
+                    <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
+                </div>
 
+                <div style="padding:2rem;">
+                    <div class="card">
+                        <table style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="padding:12px; text-align:left;">Month</th>
+                                    <th style="padding:12px; text-align:center;">Present</th>
+                                    <th style="padding:12px; text-align:center;">Absent</th>
+                                    <th style="padding:12px; text-align:center;">Rate</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding:10px;">July 2026</td>
+                                    <td style="text-align:center;">18</td>
+                                    <td style="text-align:center;">2</td>
+                                    <td style="text-align:center; color:#4CAF50; font-weight:bold;">90%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px;">June 2026</td>
+                                    <td style="text-align:center;">19</td>
+                                    <td style="text-align:center;">1</td>
+                                    <td style="text-align:center; color:#4CAF50; font-weight:bold;">95%</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px;">May 2026</td>
+                                    <td style="text-align:center;">17</td>
+                                    <td style="text-align:center;">3</td>
+                                    <td style="text-align:center; color:#FF9800; font-weight:bold;">85%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="padding:1.5rem; text-align:center; border-top:1px solid #ddd;">
+                    <button class="btn btn-blue" onclick="closeCurrentModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+let parentMonth = 6; // July
+let parentYear = 2026;
+
+function renderParentCalendar() {
+    const grid = document.getElementById('parent-calendar-grid');
+    const title = document.getElementById('parent-calendar-title');
+    if (!grid || !title) return;
+
+    const monthNames = ["January","February","March","April","May","June",
+                        "July","August","September","October","November","December"];
+    title.textContent = `${monthNames[parentMonth]} ${parentYear}`;
+
+    const days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+    let html = days.map(d => `<div style="text-align:center; font-weight:600; padding:8px; background:#f0f0f0;">${d}</div>`).join('');
+
+    const firstDay = new Date(parentYear, parentMonth, 1).getDay();
+    const daysInMonth = new Date(parentYear, parentMonth + 1, 0).getDate();
+
+    for (let i = 0; i < firstDay; i++) {
+        html += `<div style="padding:12px;"></div>`;
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const key = `${parentYear}-${parentMonth + 1}-${day}`;
+        const hasEvent = sampleEvents[key];
+        const bg = hasEvent ? "linear-gradient(135deg, #4CAF50, #2196F3)" : "#fff";
+        const color = hasEvent ? "white" : "#333";
+        const border = hasEvent ? "none" : "1px solid #ddd";
+
+        html += `
+            <div onclick="showDayEvents(${day})" 
+                 style="padding:12px; text-align:center; border-radius:10px; cursor:pointer;
+                        background:${bg}; color:${color}; border:${border}; font-weight:${hasEvent ? '600' : '400'};">
+                ${day}
+                ${hasEvent ? '<div style="font-size:0.7em; margin-top:4px;">●</div>' : ''}
+            </div>
+        `;
+    }
+
+    grid.innerHTML = html;
+}
+
+function changeParentMonth(offset) {
+    parentMonth += offset;
+    if (parentMonth > 11) {
+        parentMonth = 0;
+        parentYear++;
+    } else if (parentMonth < 0) {
+        parentMonth = 11;
+        parentYear--;
+    }
+    renderParentCalendar();
+}
 // Standardized Close Function
 function closeCurrentModal() {
     const modals = document.querySelectorAll('div[style*="z-index:2000"], div[style*="z-index:1000"]');
