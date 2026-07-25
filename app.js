@@ -113,13 +113,18 @@ health: `
     <h2 style="color: #2196F3;">❤️ Health Monitoring</h2>
     <p style="margin-bottom: 2rem; color: #555;">Track children's height, weight, growth, nutrition, and medical records.</p>
 
+    <!-- Sections on top -->
     <div class="card">
-        <h3>Select Child</h3>
-        <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <button class="btn" onclick="openHealthProfile(1)">Amina Khalid (2y 8m)</button>
-        <button class="btn" onclick="openHealthProfile(2)">Omar Ahmed (4y 2m)</button><button class="btn btn-blue" onclick="alert('Full health list would appear here')">All Children</button>
+        <h3>Select Class / Section</h3>
+        <div style="display:flex; gap:1rem; flex-wrap:wrap;">
+            <button class="btn" onclick="showHealthSection('explorers')">Little Explorers (0–3 yrs)</button>
+            <button class="btn" onclick="showHealthSection('stars')">Little Stars (3–4 yrs)</button>
+            <button class="btn btn-blue" onclick="showHealthSection('sunshine')">Sunshine Group (4–5 yrs)</button>
         </div>
     </div>
+
+    <!-- Children of selected section -->
+    <div id="health-section-container" style="margin-top:1.5rem;"></div>
 
     <div class="card">
         <h3>Recent Health Summary</h3>
@@ -149,13 +154,24 @@ attendance: `
     <!-- Children of selected section -->
     <div id="attendance-section-container" style="margin-top:1.5rem;"></div>
 
+    <!-- Monthly + Yearly Summary -->
     <div class="card">
-        <h3>Monthly Attendance Summary</h3>
-        <p><strong>Overall Rate:</strong> 94% (July 2026)</p>
-        <ul>
-            <li>Amina Khalid - 100%</li>
-            <li>Omar Ahmed - 87%</li>
-        </ul>
+        <h3>Attendance Summary</h3>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:2rem;">
+            <div>
+                <h4>Monthly (July 2026)</h4>
+                <p><strong>Attendance Rate:</strong> 93%</p>
+                <p>Present Days: 20 / 22</p>
+            </div>
+            <div>
+                <h4>Yearly (2026)</h4>
+                <p><strong>Attendance Rate:</strong> 91%</p>
+                <p>Present Days: 148 / 162</p>
+            </div>
+        </div>
+        <button class="btn" style="margin-top:1.5rem;" onclick="openAttendanceHistory()">
+            📜 View Detailed Attendance History
+        </button>
     </div>
 
     <div class="card">
@@ -963,6 +979,43 @@ function showAIModal() {
     `;
     document.body.insertAdjacentHTML('beforeend', html);
 }
+function showHealthSection(section) {
+    const container = document.getElementById('health-section-container');
+    container.innerHTML = '';
+
+    let html = '';
+
+    if (section === 'explorers') {
+        html = `
+            <div class="card">
+                <h3>Little Explorers (2–3 years)</h3>
+                <button class="btn" onclick="openHealthProfile(1)">Amina Khalid (2y 8m)</button>
+                <button class="btn" onclick="openHealthProfile(3)">Laila Yusuf (2y 5m)</button>
+            </div>
+        `;
+    } 
+    else if (section === 'stars') {
+        html = `
+            <div class="card">
+                <h3>Little Stars (3–4 years)</h3>
+                <button class="btn" onclick="openHealthProfile(4)">Sara Ali (3y 7m)</button>
+                <button class="btn" onclick="openHealthProfile(5)">Hassan Noor (3y 10m)</button>
+            </div>
+        `;
+    } 
+    else if (section === 'sunshine') {
+        html = `
+            <div class="card">
+                <h3>Sunshine Group (4–5 years)</h3>
+                <button class="btn" onclick="openHealthProfile(2)">Omar Ahmed (4y 2m)</button>
+                <button class="btn" onclick="openHealthProfile(6)">Yusuf Hassan (4y 6m)</button>
+            </div>
+        `;
+    }
+
+    container.innerHTML = html;
+}
+
 function openHealthProfile(id) {
     const names = {
         1: { name: "Amina Khalid", age: "2 years 8 months" },
@@ -1156,6 +1209,120 @@ function showAttendanceSection(section) {
     }
 
     container.innerHTML = html;
+}
+function openAttendanceHistory(section = 'sunshine', monthOffset = 0) {
+    // Simple month handling for demo
+    const months = [
+        { name: "May 2026", days: 20 },
+        { name: "June 2026", days: 21 },
+        { name: "July 2026", days: 22 }
+    ];
+    
+    const currentIndex = 2 + monthOffset; // July is index 2
+    const safeIndex = Math.max(0, Math.min(months.length - 1, currentIndex));
+    const currentMonth = months[safeIndex];
+
+    const sectionNames = {
+        explorers: "Little Explorers (0–3 yrs)",
+        stars: "Little Stars (3–4 yrs)",
+        sunshine: "Sunshine Group (4–5 yrs)"
+    };
+
+    // Sample children per section
+    const childrenData = {
+        explorers: ["Amina Khalid", "Laila Yusuf", "Rayan Malik"],
+        stars: ["Sara Ali", "Hassan Noor", "Maya Khan"],
+        sunshine: ["Omar Ahmed", "Yusuf Hassan", "Zainab Faris", "Ibrahim Saleh"]
+    };
+
+    const children = childrenData[section] || childrenData.sunshine;
+
+    // Generate simple P/A pattern for demo
+    let rows = '';
+    children.forEach((name, index) => {
+        let cells = '';
+        for (let d = 1; d <= 15; d++) {   // showing 15 sample days for compactness
+            const isAbsent = (index + d) % 7 === 0;
+            cells += `<td style="text-align:center; color:${isAbsent ? '#d32f2f' : '#4CAF50'};">${isAbsent ? 'A' : 'P'}</td>`;
+        }
+        rows += `
+            <tr>
+                <td style="padding:8px; font-weight:600; background:#f8f9fa; position:sticky; left:0;">${name}</td>
+                ${cells}
+                <td style="text-align:center; font-weight:bold;">13</td>
+                <td style="text-align:center; font-weight:bold;">87%</td>
+            </tr>
+        `;
+    });
+
+   const html = `
+        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
+            <div style="background:white;width:96%;max-width:1200px;border-radius:16px;max-height:94vh;overflow:auto;">
+                
+                <!-- Header -->
+                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                    <h2>Attendance History</h2>
+                    <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
+                </div>
+
+                <div style="padding:2rem;">
+                    <!-- Controls -->
+                    <div class="card" style="display:flex; flex-wrap:wrap; gap:1rem; align-items:center; justify-content:space-between;">
+                        <div>
+                            <strong>Section:</strong>
+                            <select id="historySection" onchange="changeHistorySection(this.value)" style="padding:8px; margin-left:8px;">
+                                <option value="explorers" ${section === 'explorers' ? 'selected' : ''}>Little Explorers</option>
+                                <option value="stars" ${section === 'stars' ? 'selected' : ''}>Little Stars</option>
+                                <option value="sunshine" ${section === 'sunshine' ? 'selected' : ''}>Sunshine Group</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button class="btn" onclick="openAttendanceHistory('${section}', ${monthOffset - 1})">← Previous Month</button>
+                            <strong style="margin:0 15px;">${currentMonth.name}</strong>
+                            <button class="btn" onclick="openAttendanceHistory('${section}', ${monthOffset + 1})">Next Month →</button>
+                        </div>
+                    </div>
+
+                    <!-- Attendance Grid -->
+                    <div class="card">
+                        <h3>${sectionNames[section]} – ${currentMonth.name}</h3>
+                        <div style="overflow-x:auto;">
+                            <table style="width:100%; border-collapse:collapse; font-size:0.9em; min-width:900px;">
+                                <thead>
+                                    <tr style="background:#1a1a1a; color:white;">
+                                        <th style="padding:10px; text-align:left;">Child Name</th>
+                                        <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
+                                        <th>6</th><th>7</th><th>8</th><th>9</th><th>10</th>
+                                        <th>11</th><th>12</th><th>13</th><th>14</th><th>15</th>
+                                        <th>Total</th>
+                                        <th>%</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${rows}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="margin-top:1rem;">
+                            <strong>Legend:</strong> 
+                            <span style="color:#4CAF50; font-weight:bold;">P</span> = Present &nbsp;&nbsp; 
+                            <span style="color:#d32f2f; font-weight:bold;">A</span> = Absent
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding:1.5rem; text-align:center; border-top:1px solid #ddd;">
+                    <button class="btn btn-blue" onclick="closeCurrentModal()">Close</button>
+                </div>
+            </div>
+        </div>
+    `;
+ closeCurrentModal();
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function changeHistorySection(newSection) {
+    openAttendanceHistory(newSection, 0);
 }
 
 function openAttendanceSheet(section) {
