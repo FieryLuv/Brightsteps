@@ -213,21 +213,26 @@ calendar: `
     <p style="margin-bottom: 2rem; color: #555;">Event scheduling, reminders, and parent notifications.</p>
 
     <div class="card">
-        <h3>July 2026 - Upcoming Events</h3>
-        <ul style="line-height: 2.4;">
-            <li><strong>July 10</strong> - Parent-Teacher Meeting (2:00 PM)</li>
-            <li><strong>July 15</strong> - Health & Nutrition Screening Day</li>
-            <li><strong>July 22</strong> - Mid-Month Storytelling Session</li>
-            <li><strong>July 28</strong> - End of Month Celebration & Progress Sharing</li>
-        </ul>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <button class="btn" onclick="changeMonth(-1)">← Previous</button>
+            <h3 id="calendar-month-title">July 2026</h3>
+            <button class="btn" onclick="changeMonth(1)">Next →</button>
+        </div>
+
+        <div id="calendar-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:6px;"></div>
     </div>
 
     <div class="card">
-        <h3>Quick Actions</h3>
-        <button class="btn" onclick="addEventDemo()">+ Add New Event</button>
-        <button class="btn btn-blue" style="margin-left:15px;" onclick="showCalendarModal()">View Full Calendar</button>
+        <h3>Upcoming Events</h3>
+        <ul id="upcoming-events" style="line-height:2.2;">
+            <li><strong>July 10</strong> – Parent-Teacher Meeting (2:00 PM)</li>
+            <li><strong>July 15</strong> – Health & Nutrition Screening Day</li>
+            <li><strong>July 22</strong> – Storytelling Session</li>
+            <li><strong>July 28</strong> – End of Month Celebration</li>
+        </ul>
+        <button class="btn" style="margin-top:1rem;" onclick="openAddEventModal()">+ Add New Event</button>
     </div>
-
+    
     <div class="card">
         <h3>Upcoming Parent Notifications</h3>
         <p>Reminder: Parent-Teacher Meeting this Friday</p>
@@ -348,6 +353,9 @@ function navigate(page) {
             {name: "Fine Motor", percent: 84, color: "#00BCD4"}
         ]);
     }
+    if (page === 'calendar') {
+    setTimeout(() => renderCalendar(), 100);
+}
 }
 
 // Feeding Program Modal
@@ -1446,27 +1454,235 @@ function showAIReportModal() {
     `;
     document.body.insertAdjacentHTML('beforeend', html);
 }
-function addEventDemo() {
-    alert("📅 New Event Creation Form would open here.\n\nYou can schedule events and automatically notify parents.");
+
+let currentMonth = 6; // July (0-indexed)
+let currentYear = 2026;
+
+const sampleEvents = {
+    "2026-7-10": "Parent-Teacher Meeting",
+    "2026-7-15": "Health Screening Day",
+    "2026-7-22": "Storytelling Session",
+    "2026-7-28": "End of Month Celebration",
+    "2026-8-5": "First Day of August Activities"
+};
+
+function renderCalendar() {
+    const grid = document.getElementById('calendar-grid');
+    const title = document.getElementById('calendar-month-title');
+    if (!grid || !title) return;
+
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December"];
+    title.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+
+    // Days of week header
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    let html = days.map(d => `<div style="text-align:center; font-weight:600; padding:8px; background:#f0f0f0;">${d}</div>`).join('');
+
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    // Empty cells before first day
+    for (let i = 0; i < firstDay; i++) {
+        html += `<div style="padding:12px;"></div>`;
+    }
+
+    // Days of the month
+    for (let day = 1; day <= daysInMonth; day++) {
+        const key = `${currentYear}-${currentMonth + 1}-${day}`;
+        const hasEvent = sampleEvents[key];
+        const bg = hasEvent ? "linear-gradient(135deg, #4CAF50, #2196F3)" : "#fff";
+        const color = hasEvent ? "white" : "#333";
+        const border = hasEvent ? "none" : "1px solid #ddd";
+
+        html += `
+            <div onclick="showDayEvents(${day})" 
+                 style="padding:12px; text-align:center; border-radius:10px; cursor:pointer; 
+                        background:${bg}; color:${color}; border:${border}; font-weight:${hasEvent ? '600' : '400'};">
+                ${day}
+                ${hasEvent ? '<div style="font-size:0.7em; margin-top:4px;">●</div>' : ''}
+            </div>
+        `;
+    }
+
+    grid.innerHTML = html;
 }
 
-function showCalendarModal() {
+function changeMonth(offset) {
+    currentMonth += offset;
+    if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+    } else if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+    }
+    renderCalendar();
+}
+
+function showDayEvents(day) {
+    const key = `${currentYear}-${currentMonth + 1}-${day}`;
+    const eventTitle = sampleEvents[key];
+
+    if (!eventTitle) {
+        alert("No events scheduled on this day.");
+        return;
+    }
+
+    // Sample extra details for demo
+    const eventDetails = {
+        "2026-7-10": {
+            time: "2:00 PM – 4:00 PM",
+            type: "Parent Meeting",
+            audience: "All Parents & Teachers",
+            notes: "Discuss children’s progress for the first half of the year."
+        },
+        "2026-7-15": {
+            time: "9:00 AM – 12:00 NN",
+            type: "Health Activity",
+            audience: "All Children",
+            notes: "Height, weight, and basic health screening."
+        },
+        "2026-7-22": {
+            time: "10:00 AM",
+            type: "Special Activity",
+            audience: "All Classes",
+            notes: "Interactive storytelling session with guest reader."
+        },
+        "2026-7-28": {
+            time: "1:00 PM – 3:00 PM",
+            type: "Celebration",
+            audience: "Parents & Children",
+            notes: "End of month celebration and progress sharing."
+        }
+    };
+
+    const details = eventDetails[key] || {
+        time: "All day",
+        type: "General",
+        audience: "All",
+        notes: "No additional notes."
+    };
+
+    const monthNames = ["January","February","March","April","May","June",
+                        "July","August","September","October","November","December"];
+
     const html = `
         <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
-            <div style="background:white;padding:2rem;border-radius:16px;max-width:700px;width:90%;">
-                <h2>🗓️ Full School Calendar</h2>
-                <p>July 2026</p>
-                <ul>
-                    <li>10 Jul - Parent-Teacher Meeting</li>
-                    <li>15 Jul - Health Screening</li>
-                    <li>28 Jul - Progress Sharing Day</li>
-                </ul>
-                <button class="btn" onclick="closeCurrentModal()">Close Calendar</button>
+            <div style="background:white;width:90%;max-width:520px;border-radius:16px;overflow:hidden;">
+                
+                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                    <h2>📅 Event Details</h2>
+                    <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
+                </div>
+
+                <div style="padding:2rem;">
+                    <h3 style="color:var(--dark-green); margin-bottom:1rem;">${eventTitle}</h3>
+                    
+                    <p><strong>Date:</strong> ${monthNames[currentMonth]} ${day}, ${currentYear}</p>
+                    <p><strong>Time:</strong> ${details.time}</p>
+                    <p><strong>Type:</strong> ${details.type}</p>
+                    <p><strong>Audience:</strong> ${details.audience}</p>
+                    
+                    <div style="margin-top:1.2rem; padding:1rem; background:#f8f9fa; border-radius:10px;">
+                        <strong>Notes:</strong><br>
+                        ${details.notes}
+                    </div>
+                </div>
+
+                <div style="padding:1.5rem; text-align:center; border-top:1px solid #ddd;">
+                    <button class="btn btn-blue" onclick="closeCurrentModal()">Close</button>
+                </div>
             </div>
         </div>
     `;
     document.body.insertAdjacentHTML('beforeend', html);
 }
+
+function openAddEventModal() {
+    const html = `
+        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
+            <div style="background:white;width:90%;max-width:600px;border-radius:16px;overflow:auto;">
+                
+                <!-- Header -->
+                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                    <h2>+ Add New Event</h2>
+                    <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
+                </div>
+
+                <div style="padding:2rem;">
+                    <div class="card">
+                        <div style="margin-bottom:1.2rem;">
+                            <label><strong>Event Title</strong></label><br>
+                            <input type="text" id="eventTitle" placeholder="e.g. Parent-Teacher Meeting" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                        </div>
+
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1.2rem; margin-bottom:1.2rem;">
+                            <div>
+                                <label><strong>Date</strong></label><br>
+                                <input type="date" id="eventDate" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                            </div>
+                            <div>
+                                <label><strong>Time</strong></label><br>
+                                <input type="time" id="eventTime" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom:1.2rem;">
+                            <label><strong>Event Type</strong></label><br>
+                            <select id="eventType" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                                <option>General Announcement</option>
+                                <option>Parent Meeting</option>
+                                <option>Health Activity</option>
+                                <option>Celebration / Special Event</option>
+                                <option>Holiday</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom:1.2rem;">
+                            <label><strong>Target Audience</strong></label><br>
+                            <select id="eventAudience" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;">
+                                <option>All Parents & Teachers</option>
+                                <option>Teachers Only</option>
+                                <option>Specific Class / Section</option>
+                                <option>Parents Only</option>
+                            </select>
+                        </div>
+
+                        <div style="margin-bottom:1.2rem;">
+                            <label><strong>Description / Notes</strong></label><br>
+                            <textarea id="eventNotes" rows="4" placeholder="Additional details about the event..." style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd;"></textarea>
+                        </div>
+
+                        <div>
+                            <label>
+                                <input type="checkbox" id="notifyParents" checked> 
+                                Send notification to parents
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="padding:1.5rem; text-align:center; border-top:1px solid #ddd;">
+                    <button class="btn" onclick="saveEvent()">💾 Save Event</button>
+                    <button class="btn btn-blue" onclick="closeCurrentModal()" style="margin-left:15px;">Cancel</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function saveEvent() {
+    const title = document.getElementById('eventTitle').value;
+    if (!title) {
+        alert("Please enter an event title.");
+        return;
+    }
+    alert("✅ Event saved successfully!\n\nThe event will now appear highlighted on the calendar.");
+    closeCurrentModal();
+}
+
 function showParentProgressModal() {
     const html = `
         <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
