@@ -20,12 +20,6 @@ const pages = {
             <p style="margin-top:10px;"><strong>Excellent attendance today!</strong></p>
         </div>
 
-        <!-- AI Insight -->
-        <div class="card">
-            <h3>🤖 AI Daily Insight</h3>
-            <p><strong>3 children</strong> are showing strong progress in Cognitive development this week.</p>
-            <button class="btn" onclick="showAIModal()">View Personalized Recommendations</button>
-        </div>
 
         <!-- Feeding Program -->
         <div class="card">
@@ -125,6 +119,8 @@ health: `
 
     <!-- Children of selected section -->
     <div id="health-section-container" style="margin-top:1.5rem;"></div>
+
+ 
 
     <div class="card">
         <h3>Recent Health Summary</h3>
@@ -1169,37 +1165,49 @@ function showHealthSection(section) {
     const container = document.getElementById('health-section-container');
     container.innerHTML = '';
 
-    let html = '';
+    const sectionNames = {
+        explorers: "Little Explorers (2–3 years)",
+        stars: "Little Stars (3–4 years)",
+        sunshine: "Sunshine Group (4–5 years)"
+    };
+
+    let childButtons = '';
 
     if (section === 'explorers') {
-        html = `
-            <div class="card">
-                <h3>Little Explorers (2–3 years)</h3>
-                <button class="btn" onclick="openHealthProfile(1)">Amina Khalid (2y 8m)</button>
-                <button class="btn" onclick="openHealthProfile(3)">Laila Yusuf (2y 5m)</button>
-            </div>
+        childButtons = `
+            <button class="btn" onclick="openHealthProfile(1)">Amina Khalid (2y 8m)</button>
+            <button class="btn" onclick="openHealthProfile(3)">Laila Yusuf (2y 5m)</button>
         `;
     } 
     else if (section === 'stars') {
-        html = `
-            <div class="card">
-                <h3>Little Stars (3–4 years)</h3>
-                <button class="btn" onclick="openHealthProfile(4)">Sara Ali (3y 7m)</button>
-                <button class="btn" onclick="openHealthProfile(5)">Hassan Noor (3y 10m)</button>
-            </div>
+        childButtons = `
+            <button class="btn" onclick="openHealthProfile(4)">Sara Ali (3y 7m)</button>
+            <button class="btn" onclick="openHealthProfile(5)">Hassan Noor (3y 10m)</button>
         `;
     } 
     else if (section === 'sunshine') {
-        html = `
-            <div class="card">
-                <h3>Sunshine Group (4–5 years)</h3>
-                <button class="btn" onclick="openHealthProfile(2)">Omar Ahmed (4y 2m)</button>
-                <button class="btn" onclick="openHealthProfile(6)">Yusuf Hassan (4y 6m)</button>
-            </div>
+        childButtons = `
+            <button class="btn" onclick="openHealthProfile(2)">Omar Ahmed (4y 2m)</button>
+            <button class="btn" onclick="openHealthProfile(6)">Yusuf Hassan (4y 6m)</button>
         `;
     }
 
-    container.innerHTML = html;
+    container.innerHTML = `
+        <div class="card">
+            <h3>${sectionNames[section]}</h3>
+
+            <!-- Health Records -->
+            <h4 style="margin-top:1.5rem; color:#2196F3;">❤️ Health Records</h4>
+            <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:0.8rem;">
+                ${childButtons}
+            </div>
+
+        </div>
+
+        <div id="nutrition-section-container" style="margin-top:1.5rem;"></div>
+    `;
+
+    showNutritionSection(section);
 }
 
 function openHealthProfile(id) {
@@ -1332,6 +1340,142 @@ function openHealthProfile(id) {
                     <button class="btn" onclick="closeCurrentModal()">Close</button>
                     <button class="btn btn-blue" style="margin-left:15px;">Update Records</button>
                     </div>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+function showNutritionSection(section) {
+    const container = document.getElementById('nutrition-section-container');
+    
+    const sectionNames = {
+        explorers: "Little Explorers (2–3 yrs)",
+        stars: "Little Stars (3–4 yrs)",
+        sunshine: "Sunshine Group (4–5 yrs)"
+    };
+
+    const children = {
+        explorers: [
+            { name: "Amina Khalid", participated: true, contribution: "₱50" },
+            { name: "Laila Yusuf", participated: true, contribution: "Rice (2 kg)" },
+            { name: "Rayan Malik", participated: false, contribution: "" }
+        ],
+        stars: [
+            { name: "Sara Ali", participated: true, contribution: "₱100" },
+            { name: "Hassan Noor", participated: true, contribution: "" }
+        ],
+        sunshine: [
+            { name: "Omar Ahmed", participated: true, contribution: "Vegetables" },
+            { name: "Yusuf Hassan", participated: true, contribution: "₱50" },
+            { name: "Zainab Faris", participated: false, contribution: "" }
+        ]
+    };
+
+    const list = children[section] || [];
+    let rows = '';
+
+    list.forEach((child, index) => {
+        rows += `
+            <tr>
+                <td style="padding:10px;">${index + 1}</td>
+                <td>${child.name}</td>
+                <td style="text-align:center;">
+                    <input type="checkbox" ${child.participated ? 'checked' : ''}>
+                </td>
+                <td>
+                    <input type="text" value="${child.contribution}" placeholder="Money or item..." style="width:100%; padding:6px;">
+                </td>
+            </tr>
+        `;
+    });
+
+    container.innerHTML = `
+        <div class="card">
+            <h3>${sectionNames[section]} – Today’s Feeding Program</h3>
+            <table style="width:100%; border-collapse:collapse; margin-top:1rem;">
+                <thead>
+                    <tr style="background:#f0f0f0;">
+                        <th style="padding:10px; text-align:left;">#</th>
+                        <th style="padding:10px; text-align:left;">Child Name</th>
+                        <th style="padding:10px; text-align:center;">Participated</th>
+                        <th style="padding:10px; text-align:left;">Contribution (Money / Item)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${rows}
+                </tbody>
+            </table>
+            <div style="margin-top:1.5rem; text-align:center;">
+                <button class="btn" onclick="alert('Feeding program record saved!\\nDashboard Feeding Status will be updated.')">
+                    💾 Save Feeding Record
+                </button>
+                <button class="btn btn-blue" style="margin-left:10px;" onclick="openFeedingHistory('${section}')">
+                    View Feeding History
+                </button>
+            </div>
+            </div>
+        </div>
+    `;
+}
+function openFeedingHistory() {
+    const html = `
+        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
+            <div style="background:white;width:95%;max-width:1000px;border-radius:16px;max-height:94vh;overflow:auto;">
+                
+                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                    <h2>Feeding Program History</h2>
+                    <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
+                </div>
+
+                <div style="padding:2rem;">
+                    <div class="card">
+                        <table style="width:100%; border-collapse:collapse;">
+                            <thead>
+                                <tr style="background:#f0f0f0;">
+                                    <th style="padding:12px; text-align:left;">Date</th>
+                                    <th style="padding:12px; text-align:left;">Section</th>
+                                    <th style="padding:12px; text-align:center;">Participants</th>
+                                    <th style="padding:12px; text-align:left;">Sample Contributions</th>
+                                    <th style="padding:12px; text-align:center;">Total Children</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td style="padding:10px;">July 28, 2026</td>
+                                    <td>Sunshine Group</td>
+                                    <td style="text-align:center;">16 / 18</td>
+                                    <td>₱50, Vegetables, Rice</td>
+                                    <td style="text-align:center;">18</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px;">July 27, 2026</td>
+                                    <td>Little Explorers</td>
+                                    <td style="text-align:center;">11 / 12</td>
+                                    <td>₱100, Fruits</td>
+                                    <td style="text-align:center;">12</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px;">July 26, 2026</td>
+                                    <td>Little Stars</td>
+                                    <td style="text-align:center;">14 / 15</td>
+                                    <td>Rice (3 kg), ₱50</td>
+                                    <td style="text-align:center;">15</td>
+                                </tr>
+                                <tr>
+                                    <td style="padding:10px;">July 25, 2026</td>
+                                    <td>Sunshine Group</td>
+                                    <td style="text-align:center;">17 / 18</td>
+                                    <td>Vegetables, ₱50</td>
+                                    <td style="text-align:center;">18</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div style="padding:1.5rem; text-align:center; border-top:1px solid #ddd;">
+                    <button class="btn btn-blue" onclick="closeCurrentModal()">Close</button>
                 </div>
             </div>
         </div>
