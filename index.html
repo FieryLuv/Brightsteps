@@ -27,22 +27,50 @@
 </head>
 <body>
     <div id="login-page">
-        <div style="max-width: 420px; margin: 80px auto; background: white; padding: 3rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center;">
-            <h1 style="color: var(--dark-green);">🌱 BrightSteps</h1>
-            <p style="color: #555; margin: 1.5rem 0;">National Child Development Center - Medina</p>
+    <div style="max-width: 420px; margin: 80px auto; background: white; padding: 3rem; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center;">
+        <h1 style="color: #2196F3;">🌱 BrightSteps</h1>
+        <p style="color: #555; margin: 1.5rem 0;">National Child Development Center - Medina</p>
+        
+        <h2 style="margin: 2rem 0 1rem;">Login as</h2>
+        
+        <!-- Teacher Login Form -->
+        <div id="teacher-form" style="display:none; text-align:left;">
+            <label>Teacher Name</label>
+            <input type="text" id="teacherName" placeholder="Enter Name" style="width:100%; padding:10px; margin:8px 0 16px; border-radius:8px; border:1px solid #ddd;">
             
-            <h2 style="margin: 2rem 0 1rem;">Login as</h2>
+            <label>Teacher ID</label>
+            <input type="text" id="teacherID" placeholder="Enter ID" style="width:100%; padding:10px; margin:8px 0 16px; border-radius:8px; border:1px solid #ddd;">
             
-            <button onclick="loginAs('teacher')" class="btn" style="width: 100%; margin-bottom: 15px; padding: 14px;">
+            <button onclick="loginAsTeacher()" class="btn" style="width:100%; padding:12px;">Login as Teacher</button>
+            <button onclick="showRoleSelect()" style="margin-top:12px; background:none; border:none; color:#2196F3; cursor:pointer;">← Back</button>
+        </div>
+
+        <!-- Parent Login Form -->
+        <div id="parent-form" style="display:none; text-align:left;">
+            <label>Parent Name / Mobile Number</label>
+            <input type="text" id="parentName" placeholder="Enter Name/Number" style="width:100%; padding:10px; margin:8px 0 16px; border-radius:8px; border:1px solid #ddd;">
+            
+            <label>Child ID</label>
+            <input type="text" id="childID" placeholder="Enter ID" style="width:100%; padding:10px; margin:8px 0 16px; border-radius:8px; border:1px solid #ddd;">
+            
+            <button onclick="loginAsParent()" class="btn" style="width:100%; padding:12px;">Login as Parent</button>
+            <button onclick="showRoleSelect()" style="margin-top:12px; background:none; border:none; color:#2196F3; cursor:pointer;">← Back</button>
+        </div>
+
+        <!-- Role Selection -->
+        <div id="role-select">
+            <button onclick="showTeacherForm()" class="btn" style="width:100%; margin-bottom:15px; padding:14px;">
                 👩‍🏫 Teacher / Faculty
             </button>
-            
-            <button onclick="loginAs('parent')" class="btn btn-blue" style="width: 100%; padding: 14px;">
+            <button onclick="showParentForm()" class="btn" style="width:100%; padding:14px; background:#1565C0;">
                 👨‍👩‍👧 Parent
             </button>
         </div>
     </div>
-
+</div>
+    <!-- <button onclick="loginAs('admin')" class="btn" style="width: 100%; margin-bottom: 15px; padding: 14px;">
+    🛠️ Admin
+    </button> -->
     <div id="main-app" style="display: none;">
         <!-- Header and Sidebar will be injected here -->
     </div>

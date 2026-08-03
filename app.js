@@ -15,9 +15,10 @@ const pages = {
             <h3>Today's Attendance</h3>
             <h2 style="color:#4CAF50; font-size:3rem; margin:10px 0;">26 / 28</h2>
             <div style="height:12px; background:#ddd; border-radius:10px; overflow:hidden;">
-                <div style="width:93%; height:100%; background:linear-gradient(to right, #4CAF50, #2196F3);"></div>
+                <div style="width:93%; height:100%; background: #4CAF50;"></div>
             </div>
             <p style="margin-top:10px;"><strong>Excellent attendance today!</strong></p>
+            <button class="btn btn-blue" onclick="showFeedingModal()">Check Class Attendance</button>
         </div>
 
 
@@ -26,7 +27,7 @@ const pages = {
             <h3>🍎 Feeding Program Status</h3>
             <p><strong>Today's Participation:</strong> 27/28 Children</p>
             <p style="color:#4CAF50"><strong>Meal Served:</strong> Vegetable Rice + Fruits</p>
-            <button class="btn btn-blue" onclick="showFeedingModal()">Update Feeding Record</button>
+            <button class="btn btn-blue" onclick="showFeedingModal()">Check feeding Attendance</button>
         </div>
 
         <!-- Children Needing Attention -->
@@ -72,6 +73,38 @@ const pages = {
                 <strong>Omar Ahmed</strong> (4y 2m) - Little Stars<br>
                 <span style="color:#FF9800">Fine Motor: Needs Support</span>
             </div>
+            <div class="card" onclick="openChildProfile(1)" style="cursor:pointer;">
+            <strong>Amina Khalid</strong><br>
+            <span style="color:#666;">2y 8m • Little Explorers</span>
+        </div>
+        <div class="card" onclick="openChildProfile(2)" style="cursor:pointer;">
+            <strong>Omar Ahmed</strong><br>
+            <span style="color:#666;">4y 2m • Sunshine Group</span>
+        </div>
+        <div class="card" onclick="openChildProfile(3)" style="cursor:pointer;">
+            <strong>Laila Yusuf</strong><br>
+            <span style="color:#666;">2y 5m • Little Explorers</span>
+        </div>
+        <div class="card" onclick="openChildProfile(4)" style="cursor:pointer;">
+            <strong>Sara Ali</strong><br>
+            <span style="color:#666;">3y 7m • Little Stars</span>
+        </div>
+        <div class="card" onclick="openChildProfile(5)" style="cursor:pointer;">
+            <strong>Yusuf Hassan</strong><br>
+            <span style="color:#666;">4y 6m • Sunshine Group</span>
+        </div>
+        <div class="card" onclick="openChildProfile(6)" style="cursor:pointer;">
+            <strong>Hassan Noor</strong><br>
+            <span style="color:#666;">3y 10m • Little Stars</span>
+        </div>
+        <div class="card" onclick="openChildProfile(7)" style="cursor:pointer;">
+            <strong>Zainab Faris</strong><br>
+            <span style="color:#666;">4y 1m • Sunshine Group</span>
+        </div>
+        <div class="card" onclick="openChildProfile(8)" style="cursor:pointer;">
+            <strong>Maya Khan</strong><br>
+            <span style="color:#666;">3y 5m • Little Stars</span>
+        </div>
         </div>
     `,
   development: `
@@ -177,31 +210,29 @@ attendance: `
     </div>
 `,
 reports: `
-    <h2 style="color: var(--dark-green);">📊 Reports</h2>
-    <p style="margin-bottom: 2rem; color: #555;">Generate and view various reports for children, class, and center performance.</p>
+    <h2 style="color: #2196F3;">📊 Reports</h2>
+    <p style="margin-bottom: 2rem; color: #555;">Generate and submit official reports.</p>
 
-    <div class="card">
-        <h3>Available Reports</h3>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
-            <div class="card" onclick="generateReportDemo('Student Development')">
-                📄 Student Development Reports
-            </div>
-            <div class="card" onclick="generateReportDemo('AI Progress')">
-                🤖 AI-Generated Progress Reports
-            </div>
-            <div class="card" onclick="generateReportDemo('Attendance')">
-                📅 Attendance Reports
-            </div>
-            <div class="card" onclick="generateReportDemo('Health')">
-                ❤️ Health & Nutrition Reports
-            </div>
+    <div class="dashboard-grid">
+        <!-- Nutrition Report (using supplementary.html) -->
+        <div class="card">
+            <h3>🍎 Nutrition Report</h3>
+            <p>Supplementary Feeding Program – Consolidated Physical & Nutritional Status Report.</p>
+            <button class="btn" onclick="openNutritionReport()">Open / Fill Form</button>
         </div>
-    </div>
 
-    <div class="card">
-        <h3>Recent AI Insights</h3>
-        <p>The AI system has generated <strong>12 new progress insights</strong> this month.</p>
-        <button class="btn" onclick="showAIReportModal()">View Latest AI Reports</button>
+        <!-- Student Profile -->
+        <div class="card">
+            <h3>👦 Student Profile</h3>
+            <p>Complete child profile including sociodemographic data and progress summary.</p>
+            <button class="btn" onclick="generateReport('profile')">Generate Report</button>
+        </div>
+
+        <!-- ECCD Results -->
+        <div class="card">
+            <h3>📈 ECCD Results</h3>
+            <p>Developmental checklist results and domain progress insights.</p>
+            <button class="btn" onclick="openECCDReport()">Open / Fill Form</button>
     </div>
 `,
 calendar: `
@@ -235,7 +266,7 @@ calendar: `
     </div>
 `,
 parent: `
-    <div style="background: linear-gradient(135deg, #E3F2FD, #E8F5E9); padding: 2rem; border-radius: 16px; margin-bottom: 2rem; text-align:center;">
+    <div style="background:  #E8F5E9; padding: 2rem; border-radius: 16px; margin-bottom: 2rem; text-align:center;">
         <h1 style="color: var(--dark-green);">Welcome, Mr. Khalid! 👨‍👧</h1>
         <p style="color:#555;">Parent of <strong>Amina Khalid</strong> • Little Explorers (2y 8m)</p>
     </div>
@@ -244,7 +275,7 @@ parent: `
 
     <div style="text-align:center; margin-bottom:2rem;">
         <!-- Profile Picture -->
-        <div style="width:120px; height:120px; border-radius:50%; background:linear-gradient(135deg,#4CAF50,#2196F3); margin:0 auto 1rem; display:flex; align-items:center; justify-content:center; color:white; font-size:3rem; box-shadow:0 6px 20px rgba(0,0,0,0.15);">
+        <div style="width:120px; height:120px; border-radius:50%; background:#2196F3; margin:0 auto 1rem; display:flex; align-items:center; justify-content:center; color:white; font-size:3rem; box-shadow:0 6px 20px rgba(0,0,0,0.15);">
             👧
         </div>
         <h1 style="color: var(--dark-green); margin:0;">Amina Khalid</h1>
@@ -445,30 +476,218 @@ parent: `
     </div>
 </div>
 
-        <!-- Announcements & Payment -->
-        <div class="card">
-            <h3>📢 Announcements & Payments</h3>
-            <p>Monthly Contribution for July: <strong style="color:#4CAF50;">Paid ✓</strong></p>
-            <p style="margin-top:8px;">New feeding menu starts next week.</p>
-            <button class="btn btn-blue" style="margin-top:12px;">View Payment Ledger</button>
+       <!-- Payment Ledger -->
+<div class="card">
+    <h3 style="color:#2196F3; text-align:center;">💰 Payment Ledger</h3>
+
+    <!-- Current Status -->
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); gap:1.2rem; margin:1.5rem 0;">
+        <div style="text-align:center; background:#f0fdf4; padding:1rem; border-radius:12px;">
+            <div style="font-size:1.5rem; font-weight:bold; color:#4CAF50;">Paid</div>
+            <div>July 2026 Status</div>
+        </div>
+        <div style="text-align:center; background:#f0f9ff; padding:1rem; border-radius:12px;">
+            <div style="font-size:1.5rem; font-weight:bold; color:#2196F3;">₱500</div>
+            <div>Monthly Contribution</div>
+        </div>
+        <div style="text-align:center; background:#fefce8; padding:1rem; border-radius:12px;">
+            <div style="font-size:1.5rem; font-weight:bold; color:#FF9800;">₱0</div>
+            <div>Outstanding Balance</div>
         </div>
     </div>
+
+    <!-- Payment History Table -->
+    <h4 style="margin-bottom:0.8rem;">Payment History</h4>
+    <div style="overflow-x:auto;">
+        <table style="width:100%; border-collapse:collapse; font-size:0.95em;">
+            <thead>
+                <tr style="background:#f0f0f0;">
+                    <th style="padding:12px; text-align:left;">Date</th>
+                    <th style="padding:12px; text-align:left;">Description</th>
+                    <th style="padding:12px; text-align:right;">Amount</th>
+                    <th style="padding:12px; text-align:center;">Status</th>
+                    <th style="padding:12px; text-align:center;">Receipt</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="padding:10px;">July 5, 2026</td>
+                    <td>Monthly Contribution – July</td>
+                    <td style="text-align:right;">₱500</td>
+                    <td style="text-align:center; color:#4CAF50; font-weight:600;">Paid</td>
+                    <td style="text-align:center;"><button class="btn" style="padding:4px 10px; font-size:0.85em;" onclick="alert('Receipt downloaded (Demo)')">View</button></td>
+                </tr>
+                <tr>
+                    <td style="padding:10px;">June 3, 2026</td>
+                    <td>Monthly Contribution – June</td>
+                    <td style="text-align:right;">₱500</td>
+                    <td style="text-align:center; color:#4CAF50; font-weight:600;">Paid</td>
+                    <td style="text-align:center;"><button class="btn" style="padding:4px 10px; font-size:0.85em;" onclick="alert('Receipt downloaded (Demo)')">View</button></td>
+                </tr>
+                <tr>
+                    <td style="padding:10px;">May 7, 2026</td>
+                    <td>Monthly Contribution – May</td>
+                    <td style="text-align:right;">₱500</td>
+                    <td style="text-align:center; color:#4CAF50; font-weight:600;">Paid</td>
+                    <td style="text-align:center;"><button class="btn" style="padding:4px 10px; font-size:0.85em;" onclick="alert('Receipt downloaded (Demo)')">View</button></td>
+                </tr>
+                <tr>
+                    <td style="padding:10px;">April 4, 2026</td>
+                    <td>Admission Fee</td>
+                    <td style="text-align:right;">₱1,000</td>
+                    <td style="text-align:center; color:#4CAF50; font-weight:600;">Paid</td>
+                    <td style="text-align:center;"><button class="btn" style="padding:4px 10px; font-size:0.85em;" onclick="alert('Receipt downloaded (Demo)')">View</button></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top:1.5rem; text-align:center;">
+        <button class="btn" onclick="alert('Payment reminder sent (Demo)')">Send Payment Reminder</button>
+        <button class="btn btn-blue" style="margin-left:10px;" onclick="alert('Full ledger exported (Demo)')">Download Full Ledger</button>
+    </div>
+</div>
+    </div>
 `,
+    'admin-dashboard': `
+        <h1 style="color: var(--dark-green);">Admin Dashboard</h1>
+        <p style="color:#555; margin-bottom:2rem;">National Child Development Center – Medina | Overview</p>
+
+        <div class="dashboard-grid">
+            <div class="card">
+                <h3>Total Children</h3>
+                <h2 style="color:#4CAF50; font-size:2.8rem;">45</h2>
+                <p>Across 3 sections</p>
+            </div>
+            <div class="card">
+                <h3>Teachers / Staff</h3>
+                <h2 style="color:#2196F3; font-size:2.8rem;">8</h2>
+                <p>Active this month</p>
+            </div>
+            <div class="card">
+                <h3>Overall Attendance</h3>
+                <h2 style="color:#4CAF50; font-size:2.8rem;">92%</h2>
+                <p>This month</p>
+            </div>
+            <div class="card">
+                <h3>Feeding Program</h3>
+                <h2 style="color:#FF9800; font-size:2.8rem;">89%</h2>
+                <p>Participation rate</p>
+            </div>
+            <div class="card">
+                <h3>Children Needing Attention</h3>
+                <p>6 children flagged for development support</p>
+                <button class="btn btn-blue">View List</button>
+            </div>
+            <div class="card">
+                <h3>Recent Activity</h3>
+                <ul style="line-height:1.9;">
+                    <li>New enrollment: 2 children</li>
+                    <li>Health screening completed</li>
+                    <li>Parent-Teacher Meeting scheduled</li>
+                </ul>
+            </div>
+        </div>
+    `,
+
+    'admin-children': `
+        <h2 style="color:#2196F3;">All Children</h2>
+        <p>Overview of all enrolled children across sections.</p>
+        <div class="card">
+            <p><strong>Little Explorers:</strong> 12 children</p>
+            <p><strong>Little Stars:</strong> 15 children</p>
+            <p><strong>Sunshine Group:</strong> 18 children</p>
+        </div>
+    `,
+
+    'admin-teachers': `
+        <h2>Teachers / Staff</h2>
+        <div class="card">
+            <p>Teacher Maria – Sunshine Group</p>
+            <p>Teacher Fatima – Little Explorers</p>
+            <p>Teacher Ahmed – Little Stars</p>
+        </div>
+    `,
+
+    'admin-reports': `
+        <h2>Center Reports</h2>
+        <div class="card">
+            <button class="btn">Generate Monthly Report</button>
+            <button class="btn btn-blue" style="margin-left:10px;">AI Insights Summary</button>
+        </div>
+    `,
+
+    'admin-feeding': `
+        <h2>Feeding Program Overview</h2>
+        <div class="card">
+            <p>Overall participation this month: <strong>89%</strong></p>
+            <p>Total contributions recorded: ₱12,450 + in-kind items</p>
+        </div>
+    `,
+
+    'admin-attendance': `
+        <h2>Attendance Overview</h2>
+        <div class="card">
+            <p>Center-wide attendance rate: <strong>92%</strong></p>
+        </div>
+    `,
+
+    'admin-settings': `
+        <h2>System Settings</h2>
+        <div class="card">
+            <p>Manage sections, user accounts, and system preferences (coming soon).</p>
+        </div>
+    `
+
 };
 
 // ====================== LOGIN ======================
-function loginAs(role) {
-    currentUser = role;
-    document.getElementById('login-page').style.display = 'none';
-    document.getElementById('main-app').style.display = 'block';
-    
-    if (role === 'teacher') {
-        loadTeacherLayout();
-    } else {
-        loadParentLayout();
-    }
+function showTeacherForm() {
+    document.getElementById('role-select').style.display = 'none';
+    document.getElementById('teacher-form').style.display = 'block';
+    document.getElementById('parent-form').style.display = 'none';
 }
 
+function showParentForm() {
+    document.getElementById('role-select').style.display = 'none';
+    document.getElementById('parent-form').style.display = 'block';
+    document.getElementById('teacher-form').style.display = 'none';
+}
+
+function showRoleSelect() {
+    document.getElementById('role-select').style.display = 'block';
+    document.getElementById('teacher-form').style.display = 'none';
+    document.getElementById('parent-form').style.display = 'none';
+}
+
+function loginAsTeacher() {
+    const name = document.getElementById('teacherName').value.trim();
+    const id = document.getElementById('teacherID').value.trim();
+
+    if (!name || !id) {
+        alert("Please enter both Teacher Name and Teacher ID.");
+        return;
+    }
+
+    // For demo purposes we accept any non-empty values
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    loadTeacherLayout();
+}
+
+function loginAsParent() {
+    const parent = document.getElementById('parentName').value.trim();
+    const childId = document.getElementById('childID').value.trim();
+
+    if (!parent || !childId) {
+        alert("Please enter Parent Name/Mobile and Child ID.");
+        return;
+    }
+
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    loadParentLayout();
+}
 function loadTeacherLayout() {
     document.getElementById('main-app').innerHTML = `
         <header>
@@ -493,7 +712,7 @@ function loadTeacherLayout() {
 
 function loadParentLayout() {
     document.getElementById('main-app').innerHTML = `
-        <header style="background: linear-gradient(135deg, #4CAF50, #81D4FA);">
+        <header style="background: #2196F3">
             <div class="logo">🌱 BrightSteps</div>
             <div class="user-info">Mr. Khalid • Parent of Amina</div>
         </header>
@@ -504,6 +723,27 @@ function loadParentLayout() {
     document.getElementById('main-content').innerHTML = pages.parent;
     drawParentGrowthChart();
     renderParentCalendar();
+}
+function loadAdminLayout() {
+    document.getElementById('main-app').innerHTML = `
+        <header>
+            <div class="logo">🌱 BrightSteps</div>
+            <div class="user-info">Admin • NCDC Medina</div>
+        </header>
+        <div class="container">
+            <aside class="sidebar">
+                <div class="nav-item active" onclick="navigate('admin-dashboard')">🏠 Admin Dashboard</div>
+                <div class="nav-item" onclick="navigate('admin-children')">👦 All Children</div>
+                <div class="nav-item" onclick="navigate('admin-teachers')">👩‍🏫 Teachers / Staff</div>
+                <div class="nav-item" onclick="navigate('admin-reports')">📊 Center Reports</div>
+                <div class="nav-item" onclick="navigate('admin-feeding')">🍎 Feeding Program Overview</div>
+                <div class="nav-item" onclick="navigate('admin-attendance')">📅 Attendance Overview</div>
+                <div class="nav-item" onclick="navigate('admin-settings')">⚙️ System Settings</div>
+            </aside>
+            <main class="main-content" id="main-content"></main>
+        </div>
+    `;
+    navigateAdmin('admin-dashboard');
 }
 
 function navigate(page) {
@@ -629,8 +869,92 @@ checklistHTML = `
         </thead>
         <tbody>
             <tr>
-                <td>1. Infant lifts head when held standing</td>
-                <td>PROCEDURE: Hold the child in an upright position and carefully remove your hand from the child's neck according to his ability to lift his head and keep it erect. <strong>Credit if the child occasionally lifts his head free of support.</strong> Parental report will suffice.</td>
+                <td>2. Infant tries to lift head when lying on stomach</td>
+                <td>PROCEDURE: Place the child on his stomach on a flat surface. Credit if the child at least momentarily lifts his head so that the chin is off the surface. Parental report will suffice.</strong> Parental report will suffice.</td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox" checked></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="text" placeholder="Comments..." style="width:100%;"></td>
+            </tr>
+            <!-- Add more rows following the same format -->
+        </tbody>
+        <thead>
+            <tr style="background:#1a1a1a; color:white;">
+                <th style="padding:12px; text-align:left;">Gross Motor</th>
+                <th style="padding:12px; text-align:left;">Material/Procedure</th>
+                <th colspan="6" style="text-align:center;">Present</th>
+                <th style="padding:12px; text-align:left;">Comments</th>
+            </tr>
+            <tr style="background:#f0f0f0;">
+                <th></th>
+                <th></th>
+                <th>1st</th><th>2nd</th><th>3rd</th><th>4th</th><th>5th</th><th>6th</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>3. Infant holds head upright on his own when lying on stomach</td>
+                <td>PROCEDURE: Place the child on his stomach on a flat surface. Credit if the child lifts his head and chest up so that his face makes a 90° angle w/ the surface for at least several seconds. Parental report will suffice.</strong> Parental report will suffice.</td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox" checked></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="text" placeholder="Comments..." style="width:100%;"></td>
+            </tr>
+            <!-- Add more rows following the same format -->
+        </tbody>
+        <thead>
+            <tr style="background:#1a1a1a; color:white;">
+                <th style="padding:12px; text-align:left;">Gross Motor</th>
+                <th style="padding:12px; text-align:left;">Material/Procedure</th>
+                <th colspan="6" style="text-align:center;">Present</th>
+                <th style="padding:12px; text-align:left;">Comments</th>
+            </tr>
+            <tr style="background:#f0f0f0;">
+                <th></th>
+                <th></th>
+                <th>1st</th><th>2nd</th><th>3rd</th><th>4th</th><th>5th</th><th>6th</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>4. Infant holds head steadily</td>
+                <td>Parental report will suffice.</strong> Parental report will suffice.</td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox" checked></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="checkbox"></td>
+                <td><input type="text" placeholder="Comments..." style="width:100%;"></td>
+            </tr>
+            <!-- Add more rows following the same format -->
+        </tbody>
+        <thead>
+            <tr style="background:#1a1a1a; color:white;">
+                <th style="padding:12px; text-align:left;">Gross Motor</th>
+                <th style="padding:12px; text-align:left;">Material/Procedure</th>
+                <th colspan="6" style="text-align:center;">Present</th>
+                <th style="padding:12px; text-align:left;">Comments</th>
+            </tr>
+            <tr style="background:#f0f0f0;">
+                <th></th>
+                <th></th>
+                <th>1st</th><th>2nd</th><th>3rd</th><th>4th</th><th>5th</th><th>6th</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>5. Infant rolls over from his back to his stomach with assistance</td>
+                <td>PROCEDURE: Place the child on his back on a flat surface. Encourage him to roll over to his stomach, providing some assistance to do so. Credit if he eventually rolls over. Parental report will suffice.</strong> Parental report will suffice.</td>
                 <td><input type="checkbox"></td>
                 <td><input type="checkbox"></td>
                 <td><input type="checkbox" checked></td>
@@ -699,7 +1023,7 @@ checklistHTML = `
        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
             <div style="background:white;width:95%;max-width:1100px;border-radius:16px;max-height:94vh;overflow:auto;">
                 <!-- Header -->
-                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                <div style="padding:1.5rem;background: #2196F3;color:white;display:flex;justify-content:space-between;align-items:center;">
                     <h2>${child.name} (${child.age})</h2>
                     <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
                 </div>
@@ -832,7 +1156,7 @@ function openChildDevelopment(id) {
             <div style="background:white;width:92%;max-width:920px;border-radius:16px;max-height:94vh;overflow:auto;">
                 
                 <!-- Header -->
-                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                <div style="padding:1.5rem;background: #2196F3;color:white;display:flex;justify-content:space-between;align-items:center;">
                     <h2>${name} - Individual Development Profile</h2>
                     <button onclick="closeCurrentModal()" style="font-size:30px;background:none;border:none;color:white;cursor:pointer;">×</button>
                 </div>
@@ -914,11 +1238,22 @@ function showSectionChildren(section) {
     if (section === 'explorers') {
         html = `
             <div class="card">
-                <h3>Little Explorers (2–3 years) – Checklist Type 1</h3>
-                <button class="btn" onclick="showChildProgress('Amina Khalid', 'amina')">
-                    Amina Khalid (2y 8m)
-                </button>
+            <h3>Little Explorers (2–3 years) – Checklist Type 1</h3>
+            <p style="color:#666; margin-bottom:1rem;">10 children enrolled</p>
+            
+            <div style="display:flex; flex-wrap:wrap; gap:10px;">
+                <button class="btn" onclick="showChildProgress('Amina Khalid', 'amina')">Amina Khalid (2y 8m)</button>
+                <button class="btn" onclick="showChildProgress('Laila Yusuf', 'laila')">Laila Yusuf (2y 5m)</button>
+                <button class="btn" onclick="showChildProgress('Rayan Malik', 'rayan')">Rayan Malik (2y 10m)</button>
+                <button class="btn" onclick="showChildProgress('Hana Ibrahim', 'hana')">Hana Ibrahim (2y 3m)</button>
+                <button class="btn" onclick="showChildProgress('Zayd Omar', 'zayd')">Zayd Omar (2y 7m)</button>
+                <button class="btn" onclick="showChildProgress('Sara Noor', 'sara')">Sara Noor (2y 6m)</button>
+                <button class="btn" onclick="showChildProgress('Yusuf Karim', 'yusuf')">Yusuf Karim (2y 9m)</button>
+                <button class="btn" onclick="showChildProgress('Fatima Saleh', 'fatima')">Fatima Saleh (2y 4m)</button>
+                <button class="btn" onclick="showChildProgress('Adam Rahman', 'adam')">Adam Rahman (2y 11m)</button>
+                <button class="btn" onclick="showChildProgress('Layla Hassan', 'layla')">Layla Hassan (2y 2m)</button>
             </div>
+        </div>
         `;
     } 
     else if (section === 'stars') {
@@ -1175,9 +1510,17 @@ function showHealthSection(section) {
 
     if (section === 'explorers') {
         childButtons = `
-            <button class="btn" onclick="openHealthProfile(1)">Amina Khalid (2y 8m)</button>
-            <button class="btn" onclick="openHealthProfile(3)">Laila Yusuf (2y 5m)</button>
-        `;
+        <button class="btn" onclick="openHealthProfile(1)">Amina Khalid (2y 8m)</button>
+        <button class="btn" onclick="openHealthProfile(3)">Laila Yusuf (2y 5m)</button>
+        <button class="btn" onclick="openHealthProfile(7)">Rayan Malik (2y 10m)</button>
+        <button class="btn" onclick="openHealthProfile(8)">Hana Ibrahim (2y 3m)</button>
+        <button class="btn" onclick="openHealthProfile(9)">Zayd Omar (2y 7m)</button>
+        <button class="btn" onclick="openHealthProfile(10)">Sara Noor (2y 6m)</button>
+        <button class="btn" onclick="openHealthProfile(11)">Yusuf Karim (2y 9m)</button>
+        <button class="btn" onclick="openHealthProfile(12)">Fatima Saleh (2y 4m)</button>
+        <button class="btn" onclick="openHealthProfile(13)">Adam Rahman (2y 11m)</button>
+        <button class="btn" onclick="openHealthProfile(14)">Layla Hassan (2y 2m)</button>
+    `;
     } 
     else if (section === 'stars') {
         childButtons = `
@@ -1221,7 +1564,7 @@ function openHealthProfile(id) {
         <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
             <div style="background:white;width:90%;max-width:900px;border-radius:16px;max-height:92vh;overflow:auto;">
                 <!-- Header -->
-                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                <div style="padding:1.5rem;background: #2196F3;color:white;display:flex;justify-content:space-between;align-items:center;">
                     <h2>${child.name} – Health Record</h2>
                     <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
                 </div>
@@ -1350,7 +1693,7 @@ function showNutritionSection(section) {
     const container = document.getElementById('nutrition-section-container');
     
     const sectionNames = {
-        explorers: "Little Explorers (2–3 yrs)",
+        explorers: "Little Explorers (0–3 yrs)",
         stars: "Little Stars (3–4 yrs)",
         sunshine: "Sunshine Group (4–5 yrs)"
     };
@@ -1359,7 +1702,14 @@ function showNutritionSection(section) {
         explorers: [
             { name: "Amina Khalid", participated: true, contribution: "₱50" },
             { name: "Laila Yusuf", participated: true, contribution: "Rice (2 kg)" },
-            { name: "Rayan Malik", participated: false, contribution: "" }
+            { name: "Rayan Malik", participated: true, contribution: "" },
+            { name: "Hana Ibrahim", participated: false, contribution: "" },
+            { name: "Zayd Omar", participated: true, contribution: "Vegetables" },
+            { name: "Sara Noor", participated: true, contribution: "₱50" },
+            { name: "Yusuf Karim", participated: true, contribution: "" },
+            { name: "Fatima Saleh", participated: false, contribution: "" },
+            { name: "Adam Rahman", participated: true, contribution: "Fruits" },
+            { name: "Layla Hassan", participated: true, contribution: "₱100" }
         ],
         stars: [
             { name: "Sara Ali", participated: true, contribution: "₱100" },
@@ -1560,7 +1910,17 @@ function openAttendanceHistory(section = 'sunshine', monthOffset = 0) {
 
     // Sample children per section
     const childrenData = {
-        explorers: ["Amina Khalid", "Laila Yusuf", "Rayan Malik"],
+        explorers: [
+        "Amina Khalid",
+        "Laila Yusuf",
+        "Rayan Malik",
+        "Hana Ibrahim",
+        "Zayd Omar",
+        "Sara Noor",
+        "Yusuf Karim",
+        "Fatima Saleh",
+        "Adam Rahman",
+        "Layla Hassan"],
         stars: ["Sara Ali", "Hassan Noor", "Maya Khan"],
         sunshine: ["Omar Ahmed", "Yusuf Hassan", "Zainab Faris", "Ibrahim Saleh"]
     };
@@ -1590,7 +1950,7 @@ function openAttendanceHistory(section = 'sunshine', monthOffset = 0) {
             <div style="background:white;width:96%;max-width:1200px;border-radius:16px;max-height:94vh;overflow:auto;">
                 
                 <!-- Header -->
-                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                <div style="padding:1.5rem;background: #2196F3;color:white;display:flex;justify-content:space-between;align-items:center;">
                     <h2>Attendance History</h2>
                     <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
                 </div>
@@ -1658,9 +2018,16 @@ function changeHistorySection(newSection) {
 function openAttendanceSheet(section) {
     const sectionChildren = {
         explorers: [
-            { name: "Amina Khalid", status: "present" },
-            { name: "Laila Yusuf", status: "present" },
-            { name: "Rayan Malik", status: "absent", reason: "Sick" }
+        { name: "Amina Khalid", status: "present" },
+        { name: "Laila Yusuf", status: "present" },
+        { name: "Rayan Malik", status: "present" },
+        { name: "Hana Ibrahim", status: "absent", reason: "Sick" },
+        { name: "Zayd Omar", status: "present" },
+        { name: "Sara Noor", status: "present" },
+        { name: "Yusuf Karim", status: "present" },
+        { name: "Fatima Saleh", status: "absent", reason: "Family matter" },
+        { name: "Adam Rahman", status: "present" },
+        { name: "Layla Hassan", status: "present" }
         ],
         stars: [
             { name: "Sara Ali", status: "present" },
@@ -1705,7 +2072,7 @@ function openAttendanceSheet(section) {
         <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
             <div style="background:white;width:95%;max-width:1100px;border-radius:16px;max-height:94vh;overflow:auto;">
                 
-                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                <div style="padding:1.5rem;background: #2196F3;;color:white;display:flex;justify-content:space-between;align-items:center;">
                     <h2>Attendance Sheet – ${sectionNames[section]}</h2>
                     <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
                 </div>
@@ -1813,7 +2180,7 @@ function renderCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const key = `${currentYear}-${currentMonth + 1}-${day}`;
         const hasEvent = sampleEvents[key];
-        const bg = hasEvent ? "linear-gradient(135deg, #4CAF50, #2196F3)" : "#fff";
+        const bg = hasEvent ? "#4CAF50" : "#fff";
         const color = hasEvent ? "white" : "#333";
         const border = hasEvent ? "none" : "1px solid #ddd";
 
@@ -1893,7 +2260,7 @@ function showDayEvents(day) {
         <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
             <div style="background:white;width:90%;max-width:520px;border-radius:16px;overflow:hidden;">
                 
-                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                <div style="padding:1.5rem;background: #4CAF50;color:white;display:flex;justify-content:space-between;align-items:center;">
                     <h2>📅 Event Details</h2>
                     <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
                 </div>
@@ -1927,7 +2294,7 @@ function openAddEventModal() {
             <div style="background:white;width:90%;max-width:600px;border-radius:16px;overflow:auto;">
                 
                 <!-- Header -->
-                <div style="padding:1.5rem;background:linear-gradient(to right,#4CAF50,#2196F3);color:white;display:flex;justify-content:space-between;align-items:center;">
+                <div style="padding:1.5rem;background: #2196F3;color:white;display:flex;justify-content:space-between;align-items:center;">
                     <h2>+ Add New Event</h2>
                     <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
                 </div>
@@ -2125,7 +2492,7 @@ function renderParentCalendar() {
     for (let day = 1; day <= daysInMonth; day++) {
         const key = `${parentYear}-${parentMonth + 1}-${day}`;
         const hasEvent = sampleEvents[key];
-        const bg = hasEvent ? "linear-gradient(135deg, #4CAF50, #2196F3)" : "#fff";
+        const bg = hasEvent ? "#4CAF50" : "#fff";
         const color = hasEvent ? "white" : "#333";
         const border = hasEvent ? "none" : "1px solid #ddd";
 
@@ -2160,6 +2527,142 @@ function closeCurrentModal() {
         if (modal) modal.remove();
     });
 }
-function generateAIReport() { /* same */ }
+function openNutritionReport() {
+    const html = `
+        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
+            <div style="background:white;width:96%;max-width:1100px;height:92vh;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;">
+                
+                <!-- Header -->
+                <div style="padding:1.2rem 1.5rem;background:#2196F3;color:white;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+                    <div>
+                        <h2 style="margin:0; font-size:1.4rem;">🍎 Nutrition Report</h2>
+                        <small>Supplementary Feeding Program – Consolidated Report (AI Pre-filled)</small>
+                    </div>
+                    <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
+                </div>
 
+                <!-- AI Notice -->
+                <div style="padding:10px 1.5rem; background:#E3F2FD; font-size:0.95em; flex-shrink:0;">
+                    <strong>🤖 AI Insight:</strong> Data has been pre-filled based on current health and feeding records.  
+                    Please review and edit before saving or submitting.
+                </div>
+
+                <!-- Actual Form (iframe) -->
+                <div style="flex:1; overflow:hidden;">
+                    <iframe 
+                        src="supplementary.html" 
+                        style="width:100%; height:100%; border:none;"
+                        title="Nutrition Report Form">
+                    </iframe>
+                </div>
+
+                <!-- Action Buttons -->
+<div style="padding:1.2rem 1.5rem; text-align:center; border-top:1px solid #ddd; background:#fafafa; flex-shrink:0;">
+    
+    <!-- Save as Dropdown -->
+    <div style="display:inline-block; position:relative;">
+        <button class="btn" onclick="toggleSaveDropdown()">
+            💾 Save as ▾
+        </button>
+        <div id="saveDropdown" style="display:none; position:absolute; bottom:45px; left:0; background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,0.12); min-width:180px; z-index:20; text-align:left;">
+            <div onclick="saveReport('draft')" style="padding:12px 16px; cursor:pointer; border-bottom:1px solid #eee;">📝 Save as Draft</div>
+            <div onclick="saveReport('pdf')" style="padding:12px 16px; cursor:pointer; border-bottom:1px solid #eee;">⬇️ Save as PDF</div>
+            <div onclick="saveReport('docx')" style="padding:12px 16px; cursor:pointer;">📄 Save as DOCX</div>
+        </div>
+    </div>
+
+    <button class="btn btn-blue" style="margin-left:12px;" onclick="alert('Report submitted via email (Demo)')">
+        ✉️ Submit (Send via Email)
+    </button>
+    
+    <button class="btn" style="margin-left:12px; background:#757575;" onclick="closeCurrentModal()">
+        Close
+    </button>
+</div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+function toggleSaveDropdown() {
+    const dropdown = document.getElementById('saveDropdown');
+    dropdown.style.display = dropdown.style.display === 'none' ? 'block' : 'none';
+}
+
+function saveReport(type) {
+    document.getElementById('saveDropdown').style.display = 'none';
+    
+    if (type === 'draft') {
+        alert('✅ Report saved as Draft');
+    } else if (type === 'pdf') {
+        alert('⬇️ Report exported as PDF (Demo)');
+    } else if (type === 'docx') {
+        alert('📄 Report exported as DOCX (Demo)');
+    }
+}
+
+// Optional: close dropdown when clicking outside
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('saveDropdown');
+    if (dropdown && !e.target.closest('button') && !e.target.closest('#saveDropdown')) {
+        dropdown.style.display = 'none';
+    }
+});
+function openECCDReport() {
+    const html = `
+        <div style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;">
+            <div style="background:white;width:96%;max-width:1100px;height:92vh;border-radius:16px;display:flex;flex-direction:column;overflow:hidden;">
+                
+                <!-- Header -->
+                <div style="padding:1.2rem 1.5rem;background:#2196F3;color:white;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
+                    <div>
+                        <h2 style="margin:0; font-size:1.4rem;">📈 ECCD Results Report</h2>
+                        <small>Developmental Checklist Results (AI Pre-filled)</small>
+                    </div>
+                    <button onclick="closeCurrentModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;">×</button>
+                </div>
+
+                <!-- AI Notice -->
+                <div style="padding:10px 1.5rem; background:#E3F2FD; font-size:0.95em; flex-shrink:0;">
+                    <strong>🤖 AI Insight:</strong> Results have been pre-filled based on the latest ECCD checklist entries.  
+                    Please review and edit before saving or submitting.
+                </div>
+
+                <!-- Actual Form -->
+                <div style="flex:1; overflow:hidden;">
+                    <iframe 
+                        src="score.html" 
+                        style="width:100%; height:100%; border:none;"
+                        title="ECCD Results Form">
+                    </iframe>
+                </div>
+
+                <!-- Action Buttons -->
+                <div style="padding:1.2rem 1.5rem; text-align:center; border-top:1px solid #ddd; background:#fafafa; flex-shrink:0;">
+                    
+                    <!-- Save as Dropdown -->
+                    <div style="display:inline-block; position:relative;">
+                        <button class="btn" onclick="toggleSaveDropdown()">
+                            💾 Save as ▾
+                        </button>
+                        <div id="saveDropdown" style="display:none; position:absolute; bottom:45px; left:0; background:white; border:1px solid #ddd; border-radius:8px; box-shadow:0 6px 20px rgba(0,0,0,0.12); min-width:180px; z-index:20; text-align:left;">
+                            <div onclick="saveReport('draft')" style="padding:12px 16px; cursor:pointer; border-bottom:1px solid #eee;">📝 Save as Draft</div>
+                            <div onclick="saveReport('pdf')" style="padding:12px 16px; cursor:pointer; border-bottom:1px solid #eee;">⬇️ Save as PDF</div>
+                            <div onclick="saveReport('docx')" style="padding:12px 16px; cursor:pointer;">📄 Save as DOCX</div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-blue" style="margin-left:12px;" onclick="alert('Report submitted via email (Demo)')">
+                        ✉️ Submit (Send via Email)
+                    </button>
+                    
+                    <button class="btn" style="margin-left:12px; background:#757575;" onclick="closeCurrentModal()">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
 window.onload = () => navigate('dashboard');

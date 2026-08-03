@@ -1,13 +1,19 @@
 :root {
-    --green: #4CAF50;
-    --dark-green: #2E7D32;
-    --blue: #2196F3;
+    --primary: #2196F3;          /* Main Blue */
+    --primary-dark: #1565C0;     /* Darker Blue */
+    --primary-light: #E3F2FD;    /* Very light blue */
+    --success: #4CAF50;          /* Only for positive status */
+    --text: #333333;
+    --muted: #666666;
+    --border: #e0e0e0;
+    --white: #ffffff;
 }
 
 body {
     font-family: 'Segoe UI', sans-serif;
     margin: 0;
-    background: linear-gradient(135deg, #E8F5E9, #E3F2FD);
+    background: #f5f9fc;
+    color: var(--text);
     height: 100vh;
    
     overflow-y: auto;
@@ -16,7 +22,7 @@ body {
 }
 
 header {
-    background: linear-gradient(135deg, var(--green), var(--blue));
+    background: var(--primary);
     color: white;
     padding: 1rem 2rem;
     display: flex;
@@ -52,9 +58,10 @@ nav a:hover { background: rgba(255,255,255,0.2); }
     cursor: pointer;
 }
 
-.nav-item:hover, .nav-item.active {
-    background: #E8F5E9;
-    color: var(--dark-green);
+.nav-item:hover,
+.nav-item.active {
+    background: var(--primary-light);
+    color: var(--primary-dark);
     font-weight: 600;
 }
 
@@ -65,21 +72,35 @@ nav a:hover { background: rgba(255,255,255,0.2); }
 }
 
 .card {
-    background: white;
-    border-radius: 16px;
-    padding: 1.8rem;
+    background: var(--white);
+    border-radius: 12px;
+    padding: 1.5rem;
     margin-bottom: 1.5rem;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-    border-left: 6px solid var(--green);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+    border-left: 5px solid var(--primary);
 }
 
 .btn {
-    background: var(--green);
+    background: var(--primary);
     color: white;
     border: none;
-    padding: 12px 24px;
-    border-radius: 30px;
+    padding: 10px 20px;
+    border-radius: 25px;
     cursor: pointer;
+    font-weight: 600;
+    transition: 0.2s;
 }
 
-.btn:hover { background: var(--dark-green); }
+
+
+.btn:hover {
+    background: var(--primary-dark);
+} 
+.btn-blue {
+    background: var(--primary-dark);
+}
+
+/* Keep green only for positive indicators */
+.success-text {
+    color: var(--success);
+}
