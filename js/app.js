@@ -1,16 +1,15 @@
 /**
  * BrightSteps — Core Application
  * Router, role state, and shared utilities.
- * Keeps teacher / parent / admin cleanly separated.
+ * Keeps teacher / parent / visitor cleanly separated.
  */
 
 const BrightSteps = (() => {
-  let currentRole = null; // 'teacher' | 'parent' | 'admin'
+  let currentRole = null; // 'teacher' | 'parent' | 'visitor'
   let currentUser = null;
 
   const users = {
-    teacher: { name: 'Teacher Irish', role: 'teacher', center: 'NCDC Medina' },
-    admin: { name: 'Admin', role: 'admin', center: 'NCDC Medina' }
+    teacher: { name: 'Teacher Irish', role: 'teacher', center: 'NCDC Medina' }
   };
 
   function init() {
@@ -27,7 +26,8 @@ const BrightSteps = (() => {
           <div class="role-buttons">
             <button class="role-btn teacher" onclick="BrightSteps.login('teacher')">👩‍🏫  Login as Teacher</button>
             <button class="role-btn parent"  onclick="BrightSteps.showParentLogin()">👨‍👧  Login as Parent / Guardian</button>
-            <button class="role-btn"         onclick="BrightSteps.login('admin')">⚙️  Login as Admin</button>
+            <button class="role-btn" style="background:#fff3e0;border:2px solid #ffb74d;"
+              onclick="BrightSteps.login('visitor')">👋  Visitor — Apply for Enrollment</button>
           </div>
         </div>
       </div>
@@ -181,14 +181,37 @@ const BrightSteps = (() => {
       showParentLogin();
       return;
     }
+    if (role === 'visitor') {
+      currentRole = 'visitor';
+      currentUser = { name: 'Visitor', role: 'visitor', center: 'NCDC Medina' };
+      showVisitorShell();
+      return;
+    }
     currentRole = role;
     currentUser = users[role];
     if (role === 'teacher') {
       TeacherLayout.render(currentUser);
       navigate('dashboard');
-    } else if (role === 'admin') {
-      TeacherLayout.render(currentUser);
-      navigate('dashboard');
+    }
+  }
+
+  function showVisitorShell() {
+    const app = document.getElementById('app');
+    app.innerHTML = `
+      <header class="parent-header">
+        <div class="logo">🌱 BrightSteps</div>
+        <div class="user-info">
+          Visitor · Enrollment
+          <button class="btn" style="margin-left:1rem; padding:0.3rem 0.7rem; font-size:0.8rem;" onclick="BrightSteps.logout()">Exit</button>
+        </div>
+      </header>
+      <div style="padding:1.75rem 2rem; overflow-y:auto; height:calc(100vh - var(--header-height));" id="main-content"></div>
+    `;
+    if (typeof VisitorEnrollment !== 'undefined') {
+      VisitorEnrollment.render(document.getElementById('main-content'));
+    } else {
+      document.getElementById('main-content').innerHTML =
+        '<div class="card"><p>Enrollment form failed to load. Hard-refresh the page.</p></div>';
     }
   }
 
@@ -215,7 +238,8 @@ const BrightSteps = (() => {
       health: () => TeacherHealth.render(main),
       attendance: () => TeacherAttendance.render(main),
       reports: () => TeacherReports.render(main),
-      calendar: () => TeacherCalendar.render(main)
+      calendar: () => TeacherCalendar.render(main),
+      applications: () => TeacherApplications.render(main)
     };
 
     if (routes[page]) {

@@ -197,11 +197,23 @@ const TeacherDevelopment = {
 
     const recordKey = child.recordType === 1 ? 'record1' : 'record2';
     const record = this.catalog.records[recordKey];
-    // Record 1: up to 6 periods; Record 2: up to 3 evaluations (matches paper forms)
+    // Record 1: 1st–6th columns; Record 2: 1st–3rd (matches paper forms — no separate period dropdown)
     this._periods = child.recordType === 1
       ? ['1st', '2nd', '3rd', '4th', '5th', '6th']
       : ['1st', '2nd', '3rd'];
-    this._scorePeriod = this._periods[0];
+
+    // Restore checklist marks from any saved assessments for this child
+    this._responses = {};
+    if (typeof AssessmentStore !== 'undefined') {
+      const history = AssessmentStore.listForChild(child.id);
+      history.forEach(a => {
+        if (a.responses && typeof a.responses === 'object') {
+          Object.keys(a.responses).forEach(k => {
+            this._responses[k] = a.responses[k];
+          });
+        }
+      });
+    }
 
     const jumpLinks = this.catalog.domains.map(d =>
       `<a href="#domain-${d.code}" class="eccd-jump">${d.name}</a>`
@@ -211,9 +223,9 @@ const TeacherDevelopment = {
       this._domainBlock(record, d, child)
     ).join('');
 
-    const periodOptions = this._periods.map(p =>
-      `<option value="${p}">${p} evaluation</option>`
-    ).join('');
+    const periodHint = child.recordType === 1
+      ? '1st through 6th evaluation columns'
+      : '1st through 3rd evaluation columns';
 
     const html = `
       <div id="dev-modal-overlay" class="bs-overlay">
@@ -230,25 +242,20 @@ const TeacherDevelopment = {
 
           <div class="eccd-toolbar">
             <div class="eccd-jump-nav">${jumpLinks}</div>
-            <div class="eccd-score-period">
-              <label for="eccd-score-period">Score using:</label>
-              <select id="eccd-score-period" onchange="TeacherDevelopment._scorePeriod=this.value">
-                ${periodOptions}
-              </select>
-            </div>
           </div>
 
           <div id="dev-modal-body" class="bs-modal-body eccd-form-scroll">
             <p class="eccd-form-note">
-              Mark a period column when the skill is <strong>Present</strong>.
-              Use Comments for observations. Domains are listed top-to-bottom as in the paper checklist.
+              Mark the <strong>Present</strong> checkbox under the evaluation column (${periodHint}) when the skill is observed.
+              Each column is one evaluation — same as the paper form. Previously saved marks are restored when you reopen.
+              Use Comments for observations. Domains are listed top-to-bottom as on the official checklist.
             </p>
             ${allDomainsHtml}
           </div>
 
           <div class="bs-modal-footer">
             <button class="btn" onclick="TeacherDevelopment.closeAssessment()">Cancel</button>
-            <button class="btn btn-blue" onclick="TeacherDevelopment.saveAssessment()">💾 Save Assessment</button>
+            <button class="btn btn-blue" onclick="TeacherDevelopment.saveAssessment()">💾 Save checklist</button>
           </div>
         </div>
       </div>
@@ -343,15 +350,12 @@ const TeacherDevelopment = {
     this._responses[key] = input.value;
   },
 
-  async saveAssessment() {
-    const child = this._assessChild;
-    if (!child || !this.catalog) return;
-
-    const recordKey = child.recordType === 1 ? 'record1' : 'record2';
-    const record = this.catalog.records[recordKey];
-    const period = this._scorePeriod || this._periods[0];
+  /**
+   * Build domain scores for one evaluation column from checklist responses.
+   */
+  _scoresForPeriod(child, record, period) {
     const domainScores = {};
-
+    let anyPresent = 0;
     this.catalog.domains.forEach(d => {
       const items = record.domains[d.code] || [];
       let present = 0;
@@ -359,41 +363,91 @@ const TeacherDevelopment = {
         const key = `${child.id}:${it.item_id}:${period}`;
         if (this._responses[key]) present++;
       });
+      anyPresent += present;
       const total = items.length || 1;
-      const pct = Math.round((present / total) * 100);
       domainScores[d.code] = {
         name: d.name,
         present,
         total: items.length,
-        percent: pct,
+        percent: Math.round((present / total) * 100),
         period
       };
     });
+    return { domainScores, anyPresent };
+  },
 
-    let insight = null;
-    if (typeof ProgressEngine !== 'undefined' && ProgressEngine.analyze) {
-      insight = await ProgressEngine.analyze({
-        childId: child.id,
-        recordType: child.recordType,
-        ageMonths: child.ageMonths,
-        period,
-        domainScores
+  /**
+   * Snapshot of checkbox/comment keys for one period (plus shared comments).
+   */
+  _responsesSnapshotForPeriod(child, record, period) {
+    const snap = {};
+    this.catalog.domains.forEach(d => {
+      const items = record.domains[d.code] || [];
+      items.forEach(it => {
+        const k = `${child.id}:${it.item_id}:${period}`;
+        if (this._responses[k]) snap[k] = true;
+        const ck = `${child.id}:${it.item_id}:comment`;
+        if (this._responses[ck] != null && this._responses[ck] !== '') {
+          snap[ck] = this._responses[ck];
+        }
       });
+    });
+    return snap;
+  },
+
+  async saveAssessment() {
+    const child = this._assessChild;
+    if (!child || !this.catalog) return;
+
+    const recordKey = child.recordType === 1 ? 'record1' : 'record2';
+    const record = this.catalog.records[recordKey];
+    const periods = this._periods || ['1st'];
+
+    // Sync any checkbox state from DOM (safety) before scoring
+    document.querySelectorAll('#dev-modal-overlay input[type="checkbox"][data-key]').forEach(cb => {
+      this._responses[cb.getAttribute('data-key')] = cb.checked;
+    });
+    document.querySelectorAll('#dev-modal-overlay input.eccd-comment-input[data-key]').forEach(inp => {
+      this._responses[inp.getAttribute('data-key')] = inp.value;
+    });
+
+    let savedPeriods = [];
+    let lastInsight = null;
+
+    for (const period of periods) {
+      const { domainScores, anyPresent } = this._scoresForPeriod(child, record, period);
+      if (anyPresent === 0) continue; // only persist columns that have marks
+
+      let insight = null;
+      if (typeof ProgressEngine !== 'undefined' && ProgressEngine.analyze) {
+        insight = await ProgressEngine.analyze({
+          childId: child.id,
+          recordType: child.recordType,
+          ageMonths: child.ageMonths,
+          period,
+          domainScores
+        });
+        lastInsight = insight;
+      }
+
+      if (typeof AssessmentStore !== 'undefined') {
+        AssessmentStore.save({
+          childId: child.id,
+          childName: child.name,
+          recordType: child.recordType,
+          ageMonths: child.ageMonths,
+          period,
+          domainScores,
+          insight,
+          responses: this._responsesSnapshotForPeriod(child, record, period)
+        });
+        savedPeriods.push(period);
+      }
     }
 
-    // Persist to localStorage
-    let saved = null;
-    if (typeof AssessmentStore !== 'undefined') {
-      saved = AssessmentStore.save({
-        childId: child.id,
-        childName: child.name,
-        recordType: child.recordType,
-        ageMonths: child.ageMonths,
-        period,
-        domainScores,
-        insight,
-        responses: null // full checklist responses stay in-session for now
-      });
+    if (!savedPeriods.length) {
+      alert('No Present marks found. Check at least one skill under an evaluation column (1st, 2nd, …) before saving.');
+      return;
     }
 
     // Trends across periods for this child
@@ -405,6 +459,8 @@ const TeacherDevelopment = {
 
     this.closeAssessment();
 
+    const insight = lastInsight;
+    const period = savedPeriods[savedPeriods.length - 1];
     const bandNote = insight && insight.ageBand
       ? `Age band: <strong>${insight.ageBand.label}</strong>.`
       : 'Age band could not be resolved.';
@@ -419,9 +475,8 @@ const TeacherDevelopment = {
       ? `<div class="card" style="margin-top:1rem;background:var(--primary-light);"><strong>Parent-friendly draft</strong><p style="margin:0.5rem 0 0;font-size:0.9rem;">${insight.parentFriendlyDraft}</p></div>`
       : '';
 
-    const persistNote = saved
-      ? `<p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem;">✓ Saved to this browser (period <strong>${period}</strong>). Re-save the same period to update.</p>`
-      : '';
+    const persistNote =
+      `<p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem;">✓ Saved evaluation column(s): <strong>${savedPeriods.join(', ')}</strong>. Reopen the checklist to edit; marks restore from these columns.</p>`;
 
     // Full official forms: all score sheets + scaled charts + standard chart
     const history = typeof AssessmentStore !== 'undefined'
@@ -454,8 +509,8 @@ const TeacherDevelopment = {
           <div class="bs-modal-body">
             ${persistNote}
             <p class="text-muted" style="margin-bottom:1rem;">
-              Period <strong>${period}</strong>. ${bandNote}
-              Empty columns fill in as you save each evaluation.
+              Evaluation columns saved: <strong>${savedPeriods.join(', ')}</strong>. ${bandNote}
+              Empty columns fill in as you mark Present under each evaluation.
             </p>
             ${trendNote}
             ${profilePanel}

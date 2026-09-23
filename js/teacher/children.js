@@ -9,6 +9,7 @@ const TeacherChildren = {
 
   render(container) {
     this.container = container;
+    if (typeof ChildRegistry !== 'undefined') ChildRegistry.ensureMerged();
     this._draw();
   },
 
@@ -38,7 +39,7 @@ const TeacherChildren = {
           <h1>👦 Children</h1>
           <p class="text-muted">View profiles, development status, and open individual child records.</p>
         </div>
-        <button class="btn btn-blue" onclick="TeacherChildren.showAddChildDemo()">+ Add Child</button>
+        <button class="btn btn-blue" onclick="TeacherChildren.openAddChild()">+ Add Child</button>
       </div>
 
       <div class="card" style="margin-bottom:1.25rem;">
@@ -107,8 +108,316 @@ const TeacherChildren = {
     this._draw();
   },
 
+  /* ---------- Add / Enroll Child ---------- */
+
+  /**
+   * @param {object} [prefill] — optional mapped application fields for autofill
+   *   (from online enrollment approval via ChildRegistry.mapApplicationToForm)
+   */
+  openAddChild(prefill) {
+    this.closeModal();
+    const p = prefill || {};
+    const codePreview = typeof ChildRegistry !== 'undefined'
+      ? ChildRegistry.nextChildCode()
+      : 'NCDC-—';
+    const today = new Date().toISOString().slice(0, 10);
+    const source = p.applicationId ? 'online_application' : 'walk_in';
+
+    const html = `
+      <div id="bs-modal-overlay" class="bs-overlay">
+        <div class="bs-modal-panel ecc-modal-wide">
+          <div class="bs-modal-header">
+            <h2 style="margin:0;font-size:1.25rem;color:white;">+ Enroll Child</h2>
+            <button class="bs-modal-close" onclick="TeacherChildren.closeModal()">×</button>
+          </div>
+          <div class="bs-modal-body">
+            <p class="text-muted" style="margin-top:0;">
+              Walk-in: encode from the hard-copy form.
+              Online application (future): fields can be auto-filled after approval, then the teacher reviews and saves.
+            </p>
+            <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;align-items:center;">
+              <span style="font-size:0.85rem;background:#e3f2fd;color:var(--primary-dark);padding:4px 10px;border-radius:20px;">
+                Child ID (auto): <strong id="enroll-code-preview">${codePreview}</strong>
+              </span>
+              <span style="font-size:0.85rem;background:#f5f5f5;padding:4px 10px;border-radius:20px;">
+                Source: <strong id="enroll-source-label">${source === 'online_application' ? 'Online application' : 'Walk-in'}</strong>
+              </span>
+              ${p.applicationId ? `<span class="text-muted" style="font-size:0.85rem;">Application: ${p.applicationId}</span>` : ''}
+            </div>
+            <input type="hidden" id="enroll-source" value="${source}" />
+            <input type="hidden" id="enroll-application-id" value="${p.applicationId || ''}" />
+
+            <div class="card" style="margin-bottom:1rem;">
+              <h3 style="margin-top:0;">1. Child identity</h3>
+              <div class="profile-grid">
+                <div>
+                  <label class="ecc-field-label">Child’s full name *</label>
+                  <input type="text" id="enroll-name" class="ecc-field-input" value="${this._escAttr(p.name)}" placeholder="Given name + family name" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Sex *</label>
+                  <select id="enroll-sex" class="ecc-field-input">
+                    <option value="Female" ${p.sex === 'Male' ? '' : 'selected'}>Female</option>
+                    <option value="Male" ${p.sex === 'Male' ? 'selected' : ''}>Male</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="ecc-field-label">Date of birth *</label>
+                  <input type="date" id="enroll-birth" class="ecc-field-input" value="${this._escAttr(p.birthDate)}"
+                    onchange="TeacherChildren._onBirthChange()" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Age (auto)</label>
+                  <input type="text" id="enroll-age-label" class="ecc-field-input" readonly style="background:#f5f5f5;" placeholder="—" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Class / Section *</label>
+                  <select id="enroll-section" class="ecc-field-input">
+                    <option value="explorers" ${(p.sectionKey || 'explorers') === 'explorers' ? 'selected' : ''}>Little Explorers (0–3 yrs)</option>
+                    <option value="stars" ${p.sectionKey === 'stars' ? 'selected' : ''}>Little Stars (3–4 yrs)</option>
+                    <option value="sunshine" ${p.sectionKey === 'sunshine' ? 'selected' : ''}>Sunshine Group (4–5 yrs)</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="ecc-field-label">ECCD Record (auto from age)</label>
+                  <input type="text" id="enroll-record" class="ecc-field-input" readonly style="background:#f5f5f5;" value="Record 1 (0–36 mo)" />
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:1rem;">
+              <h3 style="margin-top:0;">2. Family &amp; address</h3>
+              <div class="profile-grid">
+                <div>
+                  <label class="ecc-field-label">Primary parent / guardian *</label>
+                  <input type="text" id="enroll-parent" class="ecc-field-input" value="${this._escAttr(p.parentName)}" placeholder="e.g. Mr. Khalid" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Mother’s name</label>
+                  <input type="text" id="enroll-mother" class="ecc-field-input" value="${this._escAttr(p.motherName)}" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Father’s name</label>
+                  <input type="text" id="enroll-father" class="ecc-field-input" value="${this._escAttr(p.fatherName)}" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Number of siblings</label>
+                  <input type="number" id="enroll-siblings" class="ecc-field-input" min="0" value="${p.siblings != null && p.siblings !== '' ? p.siblings : ''}" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Birth order</label>
+                  <input type="text" id="enroll-birth-order" class="ecc-field-input" value="${this._escAttr(p.birthOrder)}" placeholder="e.g. 1st, 2nd" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Barangay</label>
+                  <input type="text" id="enroll-barangay" class="ecc-field-input" value="${this._escAttr(p.barangay)}" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Municipality / City</label>
+                  <input type="text" id="enroll-municipality" class="ecc-field-input" value="${this._escAttr(p.municipality || 'Medina')}" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Province</label>
+                  <input type="text" id="enroll-province" class="ecc-field-input" value="${this._escAttr(p.province || 'Misamis Oriental')}" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Region</label>
+                  <input type="text" id="enroll-region" class="ecc-field-input" value="${this._escAttr(p.region || 'X')}" />
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="margin-bottom:1rem;">
+              <h3 style="margin-top:0;">3. Health at enrollment <span class="text-muted" style="font-weight:500;font-size:0.9rem;">(optional)</span></h3>
+              <p class="text-muted" style="font-size:0.85rem;margin-top:0;">Saved to Health Records when provided.</p>
+              <div class="profile-grid">
+                <div>
+                  <label class="ecc-field-label">Height (cm)</label>
+                  <input type="number" id="enroll-height" class="ecc-field-input" step="0.1" value="${this._escAttr(p.heightCm)}" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Weight (kg)</label>
+                  <input type="number" id="enroll-weight" class="ecc-field-input" step="0.1" value="${this._escAttr(p.weightKg)}" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Allergies</label>
+                  <input type="text" id="enroll-allergies" class="ecc-field-input" value="${this._escAttr(p.allergies)}" placeholder="None / list" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Medical conditions</label>
+                  <input type="text" id="enroll-conditions" class="ecc-field-input" value="${this._escAttr(p.medicalConditions)}" />
+                </div>
+                <div style="grid-column:1 / -1;">
+                  <label class="ecc-field-label">Immunizations</label>
+                  <input type="text" id="enroll-immun" class="ecc-field-input" value="${this._escAttr(p.immunizations)}" placeholder="e.g. Up to date" />
+                </div>
+              </div>
+            </div>
+
+            <p id="enroll-error" style="color:#d32f2f;display:none;margin:0 0 0.5rem;"></p>
+          </div>
+          <div class="bs-modal-footer" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;">
+            <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherChildren.closeModal()">Cancel</button>
+            <button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.demoAutofillOnline()">Demo: autofill online app</button>
+            <button class="btn btn-blue" onclick="TeacherChildren.saveEnrollment()">💾 Save enrollment</button>
+          </div>
+        </div>
+      </div>`;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+    this._bindModalDismiss();
+    this._onBirthChange();
+  },
+
+  _escAttr(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;');
+  },
+
+  _onBirthChange() {
+    const birth = (document.getElementById('enroll-birth') || {}).value;
+    if (typeof ChildRegistry === 'undefined' || !birth) return;
+    const age = ChildRegistry.ageFromBirthDate(birth);
+    const ageEl = document.getElementById('enroll-age-label');
+    const recEl = document.getElementById('enroll-record');
+    if (ageEl) ageEl.value = age.ageLabel || '—';
+    if (recEl) {
+      const rt = ChildRegistry.recordTypeFromAgeMonths(age.ageMonths);
+      recEl.value = rt === 1 ? 'Record 1 (0–36 mo)' : 'Record 2 (37+ mo)';
+    }
+  },
+
+  /**
+   * Simulate approving an online application → autofill the form (future flow).
+   */
+  demoAutofillOnline() {
+    const sampleApp = {
+      id: 'APP-2026-0142',
+      childName: 'Samira Noor',
+      sex: 'Female',
+      birthDate: '2023-06-20',
+      preferredSection: 'explorers',
+      guardianName: 'Mrs. Noor',
+      motherName: 'Hana Noor',
+      fatherName: 'Noor Hassan',
+      barangay: 'Poblacion',
+      municipality: 'Medina',
+      province: 'Misamis Oriental',
+      region: 'X',
+      siblings: 2,
+      birthOrder: '4th',
+      allergies: 'None',
+      medicalConditions: '',
+      immunizations: 'Up to date',
+      heightCm: 88,
+      weightKg: 12.5
+    };
+    this.closeModal();
+    const mapped = ChildRegistry.mapApplicationToForm(sampleApp);
+    this.openAddChild(mapped);
+  },
+
+  saveEnrollment() {
+    const errEl = document.getElementById('enroll-error');
+    const showErr = (msg) => {
+      if (errEl) {
+        errEl.style.display = 'block';
+        errEl.textContent = msg;
+      }
+    };
+
+    const data = {
+      name: (document.getElementById('enroll-name') || {}).value,
+      sex: (document.getElementById('enroll-sex') || {}).value,
+      birthDate: (document.getElementById('enroll-birth') || {}).value,
+      sectionKey: (document.getElementById('enroll-section') || {}).value,
+      parentName: (document.getElementById('enroll-parent') || {}).value,
+      motherName: (document.getElementById('enroll-mother') || {}).value,
+      fatherName: (document.getElementById('enroll-father') || {}).value,
+      siblings: (document.getElementById('enroll-siblings') || {}).value,
+      birthOrder: (document.getElementById('enroll-birth-order') || {}).value,
+      barangay: (document.getElementById('enroll-barangay') || {}).value,
+      municipality: (document.getElementById('enroll-municipality') || {}).value,
+      province: (document.getElementById('enroll-province') || {}).value,
+      region: (document.getElementById('enroll-region') || {}).value,
+      heightCm: (document.getElementById('enroll-height') || {}).value,
+      weightKg: (document.getElementById('enroll-weight') || {}).value,
+      allergies: (document.getElementById('enroll-allergies') || {}).value,
+      medicalConditions: (document.getElementById('enroll-conditions') || {}).value,
+      immunizations: (document.getElementById('enroll-immun') || {}).value,
+      applicationId: (document.getElementById('enroll-application-id') || {}).value || null
+    };
+
+    const source = (document.getElementById('enroll-source') || {}).value || 'walk_in';
+
+    if (!data.name || !String(data.name).trim()) {
+      showErr('Child’s name is required.');
+      return;
+    }
+    if (!data.birthDate) {
+      showErr('Date of birth is required.');
+      return;
+    }
+    if (!data.parentName && !data.motherName && !data.fatherName) {
+      showErr('Enter at least one parent / guardian name.');
+      return;
+    }
+
+    const result = ChildRegistry.enroll(data, {
+      source,
+      applicationId: data.applicationId
+    });
+
+    if (!result.ok) {
+      showErr(result.error || 'Could not save enrollment.');
+      return;
+    }
+
+    const child = result.child;
+
+    // Optional health seed
+    if (typeof HealthStore !== 'undefined') {
+      const h = parseFloat(data.heightCm);
+      const w = parseFloat(data.weightKg);
+      if (!isNaN(h) || !isNaN(w)) {
+        const bmi = HealthStore.computeBmi(h, w);
+        HealthStore.saveMeasurement({
+          childId: child.id,
+          childName: child.name,
+          date: new Date().toISOString().slice(0, 10),
+          heightCm: isNaN(h) ? null : h,
+          weightKg: isNaN(w) ? null : w,
+          bmi,
+          status: bmi != null ? HealthStore.suggestStatus(bmi) : 'Normal',
+          nutritionStatus: 'Normal',
+          feedingParticipating: true,
+          notes: 'Recorded at enrollment',
+          recordedBy: 'Teacher (enrollment)'
+        });
+      }
+      if (data.allergies || data.medicalConditions || data.immunizations) {
+        HealthStore.saveProfile(child.id, {
+          allergies: data.allergies || '',
+          medicalConditions: data.medicalConditions || '',
+          immunizations: data.immunizations || '',
+          notes: 'From enrollment'
+        });
+      }
+    }
+
+    this.closeModal();
+    this._draw();
+    const toast = document.createElement('div');
+    toast.className = 'ecc-toast';
+    toast.textContent = 'Enrolled ' + child.name + ' (' + child.childCode + ')';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2800);
+  },
+
   showAddChildDemo() {
-    alert('Add Child (demo)\n\nEnrollment form will be connected in a later module.\nFor now, sample children are loaded from sample-children.js.');
+    this.openAddChild();
   },
 
   _card(c) {

@@ -18,6 +18,7 @@ const TeacherLayout = {
         <aside class="sidebar">
           <div class="nav-item active" onclick="BrightSteps.navigate('dashboard')">🏠 Dashboard</div>
           <div class="nav-item" onclick="BrightSteps.navigate('children')">👦 Children</div>
+          <div class="nav-item" onclick="BrightSteps.navigate('applications')">📝 Applications</div>
           <div class="nav-item" onclick="BrightSteps.navigate('development')">📈 Development Tracking</div>
           <div class="nav-item" onclick="BrightSteps.navigate('health')">❤️ Health Records</div>
           <div class="nav-item" onclick="BrightSteps.navigate('attendance')">📅 Attendance</div>

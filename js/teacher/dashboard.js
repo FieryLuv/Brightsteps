@@ -36,6 +36,13 @@ const TeacherDashboard = {
       </div>
 
       <div class="dashboard-grid">
+        <!-- Applications -->
+        <div class="card">
+          <h3>📝 Enrollment Applications</h3>
+          <p class="text-muted" id="dash-pending-apps">Visitor applications pending review.</p>
+          <button class="btn btn-blue mt-2" onclick="BrightSteps.navigate('applications')">Review Applications</button>
+        </div>
+
         <!-- Attendance -->
         <div class="card">
           <h3>Today's Attendance</h3>
