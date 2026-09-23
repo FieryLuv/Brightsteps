@@ -1,0 +1,1576 @@
+{
+  "version": "1.0",
+  "description": "Clean structured catalog of ECCD Checklist domains and items for BrightSteps rule-based developmental progress engine. Derived from official ECCD Checklist Child's Record 1 (0\u201336 months) and Record 2 (older children). Titles cleaned for digital encoding; original procedures/materials remain in the paper instrument.",
+  "domains": [
+    {
+      "code": "GM",
+      "name": "Gross Motor",
+      "order": 1
+    },
+    {
+      "code": "FM",
+      "name": "Fine Motor",
+      "order": 2
+    },
+    {
+      "code": "SH",
+      "name": "Self-Help",
+      "order": 3
+    },
+    {
+      "code": "RL",
+      "name": "Receptive Language",
+      "order": 4
+    },
+    {
+      "code": "EL",
+      "name": "Expressive Language",
+      "order": 5
+    },
+    {
+      "code": "COG",
+      "name": "Cognitive",
+      "order": 6
+    },
+    {
+      "code": "SE",
+      "name": "Social-Emotional",
+      "order": 7
+    }
+  ],
+  "records": {
+    "record1": {
+      "label": "ECCD Checklist \u2013 Child\u2019s Record 1",
+      "age_range": "0\u201336 months",
+      "recommended_frequency": "Every 4 months (0\u201312 mo); every 6 months (13\u201336 mo)",
+      "domains": {
+        "GM": [
+          {
+            "number": 1,
+            "title": "Infant lifts head when held standing",
+            "item_id": "RECORD1-GM-01",
+            "domain_code": "GM",
+            "procedure": "Hold the child in an upright position and carefully remove your hand from the child\u2019s neck according to his ability to lift his head and keep it erect. Credit if the child occasionally lifts his head free of support. Parental report will suffice."
+          },
+          {
+            "number": 2,
+            "title": "Infant tries to lift head when lying on stomach",
+            "item_id": "RECORD1-GM-02",
+            "domain_code": "GM",
+            "procedure": "Place the child on his stomach on a flat stomach surface. Credit if the child at least momentarily lifts his head so that the chin is off the surface. Parental report will suffice."
+          },
+          {
+            "number": 3,
+            "title": "Infant holds head upright on his own when lying on stomach",
+            "item_id": "RECORD1-GM-03",
+            "domain_code": "GM",
+            "procedure": "Place the child on his stomach on a flat when lying on surface. Credit if the child lifts his head stomach and chest up so that his face makes a 90\u00b0 angle w/ the surface for at least several seconds. Parental report will suffice."
+          },
+          {
+            "number": 4,
+            "title": "Infant holds head steadily",
+            "item_id": "RECORD1-GM-04",
+            "domain_code": "GM",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 5,
+            "title": "Infant rolls over from back to stomach with assistance",
+            "item_id": "RECORD1-GM-05",
+            "domain_code": "GM",
+            "procedure": "Place the child on his back on a flat surface. stomach with Encourage him to roll over to his stomach, assistance providing some assistance to do so. Credit if he eventually rolls over. Parental report will suffice."
+          },
+          {
+            "number": 6,
+            "title": "Infant turns from side to back without assistance",
+            "item_id": "RECORD1-GM-06",
+            "domain_code": "GM",
+            "procedure": "Roll the child from his back to his side. without assistance Make sure he is not restricted by his clothes and his arm is not caught under his torso. Credit if the child actively turns from his side to his back. Parental report will suffice."
+          },
+          {
+            "number": 7,
+            "title": "Infant sits well with support, leaning on hands",
+            "item_id": "RECORD1-GM-07",
+            "domain_code": "GM",
+            "procedure": "Hold the child in a sitting position on the hands if placed on table and slowly remove your hand from the hard surface child making sure that he does not fall. Credit if the child sits alone and puts his hands on his legs or on the table for support. Parental report will suffice."
+          },
+          {
+            "number": 8,
+            "title": "Infant bounces when held standing, briefly bearing weight on legs",
+            "item_id": "RECORD1-GM-08",
+            "domain_code": "GM",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 9,
+            "title": "Infant sits alone steadily",
+            "item_id": "RECORD1-GM-09",
+            "domain_code": "GM",
+            "procedure": "Hold the child in a sitting position on the table and slowly remove your hand from him making sure that he does not fall. Credit if the child sits alone steadily without support, keeping his back fairly straight. Parental report will suffice."
+          },
+          {
+            "number": 10,
+            "title": "Infant moves from sitting to creeping/crawling position",
+            "item_id": "RECORD1-GM-10",
+            "domain_code": "GM",
+            "procedure": "Seat the child on the floor. Place a toy on the floor, in front of the child, but not within his reach. Observe how the child moves from sitting to creeping position and the type of movement he makes to reach for the toy. Credit if the child moves forward about 9 inches or more, using either of the following: hands and knees, stomach and arms, hands and feet. Parental report will suffice."
+          },
+          {
+            "number": 11,
+            "title": "Infant pulls self from sitting to standing with minimal assistance",
+            "item_id": "RECORD1-GM-11",
+            "domain_code": "GM",
+            "procedure": "With the child in a sitting position, hold standing position both his hands and have him pull himself with minimal up with only minimal assistance from the assistance adult. Credit if the child can stand up. Parental report will suffice."
+          },
+          {
+            "number": 12,
+            "title": "Stands with minimum support",
+            "item_id": "RECORD1-GM-12",
+            "domain_code": "GM",
+            "procedure": "Credit if the child holds on to a piece of furniture with both hands and bears weight on both feet. Parental report will suffice. B. Optional starting point for children aged 1 year 1 month - 3.0 years Gross Motor Material/Procedure Present Comments"
+          },
+          {
+            "number": 13,
+            "title": "Holds furniture with both hands and walks sideways",
+            "item_id": "RECORD1-GM-13",
+            "domain_code": "GM",
+            "procedure": "walks sideways While the child is standing, observe if he moves from one point to another by walking sideways. He may support himself by holding on to furniture. He can be encouraged to walk by placing a toy on the furniture near the child but just outside his reach so he must walk to reach the toy. Credit if the child walks sideways while holding on to furniture for support and balance. Parental report will suffice."
+          },
+          {
+            "number": 14,
+            "title": "Walks with both hands held",
+            "item_id": "RECORD1-GM-14",
+            "domain_code": "GM",
+            "procedure": "Observe the child if he walks when both hands are held by an adult. Credit if the child takes coordinated walking steps with only slight support from the adult. Parental report will suffice."
+          },
+          {
+            "number": 15,
+            "title": "Climbs on chair or elevated furniture without help",
+            "item_id": "RECORD1-GM-15",
+            "domain_code": "GM",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 16,
+            "title": "Walks alone, rarely falls",
+            "item_id": "RECORD1-GM-16",
+            "domain_code": "GM",
+            "procedure": "Observe the child if he walks alone across the room. Credit if the child walks alone with good balance without tripping and rarely falling. Parental report will suffice."
+          },
+          {
+            "number": 17,
+            "title": "Walks backwards",
+            "item_id": "RECORD1-GM-17",
+            "domain_code": "GM",
+            "procedure": "Ask the child to walk backwards by demonstrating it. Credit if the child is able to walk backwards without falling and holding on to anything. Parental report will suffice."
+          },
+          {
+            "number": 18,
+            "title": "Runs without tripping or falling",
+            "item_id": "RECORD1-GM-18",
+            "domain_code": "GM",
+            "procedure": "Credit if the child can run fast and smoothly without tripping or falling."
+          },
+          {
+            "number": 19,
+            "title": "Walks down stairs, 2 feet on each step, with one hand held",
+            "item_id": "RECORD1-GM-19",
+            "domain_code": "GM",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 20,
+            "title": "Walks up stairs holding handrail, 2 feet on each step",
+            "item_id": "RECORD1-GM-20",
+            "domain_code": "GM",
+            "procedure": "feet on each step Place a toy in the middle of the step and ask the child to walk up the stairs to get the toy. Credit if the child walks up the stairs using the handrail or wall for support and places both feet on each step before stepping on the next one. Parental report will suffice."
+          },
+          {
+            "number": 21,
+            "title": "Walks upstairs with alternate feet without holding handrail",
+            "item_id": "RECORD1-GM-21",
+            "domain_code": "GM",
+            "procedure": "without holding on Place a toy in the middle of the step and to the handrail ask the child to walk upstairs to get the toy. Credit if the child walks upstairs, alternating his feet as he steps on each successive step without holding on to the handrail or wall for support. Parental report will suffice."
+          },
+          {
+            "number": 22,
+            "title": "Walks downstairs without holding onto a handrail",
+            "item_id": "RECORD1-GM-22",
+            "domain_code": "GM",
+            "procedure": "without holding Place a toy at the bottom of the stairs and onto a handrail ask the child to walk downstairs to get the toy. Credit if the child walks downstairs, alternating his feet as he steps on each successive step without holding on to the handrail or wall for support. Do not give credit if the child places both feet on the step or uses the handrail or wall for support. Parental report will suffice."
+          }
+        ],
+        "FM": [
+          {
+            "number": 1,
+            "title": "Hands of infant are predominantly open",
+            "item_id": "RECORD1-FM-01",
+            "domain_code": "FM",
+            "procedure": "Observe the infant\u2019s hands. Credit if his kept open most of hands are open most of the time. the time Parental report will suffice."
+          },
+          {
+            "number": 2,
+            "title": "Infant brings hands together toward midline",
+            "item_id": "RECORD1-FM-02",
+            "domain_code": "FM",
+            "procedure": "MATERIAL: dangling object/toy 3. hands together This must be elicited by the toward dangling interviewer. object/toy 4. Infant reaches for MATERIALS: small toy/spoon and holds small toy/ PROCEDURE: spoon Hold a small toy/spoon in your hand and urge the infant to get it. This must be elicited by the interviewer. B. Optional starting point for children aged 1year 1 month - 3.0 years Fine Motor Material/Procedure Present Comments"
+          },
+          {
+            "number": 3,
+            "title": "Infant reaches for and grasps object",
+            "item_id": "RECORD1-FM-03",
+            "domain_code": "FM",
+            "procedure": "See examiner guide / parental report as applicable."
+          },
+          {
+            "number": 4,
+            "title": "Infant transfers object from one hand to the other",
+            "item_id": "RECORD1-FM-04",
+            "domain_code": "FM",
+            "procedure": "See examiner guide / parental report as applicable."
+          },
+          {
+            "number": 5,
+            "title": "Uses all five fingers to get food/toys (raking grasp)",
+            "item_id": "RECORD1-FM-05",
+            "domain_code": "FM",
+            "procedure": "Seat the child on the parent\u2019s lap with his elbows at level with the tabletop and his hands on the table or flat surface. Drop a small toy in front of him and attract his attention by pointing to the toy or tapping the table/flat surface. Credit if the child picks up the toy, using all five fingers as if raking."
+          },
+          {
+            "number": 6,
+            "title": "Picks up objects with thumb and index finger (pincer grasp)",
+            "item_id": "RECORD1-FM-06",
+            "domain_code": "FM",
+            "procedure": "Attract his attention by tapping near the toy/food. Credit if the child uses the pads of his thumb and index or forefinger to pick up the toy/ food."
+          },
+          {
+            "number": 7,
+            "title": "Pulls toy with string",
+            "item_id": "RECORD1-FM-07",
+            "domain_code": "FM",
+            "procedure": "This must be elicited by the interviewer."
+          },
+          {
+            "number": 8,
+            "title": "Displays a definite hand preference",
+            "item_id": "RECORD1-FM-08",
+            "domain_code": "FM",
+            "procedure": "Place the toy directly in front of the child at midline (not to his left or his right) and ask him to reach for this. Credit if he uses the same hand two out of three times. Parental report will suffice."
+          },
+          {
+            "number": 9,
+            "title": "Grasps and transfers small objects using neat pincer grasp",
+            "item_id": "RECORD1-FM-09",
+            "domain_code": "FM",
+            "procedure": "Observe if the child transfers a small toy from one hand to the other. Encourage this by giving the child a toy and then present- ing another toy to the same hand. Credit if the child transfers a toy from one hand to the other without using his mouth or body."
+          },
+          {
+            "number": 10,
+            "title": "Pushes or pulls a wheeled toy",
+            "item_id": "RECORD1-FM-10",
+            "domain_code": "FM",
+            "procedure": "This must be elicited by the inter- viewer."
+          },
+          {
+            "number": 11,
+            "title": "Puts small objects into a container",
+            "item_id": "RECORD1-FM-11",
+            "domain_code": "FM",
+            "procedure": "This must be elicited by the interviewer."
+          },
+          {
+            "number": 12,
+            "title": "Holds crayon with fingers (not fist)",
+            "item_id": "RECORD1-FM-12",
+            "domain_code": "FM",
+            "procedure": "hand making a fist Present child with a crayon and have him (i.e., palmar grasp) get this. Credit if he holds it by wrapping all five fingers around as if making a fist. Automatically Credit this item if he uses the tips of all five fingers or the tips of his thumb, index, and middle fingers. This must be elicited by the interviewer."
+          },
+          {
+            "number": 13,
+            "title": "Unscrews lid of bottle or jar",
+            "item_id": "RECORD1-FM-13",
+            "domain_code": "FM",
+            "procedure": "This must be elicited by the interviewer."
+          },
+          {
+            "number": 14,
+            "title": "Scribbles spontaneously",
+            "item_id": "RECORD1-FM-14",
+            "domain_code": "FM",
+            "procedure": "Place a paper and pencil/crayon on the table and ask the child to draw anything he wants without showing him what to do. Credit if the child uses the tips of his thumb and any of his other fingertips to grasp the pencil/crayon and makes purposeful scribbling marks on the paper (not accidental marks)."
+          }
+        ],
+        "SH": [
+          {
+            "number": 1,
+            "title": "Infant sucks and swallows milk from breast or bottle",
+            "item_id": "RECORD1-SH-01",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 2,
+            "title": "Infant begins to take food from spoon",
+            "item_id": "RECORD1-SH-02",
+            "domain_code": "SH",
+            "procedure": "Credit if the caregiver reports that the child tolerates these. Write \u201cNo opportunity\u201d in the comment section if the child has not been introduced to solid foods."
+          },
+          {
+            "number": 3,
+            "title": "Chews solid food well",
+            "item_id": "RECORD1-SH-03",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 4,
+            "title": "Holds bottle all by himself",
+            "item_id": "RECORD1-SH-04",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 5,
+            "title": "Feeds self with fingers",
+            "item_id": "RECORD1-SH-05",
+            "domain_code": "SH",
+            "procedure": "This must be elicited by the biscuits, bread) interviewer. using fingers"
+          },
+          {
+            "number": 6,
+            "title": "Helps hold a cup for drinking",
+            "item_id": "RECORD1-SH-06",
+            "domain_code": "SH",
+            "procedure": "for drinking spout."
+          },
+          {
+            "number": 7,
+            "title": "Feeds self using spoon with spilling",
+            "item_id": "RECORD1-SH-07",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 8,
+            "title": "Drinks from a cup without help",
+            "item_id": "RECORD1-SH-08",
+            "domain_code": "SH",
+            "procedure": "This must be elicited by the interviewer."
+          },
+          {
+            "number": 9,
+            "title": "Feeds self using a spoon with little spilling",
+            "item_id": "RECORD1-SH-09",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 10,
+            "title": "Gets a drink for self",
+            "item_id": "RECORD1-SH-10",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          }
+        ],
+        "RL": [
+          {
+            "number": 1,
+            "title": "Infant startles to loud sounds",
+            "item_id": "RECORD1-RL-01",
+            "domain_code": "RL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 2,
+            "title": "Infant turns eyes/head toward sound of rattle or voice",
+            "item_id": "RECORD1-RL-02",
+            "domain_code": "RL",
+            "procedure": "Carry the child on his back with one hand and with the other shake a rattle out of his range of vision 6 inches from his ear. Do this continuously for 3 seconds and observe whether he can turn towards the sound. Credit if the child widens or moves his eyes from side to side in search of the sound."
+          },
+          {
+            "number": 3,
+            "title": "Infant watches speaker's face/mouth",
+            "item_id": "RECORD1-RL-03",
+            "domain_code": "RL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 4,
+            "title": "Infant smiles at a familiar voice",
+            "item_id": "RECORD1-RL-04",
+            "domain_code": "RL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 5,
+            "title": "Infant stops crying when spoken to",
+            "item_id": "RECORD1-RL-05",
+            "domain_code": "RL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 6,
+            "title": "Turns head when name is called",
+            "item_id": "RECORD1-RL-06",
+            "domain_code": "RL",
+            "procedure": "Observe if makes eye contact the child can look for you and smile. Parental report will suffice."
+          },
+          {
+            "number": 7,
+            "title": "Understands 'no' / 'don't'",
+            "item_id": "RECORD1-RL-07",
+            "domain_code": "RL",
+            "procedure": "Shake your head and finger and say \u201cNo-no\u201d. Then see whether the child understands this. Credit if the child stops what he is doing. Parental report will suffice."
+          },
+          {
+            "number": 8,
+            "title": "Imitates adults' gestures (bye-bye, clap)",
+            "item_id": "RECORD1-RL-08",
+            "domain_code": "RL",
+            "procedure": "Place the child on the playful sounds like caregiver\u2019s lap with you facing the child. coughing, lip Then make the following sounds: cough, smacking smack lips. Credit if the child makes the same sound or even just the lip movements."
+          },
+          {
+            "number": 9,
+            "title": "Follows one-step command with gesture",
+            "item_id": "RECORD1-RL-09",
+            "domain_code": "RL",
+            "procedure": "With the child seated in front of you, give used him a spoon then ask for the spoon back by saying \u201cGIVE ME THE _(object)__.\u201d with your hand (palm up) toward him. Credit if the child looks at the object and hands it over to you even if he does not release this immediately. Receptive Language Material/Procedure Present Comments"
+          },
+          {
+            "number": 10,
+            "title": "Follows one-step command without gestures",
+            "item_id": "RECORD1-RL-10",
+            "domain_code": "RL",
+            "procedure": "Place the toy on the floor and ask the child to pick this up without pointing to the toy or using any other gesture. Credit if the child picks up the toy."
+          },
+          {
+            "number": 11,
+            "title": "Points to a family member or familiar object when named",
+            "item_id": "RECORD1-RL-11",
+            "domain_code": "RL",
+            "procedure": "Ask the child to point to his mother/ asked to do so caregiver. Credit if he does so. B. Optional starting point for children aged 1year 1 month - 3.0 years Receptive Language Material/Procedure Present Comments"
+          },
+          {
+            "number": 12,
+            "title": "Points to five body parts when named",
+            "item_id": "RECORD1-RL-12",
+            "domain_code": "RL",
+            "procedure": "Have the child point to his eyes, nose, when asked to do mouth, hands and feet. Credit if he can so point to all these."
+          },
+          {
+            "number": 13,
+            "title": "Points to five common objects when named",
+            "item_id": "RECORD1-RL-13",
+            "domain_code": "RL",
+            "procedure": "Show the child a picture book (two to do so pictures per page) and ask him to point to the picture by saying \u201cWhere\u2019s the ______?\u201d Credit if the child can use his finger to point to at least five pictures."
+          },
+          {
+            "number": 14,
+            "title": "Follows one-step command involving an object",
+            "item_id": "RECORD1-RL-14",
+            "domain_code": "RL",
+            "procedure": "Ask the child to put a block/toy under the prepositions (e.g., table; on the table; in the bag. Do not in, on, under, etc.) point or use gestures when giving the instruction. Credit if the child is able to follow at least one of the instructions."
+          },
+          {
+            "number": 15,
+            "title": "Follows two-step related commands",
+            "item_id": "RECORD1-RL-15",
+            "domain_code": "RL",
+            "procedure": "Ask the child to get a block/toy from prepositions under the table and then place it on the table. Do not point or use gestures when giving the instruction. Credit if the child is able to follow."
+          }
+        ],
+        "EL": [
+          {
+            "number": 1,
+            "title": "Infant vocalizes (gurgles, coos, grunts)",
+            "item_id": "RECORD1-EL-01",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 2,
+            "title": "Infant vocalizes to express pleasure or discomfort",
+            "item_id": "RECORD1-EL-02",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 3,
+            "title": "Infant shouts to attract attention",
+            "item_id": "RECORD1-EL-03",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 4,
+            "title": "Infant laughs out loud",
+            "item_id": "RECORD1-EL-04",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 5,
+            "title": "Infant vocalizes different syllables",
+            "item_id": "RECORD1-EL-05",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 6,
+            "title": "Infant vocalizes other consonant sounds",
+            "item_id": "RECORD1-EL-06",
+            "domain_code": "EL",
+            "procedure": "sounds that do not mean Ask caregiver if the child can make anything two different sounds apart from crying like \u201cgoo\u201dand \u201cer\u201d. Take note of the sounds. Parental report will suffice."
+          },
+          {
+            "number": 7,
+            "title": "Infant babbles (ba-ba, ma-ma)",
+            "item_id": "RECORD1-EL-07",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 8,
+            "title": "Infant tries to imitate sounds made by others",
+            "item_id": "RECORD1-EL-08",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 9,
+            "title": "Infant uses body language/gestures to communicate",
+            "item_id": "RECORD1-EL-09",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 10,
+            "title": "Repeats vowel-consonant combinations (baba, mama, dada)",
+            "item_id": "RECORD1-EL-10",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 11,
+            "title": "Uses sounds meaningfully to refer to objects or people",
+            "item_id": "RECORD1-EL-11",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 12,
+            "title": "Chatters in conversational tone without real words",
+            "item_id": "RECORD1-EL-12",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 13,
+            "title": "Tries to imitate real words",
+            "item_id": "RECORD1-EL-13",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 14,
+            "title": "Combines single words with gestures",
+            "item_id": "RECORD1-EL-14",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 15,
+            "title": "Uses 5 to 20 meaningful words",
+            "item_id": "RECORD1-EL-15",
+            "domain_code": "EL",
+            "procedure": "Ask the caregiver if the recognizable words child can clearly say five to six words aside from mama and papa. This will be the minimum number."
+          },
+          {
+            "number": 16,
+            "title": "Uses pronouns (I, me, you)",
+            "item_id": "RECORD1-EL-16",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 17,
+            "title": "Uses two- to three-word phrases",
+            "item_id": "RECORD1-EL-17",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 18,
+            "title": "Names objects in pictures",
+            "item_id": "RECORD1-EL-18",
+            "domain_code": "EL",
+            "procedure": "Show the child a picture book, point to an object in the book, then ask him to name this (e.g., Ano ito?). Credit if the child can say the correct name of at least four objects. Parental report will suffice."
+          },
+          {
+            "number": 19,
+            "title": "Speaks in grammatically correct simple sentences",
+            "item_id": "RECORD1-EL-19",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 20,
+            "title": "Asks 'what' questions",
+            "item_id": "RECORD1-EL-20",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 21,
+            "title": "Asks 'who' and 'why' questions",
+            "item_id": "RECORD1-EL-21",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 22,
+            "title": "Gives account of recent experiences",
+            "item_id": "RECORD1-EL-22",
+            "domain_code": "EL",
+            "procedure": "Ask the caregiver if the child can prompting) in order of recount recent experiences in correct occurrence using past sequence and using past tenses tense correctly. The caregiver can prompt him so he can complete what he is talking about (e.g., Tapos ano pang nangyari?). Parental report will suffice."
+          }
+        ],
+        "COG": [
+          {
+            "number": 1,
+            "title": "Infant inspects surroundings",
+            "item_id": "RECORD1-COG-01",
+            "domain_code": "COG",
+            "procedure": "surroundings room."
+          },
+          {
+            "number": 2,
+            "title": "Infant gazes slowly at moving objects/people",
+            "item_id": "RECORD1-COG-02",
+            "domain_code": "COG",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 3,
+            "title": "Infant turns head to bright colored objects",
+            "item_id": "RECORD1-COG-03",
+            "domain_code": "COG",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 4,
+            "title": "Infant changes face when he does not like the taste of food",
+            "item_id": "RECORD1-COG-04",
+            "domain_code": "COG",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 5,
+            "title": "Infant explores and mouths objects",
+            "item_id": "RECORD1-COG-05",
+            "domain_code": "COG",
+            "procedure": "Give the child a clean toy or object and and looking at them observe if he brings it to his mouth to bite or chew."
+          },
+          {
+            "number": 6,
+            "title": "Infant shakes toy to make sound",
+            "item_id": "RECORD1-COG-06",
+            "domain_code": "COG",
+            "procedure": "Give the child a rattle and observe if he can make it sound. Credit if the child can hold a rattle and shake it for a few seconds, hit it on the mat or wave it."
+          },
+          {
+            "number": 7,
+            "title": "Infant eventually gets used to irritating stimuli",
+            "item_id": "RECORD1-COG-07",
+            "domain_code": "COG",
+            "procedure": "Ask the caregiver if the child eventually bothersome gets used to environmental sounds like environmental that of a tricycle/other vehicles, sound of sounds (e.g., animals (chicken, dogs) that may have tricycle, crowing of woken, bothered or irritated him earlier. cock) Parental report will suffice."
+          },
+          {
+            "number": 8,
+            "title": "Infant reacts to cloth placed over his face",
+            "item_id": "RECORD1-COG-08",
+            "domain_code": "COG",
+            "procedure": "With the child lying on his back, gently cover his face with a paper/cloth and observe if he tries to remove this or pull it away. B. Optional starting point for children aged 1 year 1 month - 3.0 years Cognitive Material/Procedure Present Comments"
+          },
+          {
+            "number": 9,
+            "title": "Looks in the direction of a fallen object",
+            "item_id": "RECORD1-COG-09",
+            "domain_code": "COG",
+            "procedure": "With the child seated, get his attention and drop a spoon/ball in front of him. Then observe if his eyes look down as the object falls. Credit if the child can bring his eyes and head down as the object falls."
+          },
+          {
+            "number": 10,
+            "title": "Displays preference for certain objects",
+            "item_id": "RECORD1-COG-10",
+            "domain_code": "COG",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 11,
+            "title": "Pushes the ball to make it roll",
+            "item_id": "RECORD1-COG-11",
+            "domain_code": "COG",
+            "procedure": "This must be elicited by the interviewer."
+          },
+          {
+            "number": 12,
+            "title": "Repeatedly drops or throws objects",
+            "item_id": "RECORD1-COG-12",
+            "domain_code": "COG",
+            "procedure": "While carrying the child, hand him the toy and see if he drops or throws this as if fascinated with the act of doing so. Parental report will suffice."
+          },
+          {
+            "number": 13,
+            "title": "Looks for a partially hidden object",
+            "item_id": "RECORD1-COG-13",
+            "domain_code": "COG",
+            "procedure": "With the child facing you, partially hide a ball behind a small towel and observe if he will look for it and find it. Credit if the child pulls the towel and gets the hidden ball."
+          },
+          {
+            "number": 14,
+            "title": "Imitates behavior seen just a few minutes earlier",
+            "item_id": "RECORD1-COG-14",
+            "domain_code": "COG",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 15,
+            "title": "Offers object but will not release it",
+            "item_id": "RECORD1-COG-15",
+            "domain_code": "COG",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 16,
+            "title": "Looks for completely hidden object",
+            "item_id": "RECORD1-COG-16",
+            "domain_code": "COG",
+            "procedure": "With the child facing you, hide a ball completely under a small towel and observe if he will look under the towel. Credit if he looks under the towel and gets the hidden ball."
+          },
+          {
+            "number": 17,
+            "title": "Exhibits simple pretend play (feeds, puts doll to sleep)",
+            "item_id": "RECORD1-COG-17",
+            "domain_code": "COG",
+            "procedure": "puts doll to sleep) If the child is a girl, carry the doll and try to rock it to sleep. If the child is a boy, move the toy car/block back and forth. Credit if the child can imitate this."
+          },
+          {
+            "number": 18,
+            "title": "Matches objects",
+            "item_id": "RECORD1-COG-18",
+            "domain_code": "COG",
+            "procedure": "Give the child the other set of objects arranged in random order. Demonstrate a matching response (e.g., spoon to spoon) then return the objects to the child. Say, \u201cPut each object on the one that is just like it.\u201d Credit if the child can match the objects correctly."
+          }
+        ],
+        "SE": [
+          {
+            "number": 1,
+            "title": "Infant stops crying when mother picks him",
+            "item_id": "RECORD1-SE-01",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 2,
+            "title": "Infant smiles in response to the caregiver",
+            "item_id": "RECORD1-SE-02",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 3,
+            "title": "Infant reacts to familiar situations (bathing, feeding)",
+            "item_id": "RECORD1-SE-03",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 4,
+            "title": "Infant lifts arms to greet familiar people",
+            "item_id": "RECORD1-SE-04",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 5,
+            "title": "Cries when caregiver leaves",
+            "item_id": "RECORD1-SE-05",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 6,
+            "title": "Enjoys watching activities of nearby people or animals",
+            "item_id": "RECORD1-SE-06",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 7,
+            "title": "Smiles playfully at mirror image",
+            "item_id": "RECORD1-SE-07",
+            "domain_code": "SE",
+            "procedure": "With the child in a sitting position, place a mirror in front of him and observe if he stares at or tries to get the mirror or pats it. Credit if the child can look or smile at the mirror, kiss or pat it with his hand or just turn it around."
+          },
+          {
+            "number": 8,
+            "title": "Friendly with strangers but may show slight anxiety",
+            "item_id": "RECORD1-SE-08",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 9,
+            "title": "Plays alone but likes to be near familiar adults/siblings",
+            "item_id": "RECORD1-SE-09",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 10,
+            "title": "Laughs or squeals aloud in play",
+            "item_id": "RECORD1-SE-10",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 11,
+            "title": "Plays peek-a-boo (bulaga)",
+            "item_id": "RECORD1-SE-11",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 12,
+            "title": "Rolls ball interactively with caregiver",
+            "item_id": "RECORD1-SE-12",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 13,
+            "title": "Hugs or cuddles toys",
+            "item_id": "RECORD1-SE-13",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 14,
+            "title": "Responds with pleasure to friendly people",
+            "item_id": "RECORD1-SE-14",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          }
+        ]
+      }
+    },
+    "record2": {
+      "label": "ECCD Checklist \u2013 Child\u2019s Record 2",
+      "age_range": "Approximately 3\u20135+ years (annual)",
+      "recommended_frequency": "Once a year",
+      "domains": {
+        "GM": [
+          {
+            "number": 1,
+            "title": "Climbs on chair or elevated furniture without help",
+            "item_id": "RECORD2-GM-01",
+            "domain_code": "GM",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 2,
+            "title": "Walks backwards",
+            "item_id": "RECORD2-GM-02",
+            "domain_code": "GM",
+            "procedure": "Ask the child to walk backwards by demonstrating this. Credit if the child is able to walk backwards without falling and holding on to anything. Parental report will suffice."
+          },
+          {
+            "number": 3,
+            "title": "Runs without tripping or falling",
+            "item_id": "RECORD2-GM-03",
+            "domain_code": "GM",
+            "procedure": "Credit if the child can run fast and smoothly without tripping or falling."
+          },
+          {
+            "number": 4,
+            "title": "Walks down stairs, two feet on each step, with one hand held",
+            "item_id": "RECORD2-GM-04",
+            "domain_code": "GM",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 5,
+            "title": "Walks upstairs holding handrail, two feet on each step",
+            "item_id": "RECORD2-GM-05",
+            "domain_code": "GM",
+            "procedure": "on each step Place a toy in the middle of the step and ask the child to walk up the stairs to get the toy. Credit if the child walks up the stairs using the handrail or wall for support and places both feet on each step before stepping on the next one. Parental report will suffice."
+          },
+          {
+            "number": 6,
+            "title": "Walks upstairs with alternate feet without holding handrail",
+            "item_id": "RECORD2-GM-06",
+            "domain_code": "GM",
+            "procedure": "holding onto a handrail Place a toy in the middle of the step and ask the child to walk upstairs to get the toy. Credit if the child walks upstairs, alternating his feet as he steps on each successive step without holding on to the handrail or wall for support. Parental report will suffice."
+          },
+          {
+            "number": 7,
+            "title": "Walks downstairs with alternate feet without holding handrail",
+            "item_id": "RECORD2-GM-07",
+            "domain_code": "GM",
+            "procedure": "holding onto a handrail Place a toy in the middle of the step and ask the child to walk downstairs to get the toy. Credit if the child walks down- stairs, alternating his feet as he steps on each successive step without holding onto the handrail or wall for support. Do not give credit if the child places both feet on the step or uses the handrail or wall for support. Parental report will suffice."
+          },
+          {
+            "number": 8,
+            "title": "Moves body part as directed",
+            "item_id": "RECORD2-GM-08",
+            "domain_code": "GM",
+            "procedure": "Ask the child to raise both arms."
+          },
+          {
+            "number": 9,
+            "title": "Jumps up",
+            "item_id": "RECORD2-GM-09",
+            "domain_code": "GM",
+            "procedure": "See examiner guide / parental report as applicable."
+          },
+          {
+            "number": 10,
+            "title": "Throws ball overhead with direction",
+            "item_id": "RECORD2-GM-10",
+            "domain_code": "GM",
+            "procedure": "Give the child the ball and stand at least 3 feet away from him. Ask the child to throw the ball to you using an overhand throw. You may show the child how to do it. Credit if the child throws the ball within your arm\u2019s reach between your knees and head using an overhand throw and not sideways or underhand."
+          },
+          {
+            "number": 11,
+            "title": "Hops one to three steps on preferred foot",
+            "item_id": "RECORD2-GM-11",
+            "domain_code": "GM",
+            "procedure": "Ask the child to lift his foot and hop at least three times on his preferred foot. Credit if the child is able to hop at least three times on his preferred foot without holding on to anything."
+          },
+          {
+            "number": 12,
+            "title": "Jumps and turns",
+            "item_id": "RECORD2-GM-12",
+            "domain_code": "GM",
+            "procedure": "Ask the child to jump while making a half-turn. Credit if the child is able to do this without tripping or falling."
+          },
+          {
+            "number": 13,
+            "title": "Dances patterns / joins group movement activities",
+            "item_id": "RECORD2-GM-13",
+            "domain_code": "GM",
+            "procedure": "Parental report will suffice."
+          }
+        ],
+        "FM": [
+          {
+            "number": 1,
+            "title": "Uses all five fingers to get small object from surface (raking)",
+            "item_id": "RECORD2-FM-01",
+            "domain_code": "FM",
+            "procedure": "Seat the child on the parent\u2019s lap with his elbows at level with the tabletop and his hands on the table or flat surface. Drop a small toy in front of him and attract his attention by pointing to the toy or tapping the table/flat surface. Credit if the child picks up the toy, using all five fingers as if raking."
+          },
+          {
+            "number": 2,
+            "title": "Picks up objects with thumb and index finger (pincer)",
+            "item_id": "RECORD2-FM-02",
+            "domain_code": "FM",
+            "procedure": "Attract his attention by tapping near the toy/food. Credit if the child uses the tips of his thumb and index or forefinger to pick up the toy/food."
+          },
+          {
+            "number": 3,
+            "title": "Displays a definite hand preference",
+            "item_id": "RECORD2-FM-03",
+            "domain_code": "FM",
+            "procedure": "Place the toy directly in front of the child at midline (not to his left or his right) and ask him to reach for this. Credit if he uses the same hand two out of three times. Parental report will suffice."
+          },
+          {
+            "number": 4,
+            "title": "Puts small objects in/out of container",
+            "item_id": "RECORD2-FM-04",
+            "domain_code": "FM",
+            "procedure": "This must be elicited by the interviewer."
+          },
+          {
+            "number": 5,
+            "title": "Holds crayon with all fingers making a fist (palmar grasp)",
+            "item_id": "RECORD2-FM-05",
+            "domain_code": "FM",
+            "procedure": "Present the child with a crayon and have him get this. Credit grasp) if he holds it by wrapping all five fingers around as if making a fist. Automatically credit this item if he uses the tips of all five fingers or his thumb, index, and middle fingers. This must be elicited by the interviewer."
+          },
+          {
+            "number": 6,
+            "title": "Unscrews the lid of a container",
+            "item_id": "RECORD2-FM-06",
+            "domain_code": "FM",
+            "procedure": "This must be elicited by the interviewer. food"
+          },
+          {
+            "number": 7,
+            "title": "Scribbles spontaneously",
+            "item_id": "RECORD2-FM-07",
+            "domain_code": "FM",
+            "procedure": "Place a paper and pencil/crayon on the table or flat surface and ask the child to draw anything he wants without showing him what to do. Credit if the child uses the tips of his thumb and any of his other fingertips to grasp the pencil/crayon and makes purposeful marks on the paper (not accidental marks)."
+          },
+          {
+            "number": 8,
+            "title": "Scribbles vertical and horizontal lines",
+            "item_id": "RECORD2-FM-08",
+            "domain_code": "FM",
+            "procedure": "Place a piece paper and pencil/crayon on the table or flat surface and ask the child to draw vertical and horizontal lines after you have demonstrated these to him. Credit if the child produces a vertical or horizontal line that is at least 2 inches long and does not deviate or vary from your vertical line by more than 30 degrees. The lines may be wavy but not broken."
+          },
+          {
+            "number": 9,
+            "title": "Draws circle purposefully",
+            "item_id": "RECORD2-FM-09",
+            "domain_code": "FM",
+            "procedure": "Place a paper and pencil/crayon on the table or flat surface and ask the child to draw a circle or a ball after you have demonstrated it to him. Credit if the child produces any curve that is closed or nearly closed. Continuous spiral motions are not credited."
+          },
+          {
+            "number": 10,
+            "title": "Draws a human figure",
+            "item_id": "RECORD2-FM-10",
+            "domain_code": "FM",
+            "procedure": "Give the child a pencil and a paper and ask him to draw a picture of a person. Credit if the child has drawn three or more body parts. A pair is considered one part (eyes, ears, arms, hands, legs, and feet) and must be drawn in pairs to get full credit unless the drawing is in profile."
+          },
+          {
+            "number": 11,
+            "title": "Draws a house using basic shapes",
+            "item_id": "RECORD2-FM-11",
+            "domain_code": "FM",
+            "procedure": "Give the child a pencil and paper and ask him to draw a picture of a house. Credit if the child has drawn at least the roof, main frame, and a door or window."
+          }
+        ],
+        "SH": [
+          {
+            "number": 1,
+            "title": "Feeds self with fingers",
+            "item_id": "RECORD2-SH-01",
+            "domain_code": "SH",
+            "procedure": "This must be elicited by the interviewer. bread) using fingers"
+          },
+          {
+            "number": 2,
+            "title": "Helps hold a cup for drinking",
+            "item_id": "RECORD2-SH-02",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 3,
+            "title": "Feeds self using spoon with spilling",
+            "item_id": "RECORD2-SH-03",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 4,
+            "title": "Drinks from cup with some spillage",
+            "item_id": "RECORD2-SH-04",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 5,
+            "title": "Feeds self using spoon with little spilling",
+            "item_id": "RECORD2-SH-05",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 6,
+            "title": "Drinks from cup without help",
+            "item_id": "RECORD2-SH-06",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 7,
+            "title": "Feeds self using spoon without spilling",
+            "item_id": "RECORD2-SH-07",
+            "domain_code": "SH",
+            "procedure": "drinking"
+          },
+          {
+            "number": 8,
+            "title": "Drinks from cup without spillage",
+            "item_id": "RECORD2-SH-08",
+            "domain_code": "SH",
+            "procedure": "spillage some spillage. The cup should not have a lid or spout."
+          },
+          {
+            "number": 9,
+            "title": "Drinks from cup independently",
+            "item_id": "RECORD2-SH-09",
+            "domain_code": "SH",
+            "procedure": "This must be elicited by the interviewer."
+          },
+          {
+            "number": 10,
+            "title": "Gets drink for self unassisted",
+            "item_id": "RECORD2-SH-10",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 11,
+            "title": "Pours from pitcher without spillage",
+            "item_id": "RECORD2-SH-11",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 12,
+            "title": "Prepares own food/snack",
+            "item_id": "RECORD2-SH-12",
+            "domain_code": "SH",
+            "procedure": "without help except for getting items that are hard to reach (e.g., bowl spoon)."
+          },
+          {
+            "number": 13,
+            "title": "Prepares meals for younger siblings/family when no adult is around",
+            "item_id": "RECORD2-SH-13",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 14,
+            "title": "Participates when being dressed (raises arms, lifts leg)",
+            "item_id": "RECORD2-SH-14",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 15,
+            "title": "Pulls down gartered short pants",
+            "item_id": "RECORD2-SH-15",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 16,
+            "title": "Removes sando / undershirt",
+            "item_id": "RECORD2-SH-16",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 17,
+            "title": "Dresses without assistance except for buttons and tying",
+            "item_id": "RECORD2-SH-17",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 18,
+            "title": "Dresses without assistance including buttons and tying",
+            "item_id": "RECORD2-SH-18",
+            "domain_code": "SH",
+            "procedure": "Have the child demonstrate how to button and tie to credit tying this item. Toilet Training sub-domain"
+          },
+          {
+            "number": 19,
+            "title": "Informs adult only after already urinated or moved bowels",
+            "item_id": "RECORD2-SH-19",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 20,
+            "title": "Informs adult of need to urinate or move bowels so can be brought to designated place",
+            "item_id": "RECORD2-SH-20",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 21,
+            "title": "Goes to designated place to toilet but sometimes still does this in underpants",
+            "item_id": "RECORD2-SH-21",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 22,
+            "title": "Goes to designated place to toilet independently",
+            "item_id": "RECORD2-SH-22",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 23,
+            "title": "Wipes/cleans self after a bowel movement",
+            "item_id": "RECORD2-SH-23",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 24,
+            "title": "Participates when bathing (soaps self)",
+            "item_id": "RECORD2-SH-24",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 25,
+            "title": "Washes and dries hands without any help",
+            "item_id": "RECORD2-SH-25",
+            "domain_code": "SH",
+            "procedure": "without any help without any help or supervision except to turn on/off faucets that are out of reach."
+          },
+          {
+            "number": 26,
+            "title": "Washes face without any help",
+            "item_id": "RECORD2-SH-26",
+            "domain_code": "SH",
+            "procedure": "help without any help or supervision except to turn on/off faucets that are out of reach."
+          },
+          {
+            "number": 27,
+            "title": "Bathes without any help",
+            "item_id": "RECORD2-SH-27",
+            "domain_code": "SH",
+            "procedure": "Parental report will suffice."
+          }
+        ],
+        "RL": [
+          {
+            "number": 1,
+            "title": "Points to a family member when asked",
+            "item_id": "RECORD2-RL-01",
+            "domain_code": "RL",
+            "procedure": "Ask the child to point to his mother/caregiver. Credit if he do so does so."
+          },
+          {
+            "number": 2,
+            "title": "Points to five body parts on himself when asked",
+            "item_id": "RECORD2-RL-02",
+            "domain_code": "RL",
+            "procedure": "Have the child point to his eyes, nose, mouth, hands and feet do so or other body part. Credit if he can point to all these."
+          },
+          {
+            "number": 3,
+            "title": "Points to five named pictures/objects when asked",
+            "item_id": "RECORD2-RL-03",
+            "domain_code": "RL",
+            "procedure": "Show the child a picture book (one picture per page) and ask him to point to the picture by saying, \u201cWhere\u2019s the ______?\u201d Credit if the child can use his finger to point to at least five pictures."
+          },
+          {
+            "number": 4,
+            "title": "Follows one-step command involving location (in, on, under)",
+            "item_id": "RECORD2-RL-04",
+            "domain_code": "RL",
+            "procedure": "Ask the child to put a block/toy under the table; on the table; in, on, under, etc.) in the bag. Do not point or use gestures when giving the instructions. Credit if the child is able to follow at least one of the instructions."
+          },
+          {
+            "number": 5,
+            "title": "Follows two-step commands",
+            "item_id": "RECORD2-RL-05",
+            "domain_code": "RL",
+            "procedure": "Ask the child to get a block/toy from under the table and then place it on the table. Do not point or use gestures when giving the instruction. Credit if the child is able to follow."
+          }
+        ],
+        "EL": [
+          {
+            "number": 1,
+            "title": "Uses five to 20 meaningful words",
+            "item_id": "RECORD2-EL-01",
+            "domain_code": "EL",
+            "procedure": "Ask the caregiver if the child can clearly say five to six words aside from mama and papa. This will be the minimum number."
+          },
+          {
+            "number": 2,
+            "title": "Uses pronouns (I, me, ako, akin)",
+            "item_id": "RECORD2-EL-02",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 3,
+            "title": "Uses two- to three-word verb-noun combinations",
+            "item_id": "RECORD2-EL-03",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 4,
+            "title": "Names objects in pictures",
+            "item_id": "RECORD2-EL-04",
+            "domain_code": "EL",
+            "procedure": "Show the child a picture book, point to an object in the book, then ask him to name it (e.g., \u201cAno \u2018to?\u201d). Credit if the child can say the correct name of at least four objects."
+          },
+          {
+            "number": 5,
+            "title": "Speaks in grammatically correct two- to three-word sentences",
+            "item_id": "RECORD2-EL-05",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 6,
+            "title": "Asks 'what' questions",
+            "item_id": "RECORD2-EL-06",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 7,
+            "title": "Asks 'who' and 'why' questions",
+            "item_id": "RECORD2-EL-07",
+            "domain_code": "EL",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 8,
+            "title": "Gives account of recent experiences (with prompting) in order of occurrence",
+            "item_id": "RECORD2-EL-08",
+            "domain_code": "EL",
+            "procedure": "Ask the caregiver if the child can recount experiences (with recent experiences in correct sequence and using past tenses prompting) in order of correctly. The caregiver can prompt him so he can complete occurrence using past what he is talking about (e.g., Tapos ano pang nangyari?). tense Parental report will suffice."
+          }
+        ],
+        "COG": [
+          {
+            "number": 1,
+            "title": "Looks in the direction of a fallen object",
+            "item_id": "RECORD2-COG-01",
+            "domain_code": "COG",
+            "procedure": "With the child seated, get his attention and drop a spoon/ ball in front of him. Then observe if his eyes look down as it falls. Credit if the child can bring his eyes and head down as the object falls."
+          },
+          {
+            "number": 2,
+            "title": "Looks for a partially hidden object",
+            "item_id": "RECORD2-COG-02",
+            "domain_code": "COG",
+            "procedure": "With the child facing you, partially hide a ball behind a small towel and observe if he will look for it and find it. Credit if the child pulls the towel and gets the hidden ball."
+          },
+          {
+            "number": 3,
+            "title": "Imitates behavior just seen a few minutes earlier",
+            "item_id": "RECORD2-COG-03",
+            "domain_code": "COG",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 4,
+            "title": "Offers an object but will not release it",
+            "item_id": "RECORD2-COG-04",
+            "domain_code": "COG",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 5,
+            "title": "Looks for a completely hidden object",
+            "item_id": "RECORD2-COG-05",
+            "domain_code": "COG",
+            "procedure": "With the child facing you, hide a ball completely under a small towel and observe if he will look under the towel. Credit if he looks under the towel and gets the hidden ball."
+          },
+          {
+            "number": 6,
+            "title": "Exhibits simple pretend play",
+            "item_id": "RECORD2-COG-06",
+            "domain_code": "COG",
+            "procedure": "sleep) If the child is a girl, carry the doll and try to rock it to sleep. If the child is a boy, move the toy car/block back and forth. Credit if the child can imitate this."
+          },
+          {
+            "number": 7,
+            "title": "Matches objects",
+            "item_id": "RECORD2-COG-07",
+            "domain_code": "COG",
+            "procedure": "Give the child the other set of objects arranged in random order. Demonstrate a matching response (e.g., spoon to spoon) then return the objects to the child. Say, \u201cPut each object on the one that is just like it.\u201d Credit if the child can match the objects correctly."
+          },
+          {
+            "number": 8,
+            "title": "Matches two to three colors",
+            "item_id": "RECORD2-COG-08",
+            "domain_code": "COG",
+            "procedure": "Give the child the other crayons arranged in random order. Demonstrate a matching response (e.g., red crayon with another red crayon) then return the crayons to the child. Say, \u201cPut each crayon on the one that is just like it.\u201d Credit if the child can match all colors correctly."
+          },
+          {
+            "number": 9,
+            "title": "Matches pictures",
+            "item_id": "RECORD2-COG-09",
+            "domain_code": "COG",
+            "procedure": "Give the child the other pictures arranged in random order. Demonstrate a matching response (e.g., picture of an apple with another apple) then return the pictures to the child. Say, \u201cPut each picture on the one that is just like it.\u201d Credit if the child can match all the pictures correctly."
+          },
+          {
+            "number": 10,
+            "title": "Sorts based on one attribute (color, shape, or size)",
+            "item_id": "RECORD2-COG-10",
+            "domain_code": "COG",
+            "procedure": "Show the child the shapes. Tell the child, \u201cPut together the ones that are the same.\u201d After the child sorts and groups the shapes, point to the ones with the same shape and ask, \u201cWhy did you put these together?\u201d Credit if the child can group the same shapes and say why they are the same (pareho sila, pareho sila ng hugis/shape, puro sila bilog)."
+          }
+        ],
+        "SE": [
+          {
+            "number": 1,
+            "title": "Friendly with strangers but may show slight anxiety",
+            "item_id": "RECORD2-SE-01",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 2,
+            "title": "Plays alone but likes to be near familiar adults/siblings",
+            "item_id": "RECORD2-SE-02",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 3,
+            "title": "Laughs or squeals aloud in play",
+            "item_id": "RECORD2-SE-03",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 4,
+            "title": "Plays peek-a-boo / simple interactive games",
+            "item_id": "RECORD2-SE-04",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 5,
+            "title": "Rolls ball interactively",
+            "item_id": "RECORD2-SE-05",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 6,
+            "title": "Hugs or cuddles toys",
+            "item_id": "RECORD2-SE-06",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 7,
+            "title": "Responds with pleasure to friendly people",
+            "item_id": "RECORD2-SE-07",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 8,
+            "title": "Shows concern when another child is hurt or crying",
+            "item_id": "RECORD2-SE-08",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 9,
+            "title": "Shares toys with others",
+            "item_id": "RECORD2-SE-09",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 10,
+            "title": "Imitates adult activities",
+            "item_id": "RECORD2-SE-10",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 11,
+            "title": "Identifies feelings in self or others",
+            "item_id": "RECORD2-SE-11",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 12,
+            "title": "Appropriately uses cultural gestures of greeting (mano, bless, kiss)",
+            "item_id": "RECORD2-SE-12",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 13,
+            "title": "Comforts playmates/siblings in distress",
+            "item_id": "RECORD2-SE-13",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 14,
+            "title": "Persists when faced with a problem or obstacle",
+            "item_id": "RECORD2-SE-14",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 15,
+            "title": "Helps with family chores",
+            "item_id": "RECORD2-SE-15",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 16,
+            "title": "Curious about environment but knows when to stop asking questions",
+            "item_id": "RECORD2-SE-16",
+            "domain_code": "SE",
+            "procedure": "environment but knows but knows when he is being \u201cmakulit\u201d about the topic. when to stop asking questions of adults"
+          },
+          {
+            "number": 17,
+            "title": "Waits for his turn",
+            "item_id": "RECORD2-SE-17",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 18,
+            "title": "Asks permission to play with toy being used by another",
+            "item_id": "RECORD2-SE-18",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 19,
+            "title": "Defends possessions appropriately",
+            "item_id": "RECORD2-SE-19",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 20,
+            "title": "Plays organized group games fairly",
+            "item_id": "RECORD2-SE-20",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 21,
+            "title": "Can talk about complex feelings (anger, sadness, worry)",
+            "item_id": "RECORD2-SE-21",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 22,
+            "title": "Honors a simple bargain with caregiver",
+            "item_id": "RECORD2-SE-22",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 23,
+            "title": "Watches responsibly over younger siblings/family members",
+            "item_id": "RECORD2-SE-23",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          },
+          {
+            "number": 24,
+            "title": "Cooperates with adults and peers in group situations",
+            "item_id": "RECORD2-SE-24",
+            "domain_code": "SE",
+            "procedure": "Parental report will suffice."
+          }
+        ]
+      }
+    }
+  }
+}

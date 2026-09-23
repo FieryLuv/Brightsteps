@@ -1,0 +1,5174 @@
+{
+  "version": "0.4.0-standard-scores",
+  "source": "ECCD Council \u2014 Table of Scaled Scores and Standard Scores; How to Use / Guidebook interpretation bands",
+  "notes": [
+    "Scaled score tables map domain raw score ranges \u2192 scaled score 1\u201319, by child age band.",
+    "Domain order in tables: GM, FM, SH, RL, EL, COG, SE.",
+    "Tables are filled incrementally; empty age bands return null scaled scores until digitized.",
+    "Interpretation bands below are official (ECCD Checklist Manual / Guidebook)."
+  ],
+  "domainOrder": [
+    "GM",
+    "FM",
+    "SH",
+    "RL",
+    "EL",
+    "COG",
+    "SE"
+  ],
+  "domainNames": {
+    "GM": "Gross Motor",
+    "FM": "Fine Motor",
+    "SH": "Self-Help",
+    "RL": "Receptive Language",
+    "EL": "Expressive Language",
+    "COG": "Cognitive",
+    "SE": "Social-Emotional"
+  },
+  "scaledScoreInterpretation": [
+    {
+      "min": 1,
+      "max": 3,
+      "code": "MONITOR_3MO",
+      "label": "Monitor after 3 months",
+      "description": "Development in the domain must be monitored after 3 months",
+      "level": "needs_support"
+    },
+    {
+      "min": 4,
+      "max": 6,
+      "code": "MONITOR_6MO",
+      "label": "Monitor after 6 months",
+      "description": "Development in the domain must be monitored after 6 months",
+      "level": "emerging"
+    },
+    {
+      "min": 7,
+      "max": 13,
+      "code": "AVERAGE",
+      "label": "Average development",
+      "description": "Average development in the domain",
+      "level": "age_appropriate"
+    },
+    {
+      "min": 14,
+      "max": 16,
+      "code": "SLIGHTLY_ADVANCED",
+      "label": "Slightly advanced",
+      "description": "Suggests slightly advanced development in the domain",
+      "level": "advanced"
+    },
+    {
+      "min": 17,
+      "max": 19,
+      "code": "HIGHLY_ADVANCED",
+      "label": "Highly advanced",
+      "description": "Suggests highly advanced development in the domain",
+      "level": "advanced"
+    }
+  ],
+  "standardScoreInterpretation": [
+    {
+      "min": 0,
+      "max": 69,
+      "code": "MONITOR_3MO",
+      "label": "Monitor after 3 months",
+      "description": "Overall development must be monitored after 3 months",
+      "level": "needs_support"
+    },
+    {
+      "min": 70,
+      "max": 79,
+      "code": "MONITOR_6MO",
+      "label": "Monitor after 6 months",
+      "description": "Overall development must be monitored after 6 months",
+      "level": "emerging"
+    },
+    {
+      "min": 80,
+      "max": 119,
+      "code": "AVERAGE",
+      "label": "Average overall development",
+      "description": "Average overall development",
+      "level": "age_appropriate"
+    },
+    {
+      "min": 120,
+      "max": 129,
+      "code": "SLIGHTLY_ADVANCED",
+      "label": "Slightly advanced overall",
+      "description": "Slightly advanced overall development",
+      "level": "advanced"
+    },
+    {
+      "min": 130,
+      "max": 200,
+      "code": "HIGHLY_ADVANCED",
+      "label": "Highly advanced overall",
+      "description": "Highly advanced overall development",
+      "level": "advanced"
+    }
+  ],
+  "ageBands": {
+    "record1": [
+      {
+        "id": "r1_0_3",
+        "label": "0\u20133 months",
+        "minMonths": 0,
+        "maxMonths": 3.99
+      },
+      {
+        "id": "r1_4_6",
+        "label": "4\u20136 months",
+        "minMonths": 4,
+        "maxMonths": 6.99
+      },
+      {
+        "id": "r1_7_9",
+        "label": "7\u20139 months",
+        "minMonths": 7,
+        "maxMonths": 9.99
+      },
+      {
+        "id": "r1_10_12",
+        "label": "10\u201312 months",
+        "minMonths": 10,
+        "maxMonths": 12.99
+      },
+      {
+        "id": "r1_13_18",
+        "label": "13\u201318 months",
+        "minMonths": 13,
+        "maxMonths": 18.99
+      },
+      {
+        "id": "r1_19_24",
+        "label": "19\u201324 months",
+        "minMonths": 19,
+        "maxMonths": 24.99
+      },
+      {
+        "id": "r1_25_30",
+        "label": "25\u201330 months",
+        "minMonths": 25,
+        "maxMonths": 30.99
+      },
+      {
+        "id": "r1_31_36",
+        "label": "31\u201336 months",
+        "minMonths": 31,
+        "maxMonths": 36.99
+      }
+    ],
+    "record2": [
+      {
+        "id": "r2_37_48",
+        "label": "3.1\u20134.0 years",
+        "minMonths": 37,
+        "maxMonths": 48.99
+      },
+      {
+        "id": "r2_49_60",
+        "label": "4.1\u20135.0 years",
+        "minMonths": 49,
+        "maxMonths": 60.99
+      },
+      {
+        "id": "r2_61_71",
+        "label": "5.1\u20135.11 years",
+        "minMonths": 61,
+        "maxMonths": 71.99
+      }
+    ]
+  },
+  "scaledScoreTables": {
+    "r1_0_3": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scaled Scores \u2014 Child's Record 1 (r1_0_3)",
+      "note": "Digitized from official scan OCR. Spot-check recommended before production.",
+      "rows": [
+        {
+          "scaled": 1,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 2,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 3,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 4,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 5,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 6,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            0,
+            0
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 7,
+          "GM": [
+            0,
+            0
+          ],
+          "FM": null,
+          "SH": [
+            1,
+            1
+          ],
+          "RL": null,
+          "EL": [
+            0,
+            0
+          ],
+          "COG": [
+            0,
+            0
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 8,
+          "GM": null,
+          "FM": [
+            0,
+            0
+          ],
+          "SH": null,
+          "RL": [
+            0,
+            0
+          ],
+          "EL": [
+            1,
+            1
+          ],
+          "COG": [
+            1,
+            1
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 9,
+          "GM": [
+            1,
+            1
+          ],
+          "FM": null,
+          "SH": [
+            2,
+            2
+          ],
+          "RL": [
+            1,
+            1
+          ],
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 10,
+          "GM": [
+            2,
+            2
+          ],
+          "FM": [
+            1,
+            1
+          ],
+          "SH": [
+            3,
+            3
+          ],
+          "RL": null,
+          "EL": [
+            2,
+            2
+          ],
+          "COG": [
+            2,
+            2
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 11,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": [
+            2,
+            2
+          ],
+          "EL": [
+            3,
+            3
+          ],
+          "COG": [
+            3,
+            3
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 12,
+          "GM": [
+            3,
+            3
+          ],
+          "FM": null,
+          "SH": [
+            4,
+            4
+          ],
+          "RL": [
+            3,
+            3
+          ],
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 13,
+          "GM": [
+            4,
+            4
+          ],
+          "FM": [
+            2,
+            2
+          ],
+          "SH": [
+            5,
+            5
+          ],
+          "RL": null,
+          "EL": [
+            4,
+            4
+          ],
+          "COG": [
+            4,
+            4
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 14,
+          "GM": [
+            5,
+            5
+          ],
+          "FM": null,
+          "SH": [
+            6,
+            6
+          ],
+          "RL": [
+            4,
+            4
+          ],
+          "EL": [
+            5,
+            5
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 15,
+          "GM": null,
+          "FM": [
+            3,
+            3
+          ],
+          "SH": null,
+          "RL": [
+            5,
+            5
+          ],
+          "EL": null,
+          "COG": [
+            5,
+            5
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 16,
+          "GM": [
+            6,
+            6
+          ],
+          "FM": null,
+          "SH": [
+            7,
+            7
+          ],
+          "RL": null,
+          "EL": [
+            6,
+            6
+          ],
+          "COG": [
+            6,
+            6
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 17,
+          "GM": [
+            7,
+            7
+          ],
+          "FM": null,
+          "SH": [
+            8,
+            15
+          ],
+          "RL": [
+            6,
+            6
+          ],
+          "EL": [
+            7,
+            7
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 18,
+          "GM": [
+            8,
+            22
+          ],
+          "FM": [
+            4,
+            14
+          ],
+          "SH": null,
+          "RL": [
+            7,
+            22
+          ],
+          "EL": null,
+          "COG": [
+            7,
+            7
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 19,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": [
+            8,
+            18
+          ],
+          "COG": [
+            8,
+            14
+          ],
+          "SE": null
+        }
+      ]
+    },
+    "r1_4_6": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scaled Scores \u2014 Child's Record 1 (r1_4_6)",
+      "note": "Digitized from official scan OCR. Spot-check recommended before production.",
+      "rows": [
+        {
+          "scaled": 1,
+          "GM": [
+            0,
+            1
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": [
+            0,
+            2
+          ],
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 2,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            0,
+            0
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 3,
+          "GM": [
+            2,
+            2
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            1,
+            1
+          ],
+          "SE": [
+            0,
+            0
+          ]
+        },
+        {
+          "scaled": 4,
+          "GM": null,
+          "FM": [
+            0,
+            0
+          ],
+          "SH": null,
+          "RL": [
+            3,
+            3
+          ],
+          "EL": [
+            0,
+            0
+          ],
+          "COG": null,
+          "SE": [
+            1,
+            1
+          ]
+        },
+        {
+          "scaled": 5,
+          "GM": [
+            3,
+            3
+          ],
+          "FM": null,
+          "SH": [
+            0,
+            0
+          ],
+          "RL": null,
+          "EL": [
+            1,
+            1
+          ],
+          "COG": [
+            2,
+            2
+          ],
+          "SE": [
+            2,
+            2
+          ]
+        },
+        {
+          "scaled": 6,
+          "GM": [
+            4,
+            4
+          ],
+          "FM": [
+            1,
+            1
+          ],
+          "SH": null,
+          "RL": [
+            4,
+            4
+          ],
+          "EL": [
+            2,
+            2
+          ],
+          "COG": [
+            3,
+            3
+          ],
+          "SE": [
+            3,
+            3
+          ]
+        },
+        {
+          "scaled": 7,
+          "GM": null,
+          "FM": [
+            2,
+            2
+          ],
+          "SH": [
+            1,
+            1
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            4,
+            4
+          ],
+          "SE": [
+            4,
+            4
+          ]
+        },
+        {
+          "scaled": 8,
+          "GM": [
+            5,
+            5
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": [
+            3,
+            3
+          ],
+          "COG": [
+            5,
+            5
+          ],
+          "SE": [
+            5,
+            5
+          ]
+        },
+        {
+          "scaled": 9,
+          "GM": [
+            6,
+            6
+          ],
+          "FM": [
+            3,
+            3
+          ],
+          "SH": [
+            2,
+            2
+          ],
+          "RL": [
+            5,
+            5
+          ],
+          "EL": [
+            4,
+            4
+          ],
+          "COG": null,
+          "SE": [
+            6,
+            6
+          ]
+        },
+        {
+          "scaled": 10,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": [
+            5,
+            5
+          ],
+          "COG": [
+            6,
+            6
+          ],
+          "SE": [
+            7,
+            7
+          ]
+        },
+        {
+          "scaled": 11,
+          "GM": [
+            7,
+            7
+          ],
+          "FM": [
+            4,
+            4
+          ],
+          "SH": [
+            3,
+            3
+          ],
+          "RL": [
+            6,
+            6
+          ],
+          "EL": [
+            6,
+            6
+          ],
+          "COG": [
+            7,
+            7
+          ],
+          "SE": [
+            8,
+            8
+          ]
+        },
+        {
+          "scaled": 12,
+          "GM": null,
+          "FM": [
+            5,
+            5
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            7,
+            7
+          ],
+          "COG": [
+            8,
+            8
+          ],
+          "SE": [
+            9,
+            9
+          ]
+        },
+        {
+          "scaled": 13,
+          "GM": [
+            8,
+            8
+          ],
+          "FM": null,
+          "SH": [
+            4,
+            4
+          ],
+          "RL": null,
+          "EL": [
+            8,
+            8
+          ],
+          "COG": null,
+          "SE": [
+            10,
+            10
+          ]
+        },
+        {
+          "scaled": 14,
+          "GM": [
+            9,
+            9
+          ],
+          "FM": [
+            6,
+            6
+          ],
+          "SH": null,
+          "RL": [
+            7,
+            7
+          ],
+          "EL": [
+            9,
+            9
+          ],
+          "COG": [
+            9,
+            9
+          ],
+          "SE": [
+            11,
+            11
+          ]
+        },
+        {
+          "scaled": 15,
+          "GM": null,
+          "FM": [
+            7,
+            7
+          ],
+          "SH": [
+            5,
+            5
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            10,
+            10
+          ],
+          "SE": [
+            12,
+            12
+          ]
+        },
+        {
+          "scaled": 16,
+          "GM": [
+            10,
+            10
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": [
+            8,
+            8
+          ],
+          "EL": [
+            10,
+            10
+          ],
+          "COG": [
+            11,
+            11
+          ],
+          "SE": [
+            13,
+            13
+          ]
+        },
+        {
+          "scaled": 17,
+          "GM": [
+            11,
+            11
+          ],
+          "FM": [
+            8,
+            8
+          ],
+          "SH": [
+            6,
+            6
+          ],
+          "RL": null,
+          "EL": [
+            11,
+            11
+          ],
+          "COG": null,
+          "SE": [
+            14,
+            14
+          ]
+        },
+        {
+          "scaled": 18,
+          "GM": null,
+          "FM": [
+            9,
+            14
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            12,
+            12
+          ],
+          "COG": [
+            12,
+            12
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 19,
+          "GM": [
+            12,
+            22
+          ],
+          "FM": null,
+          "SH": [
+            7,
+            10
+          ],
+          "RL": [
+            9,
+            15
+          ],
+          "EL": [
+            13,
+            22
+          ],
+          "COG": [
+            13,
+            18
+          ],
+          "SE": null
+        }
+      ]
+    },
+    "r1_7_9": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scaled Scores \u2014 Child's Record 1 (r1_7_9)",
+      "note": "Digitized from official scan OCR. Spot-check recommended before production.",
+      "rows": [
+        {
+          "scaled": 1,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            0,
+            1
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            0,
+            1
+          ],
+          "SE": [
+            0,
+            2
+          ]
+        },
+        {
+          "scaled": 2,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": [
+            0,
+            3
+          ],
+          "EL": [
+            0,
+            0
+          ],
+          "COG": [
+            2,
+            2
+          ],
+          "SE": [
+            3,
+            3
+          ]
+        },
+        {
+          "scaled": 3,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": [
+            1,
+            1
+          ],
+          "COG": [
+            3,
+            3
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 4,
+          "GM": [
+            0,
+            5
+          ],
+          "FM": [
+            0,
+            1
+          ],
+          "SH": [
+            2,
+            2
+          ],
+          "RL": null,
+          "EL": [
+            2,
+            2
+          ],
+          "COG": null,
+          "SE": [
+            4,
+            4
+          ]
+        },
+        {
+          "scaled": 5,
+          "GM": [
+            6,
+            6
+          ],
+          "FM": [
+            2,
+            2
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            3,
+            3
+          ],
+          "COG": [
+            4,
+            4
+          ],
+          "SE": [
+            5,
+            5
+          ]
+        },
+        {
+          "scaled": 6,
+          "GM": null,
+          "FM": [
+            3,
+            3
+          ],
+          "SH": [
+            3,
+            3
+          ],
+          "RL": null,
+          "EL": [
+            4,
+            4
+          ],
+          "COG": [
+            5,
+            5
+          ],
+          "SE": [
+            6,
+            6
+          ]
+        },
+        {
+          "scaled": 7,
+          "GM": [
+            7,
+            7
+          ],
+          "FM": [
+            4,
+            4
+          ],
+          "SH": null,
+          "RL": [
+            5,
+            5
+          ],
+          "EL": [
+            5,
+            5
+          ],
+          "COG": [
+            6,
+            6
+          ],
+          "SE": [
+            7,
+            7
+          ]
+        },
+        {
+          "scaled": 8,
+          "GM": [
+            8,
+            8
+          ],
+          "FM": null,
+          "SH": [
+            4,
+            4
+          ],
+          "RL": null,
+          "EL": [
+            6,
+            6
+          ],
+          "COG": [
+            7,
+            7
+          ],
+          "SE": [
+            8,
+            8
+          ]
+        },
+        {
+          "scaled": 9,
+          "GM": [
+            9,
+            9
+          ],
+          "FM": [
+            5,
+            5
+          ],
+          "SH": null,
+          "RL": [
+            6,
+            6
+          ],
+          "EL": [
+            7,
+            7
+          ],
+          "COG": [
+            8,
+            8
+          ],
+          "SE": [
+            9,
+            9
+          ]
+        },
+        {
+          "scaled": 10,
+          "GM": [
+            10,
+            10
+          ],
+          "FM": [
+            6,
+            6
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            8,
+            8
+          ],
+          "COG": [
+            9,
+            9
+          ],
+          "SE": [
+            10,
+            10
+          ]
+        },
+        {
+          "scaled": 11,
+          "GM": [
+            11,
+            11
+          ],
+          "FM": [
+            7,
+            7
+          ],
+          "SH": [
+            5,
+            5
+          ],
+          "RL": [
+            7,
+            7
+          ],
+          "EL": [
+            9,
+            9
+          ],
+          "COG": [
+            10,
+            10
+          ],
+          "SE": [
+            11,
+            11
+          ]
+        },
+        {
+          "scaled": 12,
+          "GM": [
+            12,
+            12
+          ],
+          "FM": [
+            8,
+            8
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            10,
+            10
+          ],
+          "COG": [
+            11,
+            11
+          ],
+          "SE": [
+            12,
+            12
+          ]
+        },
+        {
+          "scaled": 13,
+          "GM": [
+            13,
+            13
+          ],
+          "FM": null,
+          "SH": [
+            6,
+            6
+          ],
+          "RL": [
+            8,
+            8
+          ],
+          "EL": [
+            11,
+            11
+          ],
+          "COG": [
+            12,
+            12
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 14,
+          "GM": [
+            14,
+            14
+          ],
+          "FM": [
+            9,
+            9
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            12,
+            12
+          ],
+          "COG": [
+            13,
+            13
+          ],
+          "SE": [
+            13,
+            13
+          ]
+        },
+        {
+          "scaled": 15,
+          "GM": [
+            15,
+            15
+          ],
+          "FM": [
+            10,
+            10
+          ],
+          "SH": [
+            7,
+            7
+          ],
+          "RL": null,
+          "EL": [
+            13,
+            13
+          ],
+          "COG": [
+            14,
+            14
+          ],
+          "SE": [
+            14,
+            14
+          ]
+        },
+        {
+          "scaled": 16,
+          "GM": [
+            16,
+            16
+          ],
+          "FM": [
+            11,
+            11
+          ],
+          "SH": null,
+          "RL": [
+            9,
+            9
+          ],
+          "EL": [
+            14,
+            14
+          ],
+          "COG": [
+            15,
+            15
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 17,
+          "GM": [
+            17,
+            17
+          ],
+          "FM": [
+            12,
+            12
+          ],
+          "SH": [
+            8,
+            10
+          ],
+          "RL": null,
+          "EL": [
+            15,
+            22
+          ],
+          "COG": [
+            16,
+            16
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 18,
+          "GM": [
+            18,
+            18
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": [
+            10,
+            15
+          ],
+          "EL": null,
+          "COG": [
+            17,
+            17
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 19,
+          "GM": [
+            19,
+            22
+          ],
+          "FM": [
+            13,
+            14
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            18,
+            18
+          ],
+          "SE": null
+        }
+      ]
+    },
+    "r1_10_12": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scaled Scores \u2014 Child's Record 1 (r1_10_12)",
+      "note": "Digitized from official scan OCR. Spot-check recommended before production.",
+      "rows": [
+        {
+          "scaled": 1,
+          "GM": [
+            0,
+            7
+          ],
+          "FM": null,
+          "SH": [
+            0,
+            2
+          ],
+          "RL": null,
+          "EL": [
+            0,
+            2
+          ],
+          "COG": [
+            0,
+            2
+          ],
+          "SE": [
+            0,
+            4
+          ]
+        },
+        {
+          "scaled": 2,
+          "GM": null,
+          "FM": [
+            0,
+            1
+          ],
+          "SH": null,
+          "RL": [
+            0,
+            3
+          ],
+          "EL": [
+            3,
+            3
+          ],
+          "COG": [
+            3,
+            3
+          ],
+          "SE": [
+            5,
+            5
+          ]
+        },
+        {
+          "scaled": 3,
+          "GM": [
+            8,
+            8
+          ],
+          "FM": [
+            2,
+            2
+          ],
+          "SH": null,
+          "RL": [
+            4,
+            4
+          ],
+          "EL": [
+            4,
+            4
+          ],
+          "COG": [
+            4,
+            4
+          ],
+          "SE": [
+            6,
+            6
+          ]
+        },
+        {
+          "scaled": 4,
+          "GM": [
+            9,
+            9
+          ],
+          "FM": [
+            3,
+            3
+          ],
+          "SH": [
+            3,
+            3
+          ],
+          "RL": null,
+          "EL": [
+            5,
+            5
+          ],
+          "COG": [
+            5,
+            5
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 5,
+          "GM": [
+            10,
+            10
+          ],
+          "FM": [
+            4,
+            4
+          ],
+          "SH": null,
+          "RL": [
+            5,
+            5
+          ],
+          "EL": [
+            6,
+            6
+          ],
+          "COG": [
+            6,
+            6
+          ],
+          "SE": [
+            7,
+            7
+          ]
+        },
+        {
+          "scaled": 6,
+          "GM": [
+            11,
+            11
+          ],
+          "FM": null,
+          "SH": [
+            4,
+            4
+          ],
+          "RL": null,
+          "EL": [
+            7,
+            7
+          ],
+          "COG": [
+            7,
+            7
+          ],
+          "SE": [
+            8,
+            8
+          ]
+        },
+        {
+          "scaled": 7,
+          "GM": null,
+          "FM": [
+            5,
+            5
+          ],
+          "SH": null,
+          "RL": [
+            6,
+            6
+          ],
+          "EL": null,
+          "COG": [
+            8,
+            8
+          ],
+          "SE": [
+            9,
+            9
+          ]
+        },
+        {
+          "scaled": 8,
+          "GM": [
+            12,
+            12
+          ],
+          "FM": [
+            6,
+            6
+          ],
+          "SH": [
+            5,
+            5
+          ],
+          "RL": null,
+          "EL": [
+            8,
+            8
+          ],
+          "COG": [
+            9,
+            9
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 9,
+          "GM": [
+            13,
+            13
+          ],
+          "FM": [
+            7,
+            7
+          ],
+          "SH": null,
+          "RL": [
+            7,
+            7
+          ],
+          "EL": [
+            9,
+            9
+          ],
+          "COG": [
+            10,
+            10
+          ],
+          "SE": [
+            10,
+            11
+          ]
+        },
+        {
+          "scaled": 10,
+          "GM": [
+            14,
+            14
+          ],
+          "FM": [
+            8,
+            8
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            10,
+            10
+          ],
+          "COG": [
+            11,
+            11
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 11,
+          "GM": [
+            15,
+            15
+          ],
+          "FM": [
+            9,
+            9
+          ],
+          "SH": [
+            6,
+            6
+          ],
+          "RL": [
+            8,
+            8
+          ],
+          "EL": [
+            11,
+            11
+          ],
+          "COG": [
+            12,
+            12
+          ],
+          "SE": [
+            12,
+            12
+          ]
+        },
+        {
+          "scaled": 12,
+          "GM": null,
+          "FM": [
+            10,
+            10
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            12,
+            12
+          ],
+          "COG": [
+            13,
+            13
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 13,
+          "GM": [
+            16,
+            16
+          ],
+          "FM": [
+            11,
+            11
+          ],
+          "SH": [
+            7,
+            7
+          ],
+          "RL": [
+            9,
+            9
+          ],
+          "EL": [
+            13,
+            13
+          ],
+          "COG": [
+            14,
+            14
+          ],
+          "SE": [
+            13,
+            13
+          ]
+        },
+        {
+          "scaled": 14,
+          "GM": [
+            17,
+            17
+          ],
+          "FM": [
+            12,
+            12
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            14,
+            14
+          ],
+          "COG": [
+            15,
+            15
+          ],
+          "SE": [
+            14,
+            14
+          ]
+        },
+        {
+          "scaled": 15,
+          "GM": [
+            18,
+            18
+          ],
+          "FM": null,
+          "SH": [
+            8,
+            8
+          ],
+          "RL": [
+            10,
+            10
+          ],
+          "EL": [
+            15,
+            22
+          ],
+          "COG": [
+            16,
+            16
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 16,
+          "GM": [
+            19,
+            19
+          ],
+          "FM": [
+            13,
+            13
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            17,
+            18
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 17,
+          "GM": null,
+          "FM": [
+            14,
+            14
+          ],
+          "SH": null,
+          "RL": [
+            11,
+            15
+          ],
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 18,
+          "GM": [
+            20,
+            20
+          ],
+          "FM": null,
+          "SH": [
+            9,
+            10
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 19,
+          "GM": [
+            21,
+            22
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        }
+      ]
+    },
+    "r1_13_18": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scaled Scores \u2014 Child's Record 1 (r1_13_18)",
+      "note": "Digitized from official scan OCR. Spot-check recommended before production.",
+      "rows": [
+        {
+          "scaled": 1,
+          "GM": [
+            0,
+            11
+          ],
+          "FM": null,
+          "SH": [
+            0,
+            3
+          ],
+          "RL": null,
+          "EL": [
+            0,
+            7
+          ],
+          "COG": [
+            0,
+            5
+          ],
+          "SE": [
+            0,
+            5
+          ]
+        },
+        {
+          "scaled": 2,
+          "GM": [
+            12,
+            12
+          ],
+          "FM": [
+            0,
+            6
+          ],
+          "SH": null,
+          "RL": [
+            0,
+            4
+          ],
+          "EL": [
+            8,
+            8
+          ],
+          "COG": [
+            7,
+            7
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 3,
+          "GM": [
+            13,
+            13
+          ],
+          "FM": null,
+          "SH": [
+            4,
+            4
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": [
+            9,
+            9
+          ]
+        },
+        {
+          "scaled": 4,
+          "GM": null,
+          "FM": [
+            7,
+            7
+          ],
+          "SH": null,
+          "RL": [
+            5,
+            5
+          ],
+          "EL": [
+            9,
+            9
+          ],
+          "COG": [
+            8,
+            8
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 5,
+          "GM": [
+            14,
+            14
+          ],
+          "FM": [
+            8,
+            8
+          ],
+          "SH": [
+            5,
+            5
+          ],
+          "RL": [
+            6,
+            6
+          ],
+          "EL": [
+            10,
+            10
+          ],
+          "COG": [
+            9,
+            9
+          ],
+          "SE": [
+            10,
+            10
+          ]
+        },
+        {
+          "scaled": 6,
+          "GM": [
+            15,
+            15
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            10,
+            10
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 7,
+          "GM": [
+            16,
+            16
+          ],
+          "FM": [
+            9,
+            9
+          ],
+          "SH": [
+            6,
+            6
+          ],
+          "RL": [
+            7,
+            7
+          ],
+          "EL": [
+            11,
+            11
+          ],
+          "COG": [
+            11,
+            11
+          ],
+          "SE": [
+            11,
+            11
+          ]
+        },
+        {
+          "scaled": 8,
+          "GM": null,
+          "FM": [
+            10,
+            10
+          ],
+          "SH": null,
+          "RL": [
+            8,
+            8
+          ],
+          "EL": [
+            12,
+            12
+          ],
+          "COG": [
+            12,
+            12
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 9,
+          "GM": [
+            17,
+            17
+          ],
+          "FM": null,
+          "SH": [
+            7,
+            7
+          ],
+          "RL": [
+            9,
+            9
+          ],
+          "EL": null,
+          "COG": [
+            13,
+            13
+          ],
+          "SE": [
+            12,
+            12
+          ]
+        },
+        {
+          "scaled": 10,
+          "GM": [
+            18,
+            18
+          ],
+          "FM": [
+            11,
+            11
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            13,
+            13
+          ],
+          "COG": [
+            14,
+            14
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 11,
+          "GM": [
+            19,
+            19
+          ],
+          "FM": null,
+          "SH": [
+            8,
+            8
+          ],
+          "RL": [
+            10,
+            10
+          ],
+          "EL": [
+            14,
+            14
+          ],
+          "COG": [
+            15,
+            15
+          ],
+          "SE": [
+            13,
+            13
+          ]
+        },
+        {
+          "scaled": 12,
+          "GM": null,
+          "FM": [
+            12,
+            12
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            16,
+            16
+          ],
+          "SE": [
+            14,
+            14
+          ]
+        },
+        {
+          "scaled": 13,
+          "GM": [
+            20,
+            20
+          ],
+          "FM": [
+            13,
+            13
+          ],
+          "SH": [
+            9,
+            9
+          ],
+          "RL": null,
+          "EL": [
+            16,
+            16
+          ],
+          "COG": [
+            17,
+            17
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 14,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": [
+            12,
+            12
+          ],
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 15,
+          "GM": [
+            22,
+            22
+          ],
+          "FM": [
+            14,
+            14
+          ],
+          "SH": [
+            10,
+            10
+          ],
+          "RL": [
+            13,
+            13
+          ],
+          "EL": null,
+          "COG": [
+            18,
+            18
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 16,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 17,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 18,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 19,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        }
+      ]
+    },
+    "r1_19_24": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scaled Scores \u2014 Child's Record 1 (r1_19_24)",
+      "note": "Digitized from official scan OCR. Spot-check recommended before production.",
+      "rows": [
+        {
+          "scaled": 1,
+          "GM": [
+            0,
+            15
+          ],
+          "FM": [
+            0,
+            7
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            0,
+            7
+          ],
+          "COG": [
+            0,
+            8
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 2,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": [
+            8,
+            8
+          ],
+          "COG": [
+            9,
+            9
+          ],
+          "SE": [
+            0,
+            10
+          ]
+        },
+        {
+          "scaled": 3,
+          "GM": [
+            16,
+            16
+          ],
+          "FM": [
+            8,
+            8
+          ],
+          "SH": [
+            0,
+            5
+          ],
+          "RL": [
+            0,
+            6
+          ],
+          "EL": [
+            9,
+            9
+          ],
+          "COG": [
+            10,
+            10
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 4,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": [
+            7,
+            7
+          ],
+          "EL": [
+            10,
+            10
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 5,
+          "GM": [
+            17,
+            17
+          ],
+          "FM": [
+            9,
+            9
+          ],
+          "SH": [
+            7,
+            7
+          ],
+          "RL": null,
+          "EL": [
+            11,
+            11
+          ],
+          "COG": [
+            11,
+            11
+          ],
+          "SE": [
+            11,
+            11
+          ]
+        },
+        {
+          "scaled": 6,
+          "GM": null,
+          "FM": [
+            10,
+            10
+          ],
+          "SH": null,
+          "RL": [
+            8,
+            8
+          ],
+          "EL": [
+            12,
+            12
+          ],
+          "COG": [
+            12,
+            12
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 7,
+          "GM": [
+            18,
+            18
+          ],
+          "FM": [
+            11,
+            11
+          ],
+          "SH": null,
+          "RL": [
+            9,
+            9
+          ],
+          "EL": [
+            13,
+            13
+          ],
+          "COG": [
+            13,
+            13
+          ],
+          "SE": [
+            12,
+            12
+          ]
+        },
+        {
+          "scaled": 8,
+          "GM": null,
+          "FM": [
+            12,
+            12
+          ],
+          "SH": [
+            8,
+            8
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 9,
+          "GM": [
+            19,
+            19
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": [
+            14,
+            14
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 10,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": [
+            11,
+            11
+          ],
+          "EL": [
+            15,
+            15
+          ],
+          "COG": [
+            15,
+            15
+          ],
+          "SE": [
+            13,
+            13
+          ]
+        },
+        {
+          "scaled": 11,
+          "GM": [
+            20,
+            20
+          ],
+          "FM": [
+            13,
+            13
+          ],
+          "SH": [
+            9,
+            9
+          ],
+          "RL": [
+            12,
+            12
+          ],
+          "EL": [
+            16,
+            16
+          ],
+          "COG": [
+            16,
+            16
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 12,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": [
+            13,
+            13
+          ],
+          "EL": [
+            17,
+            17
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 13,
+          "GM": [
+            21,
+            21
+          ],
+          "FM": [
+            14,
+            14
+          ],
+          "SH": null,
+          "RL": [
+            14,
+            14
+          ],
+          "EL": [
+            18,
+            18
+          ],
+          "COG": [
+            17,
+            17
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 14,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            10,
+            10
+          ],
+          "RL": null,
+          "EL": [
+            19,
+            19
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 15,
+          "GM": [
+            22,
+            22
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": [
+            15,
+            15
+          ],
+          "EL": [
+            20,
+            20
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 16,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": [
+            21,
+            21
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 17,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": [
+            22,
+            22
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 18,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 19,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        }
+      ]
+    },
+    "r2_37_48": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scaled Scores and Standard Scores (Record 2, Ages 3.1\u20134.0 years)",
+      "note": "Digitized from official scan + cross-checked with Technical Manual excerpts. Spot-check before production.",
+      "rows": [
+        {
+          "scaled": 1,
+          "GM": [
+            0,
+            3
+          ],
+          "FM": null,
+          "SH": [
+            0,
+            9
+          ],
+          "RL": null,
+          "EL": [
+            0,
+            2
+          ],
+          "COG": null,
+          "SE": [
+            0,
+            9
+          ]
+        },
+        {
+          "scaled": 2,
+          "GM": [
+            4,
+            4
+          ],
+          "FM": [
+            0,
+            3
+          ],
+          "SH": [
+            10,
+            10
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": [
+            10,
+            11
+          ]
+        },
+        {
+          "scaled": 3,
+          "GM": [
+            5,
+            5
+          ],
+          "FM": null,
+          "SH": [
+            11,
+            11
+          ],
+          "RL": [
+            0,
+            1
+          ],
+          "EL": [
+            3,
+            3
+          ],
+          "COG": [
+            0,
+            0
+          ],
+          "SE": [
+            12,
+            12
+          ]
+        },
+        {
+          "scaled": 4,
+          "GM": null,
+          "FM": [
+            4,
+            4
+          ],
+          "SH": [
+            12,
+            12
+          ],
+          "RL": null,
+          "EL": [
+            4,
+            4
+          ],
+          "COG": [
+            1,
+            1
+          ],
+          "SE": [
+            13,
+            13
+          ]
+        },
+        {
+          "scaled": 5,
+          "GM": [
+            6,
+            6
+          ],
+          "FM": [
+            5,
+            5
+          ],
+          "SH": [
+            13,
+            14
+          ],
+          "RL": [
+            2,
+            2
+          ],
+          "EL": null,
+          "COG": [
+            2,
+            3
+          ],
+          "SE": [
+            14,
+            14
+          ]
+        },
+        {
+          "scaled": 6,
+          "GM": [
+            7,
+            7
+          ],
+          "FM": null,
+          "SH": [
+            15,
+            15
+          ],
+          "RL": null,
+          "EL": [
+            5,
+            5
+          ],
+          "COG": [
+            4,
+            4
+          ],
+          "SE": [
+            15,
+            15
+          ]
+        },
+        {
+          "scaled": 7,
+          "GM": [
+            8,
+            8
+          ],
+          "FM": [
+            6,
+            6
+          ],
+          "SH": [
+            16,
+            16
+          ],
+          "RL": [
+            3,
+            3
+          ],
+          "EL": null,
+          "COG": [
+            5,
+            5
+          ],
+          "SE": [
+            16,
+            16
+          ]
+        },
+        {
+          "scaled": 8,
+          "GM": [
+            9,
+            9
+          ],
+          "FM": null,
+          "SH": [
+            17,
+            17
+          ],
+          "RL": null,
+          "EL": [
+            6,
+            6
+          ],
+          "COG": [
+            6,
+            6
+          ],
+          "SE": [
+            17,
+            18
+          ]
+        },
+        {
+          "scaled": 9,
+          "GM": null,
+          "FM": [
+            7,
+            7
+          ],
+          "SH": [
+            18,
+            19
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            7,
+            7
+          ],
+          "SE": [
+            19,
+            19
+          ]
+        },
+        {
+          "scaled": 10,
+          "GM": [
+            10,
+            10
+          ],
+          "FM": [
+            8,
+            8
+          ],
+          "SH": [
+            20,
+            20
+          ],
+          "RL": [
+            4,
+            4
+          ],
+          "EL": [
+            7,
+            7
+          ],
+          "COG": [
+            8,
+            9
+          ],
+          "SE": [
+            20,
+            20
+          ]
+        },
+        {
+          "scaled": 11,
+          "GM": [
+            11,
+            11
+          ],
+          "FM": null,
+          "SH": [
+            21,
+            21
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            10,
+            10
+          ],
+          "SE": [
+            21,
+            21
+          ]
+        },
+        {
+          "scaled": 12,
+          "GM": [
+            12,
+            12
+          ],
+          "FM": [
+            9,
+            9
+          ],
+          "SH": [
+            22,
+            22
+          ],
+          "RL": [
+            5,
+            5
+          ],
+          "EL": [
+            8,
+            8
+          ],
+          "COG": [
+            11,
+            11
+          ],
+          "SE": [
+            22,
+            22
+          ]
+        },
+        {
+          "scaled": 13,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            23,
+            24
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            12,
+            12
+          ],
+          "SE": [
+            23,
+            23
+          ]
+        },
+        {
+          "scaled": 14,
+          "GM": [
+            13,
+            13
+          ],
+          "FM": [
+            10,
+            10
+          ],
+          "SH": [
+            25,
+            25
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            13,
+            14
+          ],
+          "SE": [
+            24,
+            24
+          ]
+        },
+        {
+          "scaled": 15,
+          "GM": null,
+          "FM": [
+            11,
+            11
+          ],
+          "SH": [
+            26,
+            26
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            15,
+            15
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 16,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            27,
+            27
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            16,
+            16
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 17,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            17,
+            17
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 18,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            18,
+            18
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 19,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            19,
+            21
+          ],
+          "SE": null
+        }
+      ]
+    },
+    "r2_49_60": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scaled Scores (Record 2, Ages 4.1\u20135.0 years)",
+      "note": "Digitized from official scan OCR. Spot-check recommended.",
+      "rows": [
+        {
+          "scaled": 1,
+          "GM": [
+            0,
+            5
+          ],
+          "FM": [
+            0,
+            3
+          ],
+          "SH": [
+            0,
+            15
+          ],
+          "RL": [
+            0,
+            1
+          ],
+          "EL": null,
+          "COG": [
+            0,
+            0
+          ],
+          "SE": [
+            0,
+            13
+          ]
+        },
+        {
+          "scaled": 2,
+          "GM": [
+            6,
+            6
+          ],
+          "FM": [
+            4,
+            4
+          ],
+          "SH": [
+            16,
+            16
+          ],
+          "RL": null,
+          "EL": [
+            0,
+            5
+          ],
+          "COG": [
+            1,
+            1
+          ],
+          "SE": [
+            14,
+            14
+          ]
+        },
+        {
+          "scaled": 3,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            17,
+            17
+          ],
+          "RL": [
+            2,
+            2
+          ],
+          "EL": null,
+          "COG": [
+            2,
+            3
+          ],
+          "SE": [
+            15,
+            15
+          ]
+        },
+        {
+          "scaled": 4,
+          "GM": [
+            7,
+            7
+          ],
+          "FM": [
+            5,
+            5
+          ],
+          "SH": [
+            18,
+            18
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            4,
+            4
+          ],
+          "SE": [
+            16,
+            16
+          ]
+        },
+        {
+          "scaled": 5,
+          "GM": [
+            8,
+            8
+          ],
+          "FM": [
+            6,
+            6
+          ],
+          "SH": [
+            19,
+            19
+          ],
+          "RL": null,
+          "EL": [
+            6,
+            6
+          ],
+          "COG": [
+            5,
+            5
+          ],
+          "SE": [
+            17,
+            17
+          ]
+        },
+        {
+          "scaled": 6,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            20,
+            20
+          ],
+          "RL": [
+            3,
+            3
+          ],
+          "EL": null,
+          "COG": [
+            6,
+            7
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 7,
+          "GM": [
+            9,
+            9
+          ],
+          "FM": [
+            7,
+            7
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            8,
+            8
+          ],
+          "SE": [
+            18,
+            18
+          ]
+        },
+        {
+          "scaled": 8,
+          "GM": [
+            10,
+            10
+          ],
+          "FM": null,
+          "SH": [
+            21,
+            21
+          ],
+          "RL": null,
+          "EL": [
+            7,
+            7
+          ],
+          "COG": [
+            9,
+            10
+          ],
+          "SE": [
+            19,
+            19
+          ]
+        },
+        {
+          "scaled": 9,
+          "GM": null,
+          "FM": [
+            8,
+            8
+          ],
+          "SH": [
+            22,
+            22
+          ],
+          "RL": [
+            4,
+            4
+          ],
+          "EL": null,
+          "COG": [
+            11,
+            11
+          ],
+          "SE": [
+            20,
+            20
+          ]
+        },
+        {
+          "scaled": 10,
+          "GM": [
+            11,
+            11
+          ],
+          "FM": [
+            9,
+            9
+          ],
+          "SH": [
+            23,
+            23
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            12,
+            12
+          ],
+          "SE": [
+            21,
+            21
+          ]
+        },
+        {
+          "scaled": 11,
+          "GM": [
+            12,
+            12
+          ],
+          "FM": null,
+          "SH": [
+            24,
+            24
+          ],
+          "RL": [
+            5,
+            5
+          ],
+          "EL": [
+            8,
+            8
+          ],
+          "COG": [
+            13,
+            14
+          ],
+          "SE": [
+            22,
+            22
+          ]
+        },
+        {
+          "scaled": 12,
+          "GM": null,
+          "FM": [
+            10,
+            10
+          ],
+          "SH": [
+            25,
+            25
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            15,
+            15
+          ],
+          "SE": [
+            23,
+            23
+          ]
+        },
+        {
+          "scaled": 13,
+          "GM": [
+            13,
+            13
+          ],
+          "FM": null,
+          "SH": [
+            26,
+            26
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            16,
+            17
+          ],
+          "SE": [
+            24,
+            24
+          ]
+        },
+        {
+          "scaled": 14,
+          "GM": null,
+          "FM": [
+            11,
+            11
+          ],
+          "SH": [
+            27,
+            27
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            18,
+            18
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 15,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            19,
+            20
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 16,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": [
+            21,
+            21
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 17,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 18,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 19,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        }
+      ]
+    },
+    "r2_61_71": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scaled Scores (Record 2, Ages 5.1\u20135.11 years)",
+      "note": "Digitized from official scan OCR. Spot-check recommended.",
+      "rows": [
+        {
+          "scaled": 1,
+          "GM": [
+            0,
+            10
+          ],
+          "FM": [
+            0,
+            5
+          ],
+          "SH": null,
+          "RL": [
+            0,
+            2
+          ],
+          "EL": null,
+          "COG": [
+            0,
+            9
+          ],
+          "SE": [
+            0,
+            15
+          ]
+        },
+        {
+          "scaled": 2,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            0,
+            19
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            10,
+            10
+          ],
+          "SE": [
+            16,
+            16
+          ]
+        },
+        {
+          "scaled": 3,
+          "GM": null,
+          "FM": [
+            6,
+            6
+          ],
+          "SH": [
+            20,
+            20
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            11,
+            11
+          ],
+          "SE": [
+            17,
+            17
+          ]
+        },
+        {
+          "scaled": 4,
+          "GM": [
+            11,
+            11
+          ],
+          "FM": null,
+          "SH": [
+            21,
+            21
+          ],
+          "RL": [
+            3,
+            3
+          ],
+          "EL": null,
+          "COG": [
+            12,
+            12
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 5,
+          "GM": null,
+          "FM": [
+            7,
+            7
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            0,
+            7
+          ],
+          "COG": [
+            13,
+            13
+          ],
+          "SE": [
+            18,
+            18
+          ]
+        },
+        {
+          "scaled": 6,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            22,
+            22
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            14,
+            14
+          ],
+          "SE": [
+            19,
+            19
+          ]
+        },
+        {
+          "scaled": 7,
+          "GM": [
+            12,
+            12
+          ],
+          "FM": [
+            8,
+            8
+          ],
+          "SH": [
+            23,
+            23
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            15,
+            15
+          ],
+          "SE": [
+            20,
+            20
+          ]
+        },
+        {
+          "scaled": 8,
+          "GM": null,
+          "FM": [
+            9,
+            9
+          ],
+          "SH": null,
+          "RL": [
+            4,
+            4
+          ],
+          "EL": null,
+          "COG": [
+            16,
+            16
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 9,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            24,
+            24
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            17,
+            17
+          ],
+          "SE": [
+            21,
+            21
+          ]
+        },
+        {
+          "scaled": 10,
+          "GM": null,
+          "FM": [
+            10,
+            10
+          ],
+          "SH": [
+            25,
+            25
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            18,
+            18
+          ],
+          "SE": [
+            22,
+            22
+          ]
+        },
+        {
+          "scaled": 11,
+          "GM": [
+            13,
+            13
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": [
+            5,
+            5
+          ],
+          "EL": [
+            8,
+            8
+          ],
+          "COG": [
+            19,
+            19
+          ],
+          "SE": [
+            23,
+            23
+          ]
+        },
+        {
+          "scaled": 12,
+          "GM": null,
+          "FM": [
+            11,
+            11
+          ],
+          "SH": [
+            26,
+            26
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            20,
+            20
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 13,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            27,
+            27
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": [
+            21,
+            21
+          ],
+          "SE": [
+            24,
+            24
+          ]
+        },
+        {
+          "scaled": 14,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 15,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 16,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 17,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 18,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 19,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        }
+      ]
+    },
+    "r1_25_30": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scaled Scores \u2014 Child's Record 1 (r1_25_30)",
+      "note": "Digitized from official scan OCR. Spot-check recommended before production.",
+      "rows": [
+        {
+          "scaled": 1,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 2,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": [
+            0,
+            11
+          ]
+        },
+        {
+          "scaled": 3,
+          "GM": [
+            17,
+            17
+          ],
+          "FM": [
+            9,
+            9
+          ],
+          "SH": null,
+          "RL": [
+            8,
+            8
+          ],
+          "EL": [
+            12,
+            12
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 4,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            0,
+            7
+          ],
+          "RL": [
+            9,
+            9
+          ],
+          "EL": [
+            13,
+            13
+          ],
+          "COG": [
+            14,
+            14
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 5,
+          "GM": [
+            18,
+            18
+          ],
+          "FM": [
+            10,
+            10
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            14,
+            14
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 6,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": [
+            10,
+            10
+          ],
+          "EL": [
+            15,
+            15
+          ],
+          "COG": [
+            15,
+            15
+          ],
+          "SE": [
+            12,
+            12
+          ]
+        },
+        {
+          "scaled": 7,
+          "GM": null,
+          "FM": [
+            11,
+            11
+          ],
+          "SH": [
+            8,
+            8
+          ],
+          "RL": [
+            11,
+            11
+          ],
+          "EL": [
+            16,
+            16
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 8,
+          "GM": [
+            19,
+            19
+          ],
+          "FM": [
+            12,
+            12
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            17,
+            17
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 9,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": [
+            12,
+            12
+          ],
+          "EL": [
+            18,
+            18
+          ],
+          "COG": [
+            16,
+            16
+          ],
+          "SE": [
+            13,
+            13
+          ]
+        },
+        {
+          "scaled": 10,
+          "GM": [
+            20,
+            20
+          ],
+          "FM": [
+            13,
+            13
+          ],
+          "SH": [
+            9,
+            9
+          ],
+          "RL": [
+            13,
+            13
+          ],
+          "EL": [
+            19,
+            19
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 11,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": [
+            20,
+            20
+          ],
+          "COG": [
+            17,
+            17
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 12,
+          "GM": [
+            21,
+            21
+          ],
+          "FM": [
+            14,
+            14
+          ],
+          "SH": null,
+          "RL": [
+            14,
+            14
+          ],
+          "EL": null,
+          "COG": null,
+          "SE": [
+            14,
+            14
+          ]
+        },
+        {
+          "scaled": 13,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            10,
+            10
+          ],
+          "RL": [
+            15,
+            15
+          ],
+          "EL": [
+            21,
+            21
+          ],
+          "COG": [
+            18,
+            18
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 14,
+          "GM": [
+            22,
+            22
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": [
+            22,
+            22
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 15,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 16,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 17,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 18,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 19,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        }
+      ]
+    },
+    "r1_31_36": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scaled Scores \u2014 Child's Record 1 (r1_31_36)",
+      "note": "Digitized from official scan OCR. Spot-check recommended before production.",
+      "rows": [
+        {
+          "scaled": 1,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 2,
+          "GM": [
+            0,
+            17
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": [
+            0,
+            8
+          ],
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 3,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": [
+            9,
+            9
+          ],
+          "EL": [
+            12,
+            12
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 4,
+          "GM": null,
+          "FM": [
+            0,
+            10
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": [
+            13,
+            13
+          ],
+          "COG": [
+            14,
+            14
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 5,
+          "GM": [
+            18,
+            18
+          ],
+          "FM": null,
+          "SH": [
+            8,
+            8
+          ],
+          "RL": [
+            10,
+            10
+          ],
+          "EL": null,
+          "COG": null,
+          "SE": [
+            12,
+            12
+          ]
+        },
+        {
+          "scaled": 6,
+          "GM": null,
+          "FM": [
+            11,
+            11
+          ],
+          "SH": null,
+          "RL": [
+            11,
+            11
+          ],
+          "EL": [
+            15,
+            15
+          ],
+          "COG": [
+            15,
+            15
+          ],
+          "SE": null
+        },
+        {
+          "scaled": 7,
+          "GM": [
+            19,
+            19
+          ],
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": [
+            16,
+            16
+          ],
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 8,
+          "GM": null,
+          "FM": [
+            12,
+            12
+          ],
+          "SH": null,
+          "RL": [
+            12,
+            12
+          ],
+          "EL": [
+            19,
+            19
+          ],
+          "COG": [
+            16,
+            16
+          ],
+          "SE": [
+            13,
+            13
+          ]
+        },
+        {
+          "scaled": 9,
+          "GM": [
+            20,
+            20
+          ],
+          "FM": null,
+          "SH": [
+            9,
+            9
+          ],
+          "RL": [
+            13,
+            13
+          ],
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 10,
+          "GM": null,
+          "FM": [
+            13,
+            13
+          ],
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 11,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 12,
+          "GM": null,
+          "FM": [
+            14,
+            14
+          ],
+          "SH": null,
+          "RL": [
+            15,
+            15
+          ],
+          "EL": [
+            22,
+            22
+          ],
+          "COG": [
+            18,
+            18
+          ],
+          "SE": [
+            14,
+            14
+          ]
+        },
+        {
+          "scaled": 13,
+          "GM": null,
+          "FM": null,
+          "SH": [
+            10,
+            10
+          ],
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 14,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 15,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 16,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 17,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 18,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        },
+        {
+          "scaled": 19,
+          "GM": null,
+          "FM": null,
+          "SH": null,
+          "RL": null,
+          "EL": null,
+          "COG": null,
+          "SE": null
+        }
+      ]
+    }
+  },
+  "standardScoreTables": {
+    "record1": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scores \u2014 Standard Score Equivalent of Sum of Scaled Scores (Child's Record 1)",
+      "note": "Primary range sum 21\u2013110 from official PDF. Sums 7\u201320 estimated/floored for edge cases; spot-check recommended.",
+      "rows": [
+        {
+          "sum": 7,
+          "standard": 25
+        },
+        {
+          "sum": 8,
+          "standard": 26
+        },
+        {
+          "sum": 9,
+          "standard": 27
+        },
+        {
+          "sum": 10,
+          "standard": 28
+        },
+        {
+          "sum": 11,
+          "standard": 29
+        },
+        {
+          "sum": 12,
+          "standard": 30
+        },
+        {
+          "sum": 13,
+          "standard": 31
+        },
+        {
+          "sum": 14,
+          "standard": 32
+        },
+        {
+          "sum": 15,
+          "standard": 33
+        },
+        {
+          "sum": 16,
+          "standard": 34
+        },
+        {
+          "sum": 17,
+          "standard": 35
+        },
+        {
+          "sum": 18,
+          "standard": 36
+        },
+        {
+          "sum": 19,
+          "standard": 37
+        },
+        {
+          "sum": 20,
+          "standard": 38
+        },
+        {
+          "sum": 21,
+          "standard": 39
+        },
+        {
+          "sum": 22,
+          "standard": 40
+        },
+        {
+          "sum": 23,
+          "standard": 42
+        },
+        {
+          "sum": 24,
+          "standard": 43
+        },
+        {
+          "sum": 25,
+          "standard": 44
+        },
+        {
+          "sum": 26,
+          "standard": 45
+        },
+        {
+          "sum": 27,
+          "standard": 46
+        },
+        {
+          "sum": 28,
+          "standard": 48
+        },
+        {
+          "sum": 29,
+          "standard": 49
+        },
+        {
+          "sum": 30,
+          "standard": 50
+        },
+        {
+          "sum": 31,
+          "standard": 51
+        },
+        {
+          "sum": 32,
+          "standard": 53
+        },
+        {
+          "sum": 33,
+          "standard": 54
+        },
+        {
+          "sum": 34,
+          "standard": 55
+        },
+        {
+          "sum": 35,
+          "standard": 56
+        },
+        {
+          "sum": 36,
+          "standard": 57
+        },
+        {
+          "sum": 37,
+          "standard": 59
+        },
+        {
+          "sum": 38,
+          "standard": 60
+        },
+        {
+          "sum": 39,
+          "standard": 61
+        },
+        {
+          "sum": 40,
+          "standard": 62
+        },
+        {
+          "sum": 41,
+          "standard": 64
+        },
+        {
+          "sum": 42,
+          "standard": 65
+        },
+        {
+          "sum": 43,
+          "standard": 66
+        },
+        {
+          "sum": 44,
+          "standard": 67
+        },
+        {
+          "sum": 45,
+          "standard": 68
+        },
+        {
+          "sum": 46,
+          "standard": 70
+        },
+        {
+          "sum": 47,
+          "standard": 71
+        },
+        {
+          "sum": 48,
+          "standard": 72
+        },
+        {
+          "sum": 49,
+          "standard": 73
+        },
+        {
+          "sum": 50,
+          "standard": 75
+        },
+        {
+          "sum": 51,
+          "standard": 76
+        },
+        {
+          "sum": 52,
+          "standard": 77
+        },
+        {
+          "sum": 53,
+          "standard": 78
+        },
+        {
+          "sum": 54,
+          "standard": 79
+        },
+        {
+          "sum": 55,
+          "standard": 81
+        },
+        {
+          "sum": 56,
+          "standard": 82
+        },
+        {
+          "sum": 57,
+          "standard": 83
+        },
+        {
+          "sum": 58,
+          "standard": 84
+        },
+        {
+          "sum": 59,
+          "standard": 86
+        },
+        {
+          "sum": 60,
+          "standard": 87
+        },
+        {
+          "sum": 61,
+          "standard": 88
+        },
+        {
+          "sum": 62,
+          "standard": 89
+        },
+        {
+          "sum": 63,
+          "standard": 90
+        },
+        {
+          "sum": 64,
+          "standard": 92
+        },
+        {
+          "sum": 65,
+          "standard": 93
+        },
+        {
+          "sum": 66,
+          "standard": 94
+        },
+        {
+          "sum": 67,
+          "standard": 95
+        },
+        {
+          "sum": 68,
+          "standard": 96
+        },
+        {
+          "sum": 69,
+          "standard": 98
+        },
+        {
+          "sum": 70,
+          "standard": 99
+        },
+        {
+          "sum": 71,
+          "standard": 100
+        },
+        {
+          "sum": 72,
+          "standard": 101
+        },
+        {
+          "sum": 73,
+          "standard": 103
+        },
+        {
+          "sum": 74,
+          "standard": 104
+        },
+        {
+          "sum": 75,
+          "standard": 105
+        },
+        {
+          "sum": 76,
+          "standard": 106
+        },
+        {
+          "sum": 77,
+          "standard": 107
+        },
+        {
+          "sum": 78,
+          "standard": 109
+        },
+        {
+          "sum": 79,
+          "standard": 110
+        },
+        {
+          "sum": 80,
+          "standard": 111
+        },
+        {
+          "sum": 81,
+          "standard": 112
+        },
+        {
+          "sum": 82,
+          "standard": 114
+        },
+        {
+          "sum": 83,
+          "standard": 115
+        },
+        {
+          "sum": 84,
+          "standard": 116
+        },
+        {
+          "sum": 85,
+          "standard": 117
+        },
+        {
+          "sum": 86,
+          "standard": 118
+        },
+        {
+          "sum": 87,
+          "standard": 120
+        },
+        {
+          "sum": 88,
+          "standard": 121
+        },
+        {
+          "sum": 89,
+          "standard": 122
+        },
+        {
+          "sum": 90,
+          "standard": 123
+        },
+        {
+          "sum": 91,
+          "standard": 125
+        },
+        {
+          "sum": 92,
+          "standard": 126
+        },
+        {
+          "sum": 93,
+          "standard": 127
+        },
+        {
+          "sum": 94,
+          "standard": 128
+        },
+        {
+          "sum": 95,
+          "standard": 129
+        },
+        {
+          "sum": 96,
+          "standard": 131
+        },
+        {
+          "sum": 97,
+          "standard": 132
+        },
+        {
+          "sum": 98,
+          "standard": 133
+        },
+        {
+          "sum": 99,
+          "standard": 134
+        },
+        {
+          "sum": 100,
+          "standard": 135
+        },
+        {
+          "sum": 101,
+          "standard": 137
+        },
+        {
+          "sum": 102,
+          "standard": 138
+        },
+        {
+          "sum": 103,
+          "standard": 139
+        },
+        {
+          "sum": 104,
+          "standard": 140
+        },
+        {
+          "sum": 105,
+          "standard": 142
+        },
+        {
+          "sum": 106,
+          "standard": 143
+        },
+        {
+          "sum": 107,
+          "standard": 144
+        },
+        {
+          "sum": 108,
+          "standard": 145
+        },
+        {
+          "sum": 109,
+          "standard": 146
+        },
+        {
+          "sum": 110,
+          "standard": 148
+        }
+      ]
+    },
+    "record2": {
+      "status": "digitized_from_official_pdf",
+      "source": "ECCD Checklist Table of Scores + Technical Manual \u2014 Standard Score Equivalent (Child's Record 2)",
+      "note": "Sum 29\u201398 from official PDF page / Technical Manual. Spot-check recommended.",
+      "rows": [
+        {
+          "sum": 29,
+          "standard": 37
+        },
+        {
+          "sum": 30,
+          "standard": 38
+        },
+        {
+          "sum": 31,
+          "standard": 40
+        },
+        {
+          "sum": 32,
+          "standard": 41
+        },
+        {
+          "sum": 33,
+          "standard": 43
+        },
+        {
+          "sum": 34,
+          "standard": 44
+        },
+        {
+          "sum": 35,
+          "standard": 45
+        },
+        {
+          "sum": 36,
+          "standard": 47
+        },
+        {
+          "sum": 37,
+          "standard": 48
+        },
+        {
+          "sum": 38,
+          "standard": 50
+        },
+        {
+          "sum": 39,
+          "standard": 51
+        },
+        {
+          "sum": 40,
+          "standard": 53
+        },
+        {
+          "sum": 41,
+          "standard": 54
+        },
+        {
+          "sum": 42,
+          "standard": 56
+        },
+        {
+          "sum": 43,
+          "standard": 57
+        },
+        {
+          "sum": 44,
+          "standard": 59
+        },
+        {
+          "sum": 45,
+          "standard": 60
+        },
+        {
+          "sum": 46,
+          "standard": 62
+        },
+        {
+          "sum": 47,
+          "standard": 63
+        },
+        {
+          "sum": 48,
+          "standard": 65
+        },
+        {
+          "sum": 49,
+          "standard": 66
+        },
+        {
+          "sum": 50,
+          "standard": 67
+        },
+        {
+          "sum": 51,
+          "standard": 69
+        },
+        {
+          "sum": 52,
+          "standard": 70
+        },
+        {
+          "sum": 53,
+          "standard": 72
+        },
+        {
+          "sum": 54,
+          "standard": 73
+        },
+        {
+          "sum": 55,
+          "standard": 75
+        },
+        {
+          "sum": 56,
+          "standard": 76
+        },
+        {
+          "sum": 57,
+          "standard": 78
+        },
+        {
+          "sum": 58,
+          "standard": 79
+        },
+        {
+          "sum": 59,
+          "standard": 81
+        },
+        {
+          "sum": 60,
+          "standard": 82
+        },
+        {
+          "sum": 61,
+          "standard": 84
+        },
+        {
+          "sum": 62,
+          "standard": 85
+        },
+        {
+          "sum": 63,
+          "standard": 86
+        },
+        {
+          "sum": 64,
+          "standard": 88
+        },
+        {
+          "sum": 65,
+          "standard": 89
+        },
+        {
+          "sum": 66,
+          "standard": 91
+        },
+        {
+          "sum": 67,
+          "standard": 92
+        },
+        {
+          "sum": 68,
+          "standard": 94
+        },
+        {
+          "sum": 69,
+          "standard": 95
+        },
+        {
+          "sum": 70,
+          "standard": 97
+        },
+        {
+          "sum": 71,
+          "standard": 98
+        },
+        {
+          "sum": 72,
+          "standard": 100
+        },
+        {
+          "sum": 73,
+          "standard": 101
+        },
+        {
+          "sum": 74,
+          "standard": 103
+        },
+        {
+          "sum": 75,
+          "standard": 104
+        },
+        {
+          "sum": 76,
+          "standard": 105
+        },
+        {
+          "sum": 77,
+          "standard": 107
+        },
+        {
+          "sum": 78,
+          "standard": 108
+        },
+        {
+          "sum": 79,
+          "standard": 110
+        },
+        {
+          "sum": 80,
+          "standard": 111
+        },
+        {
+          "sum": 81,
+          "standard": 113
+        },
+        {
+          "sum": 82,
+          "standard": 114
+        },
+        {
+          "sum": 83,
+          "standard": 116
+        },
+        {
+          "sum": 84,
+          "standard": 117
+        },
+        {
+          "sum": 85,
+          "standard": 119
+        },
+        {
+          "sum": 86,
+          "standard": 120
+        },
+        {
+          "sum": 87,
+          "standard": 122
+        },
+        {
+          "sum": 88,
+          "standard": 123
+        },
+        {
+          "sum": 89,
+          "standard": 124
+        },
+        {
+          "sum": 90,
+          "standard": 126
+        },
+        {
+          "sum": 91,
+          "standard": 127
+        },
+        {
+          "sum": 92,
+          "standard": 129
+        },
+        {
+          "sum": 93,
+          "standard": 130
+        },
+        {
+          "sum": 94,
+          "standard": 132
+        },
+        {
+          "sum": 95,
+          "standard": 133
+        },
+        {
+          "sum": 96,
+          "standard": 135
+        },
+        {
+          "sum": 97,
+          "standard": 136
+        },
+        {
+          "sum": 98,
+          "standard": 138
+        }
+      ]
+    }
+  }
+}

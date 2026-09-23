@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BrightSteps — NCDC Medina</title>
+  <link rel="stylesheet" href="css/main.css" />
+</head>
+<body>
+  <!-- Root mounts either login or the role layout -->
+  <div id="app"></div>
+
+  <!-- Core -->
+  <script src="js/app.js"></script>
+  <script src="js/shared/components.js"></script>
+  <script src="js/shared/score-profile.js"></script>
+  <script src="js/data/sample-children.js"></script>
+  <script src="js/data/assessment-store.js"></script>
+  <script src="js/data/report-store.js"></script>
+  <script src="js/data/health-store.js"></script>
+  <script src="js/data/attendance-store.js"></script>
+  <script src="js/data/calendar-store.js"></script>
+
+  <!-- Engine -->
+  <script src="js/engine/progress-engine.js"></script>
+
+  <!-- Teacher modules -->
+  <script src="js/teacher/layout.js"></script>
+  <script src="js/teacher/dashboard.js"></script>
+  <script src="js/teacher/children.js"></script>
+  <script src="js/teacher/development.js"></script>
+  <script src="js/teacher/health.js"></script>
+  <script src="js/teacher/attendance.js"></script>
+  <script src="js/teacher/reports.js"></script>
+  <script src="js/teacher/calendar.js"></script>
+
+  <!-- Parent modules -->
+  <script src="js/parent/layout.js"></script>
+  <script src="js/parent/dashboard.js"></script>
+
+  <script>
+    // Boot
+    document.addEventListener('DOMContentLoaded', () => {
+      BrightSteps.init();
+    });
+  </script>
+</body>
+</html>
