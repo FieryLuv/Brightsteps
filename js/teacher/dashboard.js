@@ -39,8 +39,8 @@ const TeacherDashboard = {
         <!-- Applications -->
         <div class="card">
           <h3>📝 Enrollment Applications</h3>
-          <p class="text-muted" id="dash-pending-apps">Visitor applications pending review.</p>
-          <button class="btn btn-blue mt-2" onclick="BrightSteps.navigate('applications')">Review Applications</button>
+          <p class="text-muted" id="dash-pending-apps">Pending visitor applications appear under Children.</p>
+          <button class="btn btn-blue mt-2" onclick="BrightSteps.navigate('children')">Open Children</button>
         </div>
 
         <!-- Attendance -->

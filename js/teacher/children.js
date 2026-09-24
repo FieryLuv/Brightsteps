@@ -22,6 +22,15 @@ const TeacherChildren = {
       { key: 'sunshine', label: 'Sunshine Group (4–5)' }
     ];
 
+    const pending = (typeof ApplicationStore !== 'undefined')
+      ? ApplicationStore.listByStatus('pending')
+      : [];
+    const approvedWait = (typeof ApplicationStore !== 'undefined')
+      ? ApplicationStore.listByStatus('approved')
+      : [];
+
+    const pendingBlock = this._pendingApplicationsHtml(pending, approvedWait);
+
     const listHtml = children.length
       ? `<div class="children-grid">${children.map(c => this._card(c)).join('')}</div>`
       : `<div class="card children-empty">
@@ -37,10 +46,12 @@ const TeacherChildren = {
       <div class="flex justify-between items-center mb-3" style="flex-wrap:wrap; gap:1rem;">
         <div>
           <h1>👦 Children</h1>
-          <p class="text-muted">View profiles, development status, and open individual child records.</p>
+          <p class="text-muted">Enroll children, review online applications, and open profiles.</p>
         </div>
         <button class="btn btn-blue" onclick="TeacherChildren.openAddChild()">+ Add Child</button>
       </div>
+
+      ${pendingBlock}
 
       <div class="card" style="margin-bottom:1.25rem;">
         <div class="flex flex-wrap gap-1 items-center" style="justify-content:space-between;">
@@ -64,7 +75,7 @@ const TeacherChildren = {
       </div>
 
       <p class="text-muted mb-2" style="font-size:0.9rem;">
-        Showing <strong>${children.length}</strong> of ${SampleChildren.length} children
+        Showing <strong>${children.length}</strong> of ${SampleChildren.length} enrolled children
       </p>
 
       ${listHtml}
@@ -106,6 +117,61 @@ const TeacherChildren = {
     this.filterText = '';
     this.filterSection = 'all';
     this._draw();
+  },
+
+
+  _pendingApplicationsHtml(pending, approvedWait) {
+    const hasPending = pending && pending.length;
+    const hasApproved = approvedWait && approvedWait.length;
+    if (!hasPending && !hasApproved) {
+      return `
+        <div class="card" style="margin-bottom:1.25rem;border-left:4px solid var(--border);">
+          <div class="flex justify-between items-center" style="flex-wrap:wrap;gap:0.5rem;">
+            <div>
+              <h3 style="margin:0;">📝 Online applications</h3>
+              <p class="text-muted" style="margin:0.35rem 0 0;font-size:0.9rem;">
+                No pending visitor applications. Use <strong>+ Add Child</strong> for walk-in enrollment.
+              </p>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    const row = (a, isApproved) => `
+      <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;padding:0.75rem 0;border-bottom:1px solid var(--border);">
+        <div>
+          <strong>${a.childName}</strong>
+          <span class="text-muted" style="font-size:0.85rem;margin-left:0.35rem;">${a.id}</span>
+          <div class="text-muted" style="font-size:0.85rem;margin-top:0.2rem;">
+            Guardian: ${a.guardianName || '—'} · ${a.contactPhone || 'no phone'}
+            · DOB ${a.birthDate || '—'}
+            ${isApproved ? ' · <span style="color:var(--primary);font-weight:600;">Approved — finish enrollment</span>' : ''}
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+          ${isApproved
+            ? `<button class="btn btn-blue" onclick="TeacherApplications.continueEnroll('${a.id}')">Complete enrollment</button>`
+            : `<button class="btn btn-blue" onclick="TeacherApplications.approve('${a.id}')">Approve & enroll</button>
+               <button class="btn" style="background:#ffebee;color:#c62828;" onclick="TeacherApplications.reject('${a.id}')">Reject</button>`}
+          <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherApplications.openReview('${a.id}')">View</button>
+        </div>
+      </div>`;
+
+    const pendingRows = (pending || []).map(a => row(a, false)).join('');
+    const approvedRows = (approvedWait || []).map(a => row(a, true)).join('');
+
+    return `
+      <div class="card" style="margin-bottom:1.25rem;border-left:4px solid var(--orange);">
+        <h3 style="margin:0 0 0.35rem;">📝 Online applications
+          ${hasPending ? `<span style="font-size:0.85rem;font-weight:600;color:var(--orange);"> · ${pending.length} pending</span>` : ''}
+        </h3>
+        <p class="text-muted" style="margin:0 0 0.75rem;font-size:0.9rem;">
+          Visitor requests stay on hold until you approve. Approval opens <strong>Add Child</strong> with fields auto-filled.
+          Walk-in families use <strong>+ Add Child</strong> only.
+        </p>
+        ${pendingRows}
+        ${approvedRows}
+      </div>`;
   },
 
   /* ---------- Add / Enroll Child ---------- */

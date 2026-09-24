@@ -225,7 +225,11 @@ const TeacherApplications = {
       rejectReason: reason
     });
     this.closeReview();
-    this._draw();
+    if (typeof TeacherChildren !== 'undefined' && TeacherChildren.container) {
+      TeacherChildren._draw();
+    } else if (this._container) {
+      this._draw();
+    }
   },
 
   showCredentials(id) {
@@ -259,7 +263,7 @@ const TeacherApplications = {
             </p>
           </div>
           <div class="bs-modal-footer">
-            <button class="btn btn-blue" onclick="document.getElementById('app-cred-overlay').remove();TeacherApplications.render(document.getElementById('main-content'))">Done</button>
+            <button class="btn btn-blue" onclick="document.getElementById('app-cred-overlay').remove();BrightSteps.navigate('children')">Done</button>
           </div>
         </div>
       </div>`;

@@ -239,7 +239,7 @@ const BrightSteps = (() => {
       attendance: () => TeacherAttendance.render(main),
       reports: () => TeacherReports.render(main),
       calendar: () => TeacherCalendar.render(main),
-      applications: () => TeacherApplications.render(main)
+      applications: () => TeacherChildren.render(main) /* merged into Children */
     };
 
     if (routes[page]) {
