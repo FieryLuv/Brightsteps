@@ -274,6 +274,10 @@ const TeacherReports = {
     this._toast('Report approved — visible on the Parent Portal for this child.');
   },
 
+  printEditor() {
+    window.print();
+  },
+
   closeEditor() {
     const el = document.getElementById('report-editor-overlay');
     if (el) el.remove();

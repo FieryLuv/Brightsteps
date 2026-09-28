@@ -6,11 +6,20 @@ const TeacherAttendance = {
   selectedSection: 'explorers',
   selectedDate: new Date().toISOString().slice(0, 10),
 
-  sections: [
-    { key: 'explorers', label: 'Little Explorers', ages: '0–3 yrs' },
-    { key: 'stars', label: 'Little Stars', ages: '3–4 yrs' },
-    { key: 'sunshine', label: 'Sunshine Group', ages: '4–5 yrs' }
-  ],
+  get sections() {
+    if (typeof ClassStore !== 'undefined') {
+      return ClassStore.listActive().map(c => ({
+        key: c.key,
+        label: c.name,
+        ages: c.ageLabel || ''
+      }));
+    }
+    return [
+      { key: 'explorers', label: 'Little Explorers', ages: '0–3 yrs' },
+      { key: 'stars', label: 'Little Stars', ages: '3–4 yrs' },
+      { key: 'sunshine', label: 'Sunshine Group', ages: '4–5 yrs' }
+    ];
+  },
 
   render(container) {
     this._container = container;

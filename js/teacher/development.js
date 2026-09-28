@@ -28,11 +28,13 @@ const TeacherDevelopment = {
   },
 
   _draw() {
-    const sections = [
-      { key: 'explorers', label: 'Little Explorers (0–3 yrs)' },
-      { key: 'stars', label: 'Little Stars (3–4 yrs)' },
-      { key: 'sunshine', label: 'Sunshine Group (4–5 yrs)' }
-    ];
+    const sections = (typeof ClassStore !== 'undefined')
+      ? ClassStore.options(false)
+      : [
+          { key: 'explorers', label: 'Little Explorers (0–3 yrs)' },
+          { key: 'stars', label: 'Little Stars (3–4 yrs)' },
+          { key: 'sunshine', label: 'Sunshine Group (4–5 yrs)' }
+        ];
 
     const children = SampleChildren.filter(c => c.sectionKey === this.selectedSection);
 
@@ -156,7 +158,8 @@ const TeacherDevelopment = {
             </div>
           </div>
           <div class="bs-modal-footer">
-            <button class="btn btn-blue" onclick="TeacherDevelopment.closeResult()">Close</button>
+            <button class="btn no-print" style="background:#fff3e0;color:#e65100;" onclick="TeacherDevelopment.printResult()">🖨 Print</button>
+            <button class="btn btn-blue no-print" onclick="TeacherDevelopment.closeResult()">Close</button>
           </div>
         </div>
       </div>`;
@@ -227,10 +230,19 @@ const TeacherDevelopment = {
       ? '1st through 6th evaluation columns'
       : '1st through 3rd evaluation columns';
 
+    const isR1 = child.recordType === 1;
+    const themeClass = isR1 ? 'eccd-theme-record1' : 'eccd-theme-record2';
+    const coverSrc = isR1
+      ? 'assets/eccd/record1-cover.png'
+      : 'assets/eccd/record2-cover.png';
+    const coverAlt = isR1
+      ? "Child's Record 1 — Ages 0 month to 3 years"
+      : "Child's Record 2 — Age 3 years 1 month to 5 years";
+
     const html = `
       <div id="dev-modal-overlay" class="bs-overlay">
-        <div class="bs-modal-panel" style="max-width:1200px;">
-          <div class="bs-modal-header">
+        <div class="bs-modal-panel eccd-checklist-panel ${themeClass}" style="max-width:1200px;">
+          <div class="bs-modal-header eccd-checklist-header">
             <div>
               <h2 style="margin:0;font-size:1.3rem;color:white;">ECCD Checklist — ${child.name}</h2>
               <div style="opacity:0.9;font-size:0.88rem;margin-top:2px;">
@@ -240,11 +252,13 @@ const TeacherDevelopment = {
             <button onclick="TeacherDevelopment.closeAssessment()" class="bs-modal-close">×</button>
           </div>
 
-          <div class="eccd-toolbar">
-            <div class="eccd-jump-nav">${jumpLinks}</div>
-          </div>
-
           <div id="dev-modal-body" class="bs-modal-body eccd-form-scroll">
+            <div class="eccd-cover-wrap">
+              <img src="${coverSrc}" alt="${coverAlt}" class="eccd-cover-img" />
+            </div>
+            <div class="eccd-toolbar eccd-toolbar-sticky">
+              <div class="eccd-jump-nav">${jumpLinks}</div>
+            </div>
             <p class="eccd-form-note">
               Mark the <strong>Present</strong> checkbox under the evaluation column (${periodHint}) when the skill is observed.
               Each column is one evaluation — same as the paper form. Previously saved marks are restored when you reopen.
@@ -520,7 +534,8 @@ const TeacherDevelopment = {
             ${draft}
           </div>
           <div class="bs-modal-footer">
-            <button class="btn btn-blue" onclick="TeacherDevelopment.closeResult()">Done</button>
+            <button class="btn no-print" style="background:#fff3e0;color:#e65100;" onclick="TeacherDevelopment.printResult()">🖨 Print</button>
+            <button class="btn btn-blue no-print" onclick="TeacherDevelopment.closeResult()">Done</button>
           </div>
         </div>
       </div>
@@ -692,6 +707,10 @@ const TeacherDevelopment = {
     const el = document.getElementById('dev-modal-overlay');
     if (el) el.remove();
     this._assessChild = null;
+  },
+
+  printResult() {
+    window.print();
   },
 
   closeResult() {

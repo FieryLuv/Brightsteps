@@ -41,9 +41,11 @@ const VisitorEnrollment = {
             <div>
               <label class="ecc-field-label">Preferred section</label>
               <select id="v-section" class="ecc-field-input">
-                <option value="explorers">Little Explorers (0–3 yrs)</option>
-                <option value="stars">Little Stars (3–4 yrs)</option>
-                <option value="sunshine">Sunshine Group (4–5 yrs)</option>
+                ${(typeof ClassStore !== 'undefined' ? ClassStore.options(false) : [
+                    { key: 'explorers', label: 'Little Explorers (0–3 yrs)' },
+                    { key: 'stars', label: 'Little Stars (3–4 yrs)' },
+                    { key: 'sunshine', label: 'Sunshine Group (4–5 yrs)' }
+                  ]).map(s => `<option value="${s.key}">${s.label}</option>`).join('')}
               </select>
             </div>
           </div>

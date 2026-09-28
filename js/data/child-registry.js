@@ -42,6 +42,15 @@ const ChildRegistry = {
         SampleChildren.push(c);
       }
     });
+    // Apply transfers stored in enrolled over sample seeds
+    enrolled.forEach(c => {
+      const idx = SampleChildren.findIndex(x => x.id === c.id || String(x.id) === String(c.id));
+      if (idx >= 0 && c.sectionKey) {
+        SampleChildren[idx].sectionKey = c.sectionKey;
+        SampleChildren[idx].section = c.section || SampleChildren[idx].section;
+      }
+    });
+    this.applyDeletions();
     this._merged = true;
   },
 
@@ -92,12 +101,16 @@ const ChildRegistry = {
   },
 
   sectionFromKey(key) {
+    if (typeof ClassStore !== 'undefined' && ClassStore.displayName) {
+      const n = ClassStore.displayName(key);
+      if (n && n !== key) return n;
+    }
     const map = {
       explorers: 'Little Explorers',
       stars: 'Little Stars',
       sunshine: 'Sunshine Group'
     };
-    return map[key] || 'Little Explorers';
+    return map[key] || key || 'Little Explorers';
   },
 
   /**
@@ -114,10 +127,30 @@ const ChildRegistry = {
     const ageLabel = data.ageLabel || age.ageLabel;
     const sectionKey = data.sectionKey || 'explorers';
 
+    const lastName = (data.lastName || '').trim();
+    const firstName = (data.firstName || '').trim();
+    const middleInitial = (data.middleInitial || '').trim();
+    let name = (data.name || '').trim();
+    if (!name && (lastName || firstName)) {
+      name = [firstName, middleInitial, lastName].filter(Boolean).join(' ').replace(/\s+/g, ' ').trim();
+    }
+
+    // Phase A — ECCD Child Profile (personal + health)
+    const vaccines = data.vaccines || {};
+    const vaccineKeys = ['BCG', 'DPT', 'OralPolio', 'HepaB', 'Measles', 'Others'];
+    const vaccinesNorm = {};
+    vaccineKeys.forEach(k => {
+      const v = vaccines[k] != null ? vaccines[k] : data['vaccine_' + k];
+      vaccinesNorm[k] = (v === 'Yes' || v === 'No' || v === "Don't Know") ? v : (v || '');
+    });
+
     return {
       id,
       childCode,
-      name: (data.name || '').trim(),
+      name,
+      lastName,
+      firstName,
+      middleInitial,
       sex: data.sex || 'Female',
       ageLabel,
       ageMonths,
@@ -134,17 +167,38 @@ const ChildRegistry = {
         barangay: (data.barangay != null ? data.barangay : (data.address && data.address.barangay)) || '',
         municipality: (data.municipality != null ? data.municipality : (data.address && data.address.municipality)) || 'Medina',
         province: (data.province != null ? data.province : (data.address && data.address.province)) || 'Misamis Oriental',
-        region: (data.region != null ? data.region : (data.address && data.address.region)) || 'X'
+        region: (data.region != null ? data.region : (data.address && data.address.region)) || 'X',
+        purok: (data.purok != null ? data.purok : (data.address && data.address.purok)) || ''
       },
       siblings: data.siblings != null && data.siblings !== '' ? Number(data.siblings) : 0,
       birthOrder: data.birthOrder || '',
       recordType: data.recordType || this.recordTypeFromAgeMonths(ageMonths),
+      // Phase A ECCD profile
+      registered: data.registered === true || data.registered === 'Yes' || data.registered === 'yes',
+      bornAt: data.bornAt || '', // Hospital | Health Center | Home
+      motherTongue: data.motherTongue || '',
+      motherTongueOther: data.motherTongueOther || '',
+      otherDialects: data.otherDialects || '',
+      documents: {
+        eccdCard: !!(data.documents && data.documents.eccdCard) || data.docEccdCard === true || data.docEccdCard === 'on',
+        motherChildBook: !!(data.documents && data.documents.motherChildBook) || data.docMotherChildBook === true || data.docMotherChildBook === 'on',
+        other: (data.documents && data.documents.other) || data.docOther || ''
+      },
+      vaccines: vaccinesNorm,
       // enrollment meta
       enrollmentSource: opts.source || data.enrollmentSource || 'walk_in',
       applicationId: opts.applicationId || data.applicationId || null,
       enrolledAt: data.enrolledAt || new Date().toISOString(),
-      // optional health at enrollment (also can go to HealthStore)
-      enrollmentHealth: data.enrollmentHealth || null
+      enrollmentHealth: data.enrollmentHealth || null,
+      // Phases B–D placeholders (filled later)
+      motherProfile: data.motherProfile || null,
+      fatherProfile: data.fatherProfile || null,
+      siblingsDetail: data.siblingsDetail || null,
+      physicalAttributes: data.physicalAttributes || null,
+      priorEce: data.priorEce || null,
+      transport: data.transport || null,
+      accompanies: data.accompanies || null,
+      profileMeta: data.profileMeta || null
     };
   },
 
@@ -175,6 +229,99 @@ const ChildRegistry = {
   },
 
   /**
+   * Update an enrolled or sample child in memory + enrolled storage.
+   */
+  updateChild(id, patch) {
+    this.ensureMerged();
+    if (typeof SampleChildren === 'undefined') return { ok: false, error: 'No children list.' };
+    const idx = SampleChildren.findIndex(c => c.id === id || String(c.id) === String(id));
+    if (idx < 0) return { ok: false, error: 'Child not found.' };
+    SampleChildren[idx] = { ...SampleChildren[idx], ...patch };
+    const enrolled = this._readEnrolled();
+    const eIdx = enrolled.findIndex(c => c.id === id || String(c.id) === String(id));
+    if (eIdx >= 0) {
+      enrolled[eIdx] = { ...enrolled[eIdx], ...patch };
+      this._writeEnrolled(enrolled);
+    } else {
+      // Persist sample-child edits so transfer/delete survives refresh
+      enrolled.push(SampleChildren[idx]);
+      this._writeEnrolled(enrolled);
+    }
+    return { ok: true, child: SampleChildren[idx] };
+  },
+
+  /**
+   * Move one or more children to a class/section.
+   */
+  transferToClass(ids, sectionKey) {
+    if (!sectionKey) return { ok: false, error: 'Target class is required.' };
+    const section = this.sectionFromKey(sectionKey);
+    const results = [];
+    (ids || []).forEach(id => {
+      results.push(this.updateChild(id, { sectionKey, section }));
+    });
+    const failed = results.filter(r => !r.ok);
+    if (failed.length) {
+      return { ok: false, error: failed[0].error, results };
+    }
+    return { ok: true, count: results.length, results };
+  },
+
+  /**
+   * Remove child from active list. Soft-delete sample data by filtering out of SampleChildren;
+   * removes from enrolled storage. Related assessment/health data is left (orphan) for safety.
+   */
+  removeChild(id) {
+    this.ensureMerged();
+    if (typeof SampleChildren === 'undefined') return { ok: false, error: 'No children list.' };
+    const before = SampleChildren.length;
+    const child = SampleChildren.find(c => c.id === id || String(c.id) === String(id));
+    if (!child) return { ok: false, error: 'Child not found.' };
+
+    for (let i = SampleChildren.length - 1; i >= 0; i--) {
+      if (SampleChildren[i].id === id || String(SampleChildren[i].id) === String(id)) {
+        SampleChildren.splice(i, 1);
+      }
+    }
+    const enrolled = this._readEnrolled().filter(c => c.id !== id && String(c.id) !== String(id));
+    this._writeEnrolled(enrolled);
+
+    // Track deleted sample IDs so ensureMerged does not need special handling
+    try {
+      const KEY = 'brightsteps_deleted_children_v1';
+      const raw = localStorage.getItem(KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      if (!list.includes(id) && !list.includes(String(id))) {
+        list.push(id);
+        localStorage.setItem(KEY, JSON.stringify(list));
+      }
+    } catch (e) { /* ignore */ }
+
+    return { ok: true, removed: child, before, after: SampleChildren.length };
+  },
+
+  removeChildren(ids) {
+    const out = [];
+    (ids || []).forEach(id => out.push(this.removeChild(id)));
+    return { ok: out.every(r => r.ok), results: out, count: out.filter(r => r.ok).length };
+  },
+
+  /** Filter out previously deleted IDs after merge */
+  applyDeletions() {
+    if (typeof SampleChildren === 'undefined') return;
+    try {
+      const raw = localStorage.getItem('brightsteps_deleted_children_v1');
+      if (!raw) return;
+      const deleted = new Set(JSON.parse(raw).map(String));
+      for (let i = SampleChildren.length - 1; i >= 0; i--) {
+        if (deleted.has(String(SampleChildren[i].id))) {
+          SampleChildren.splice(i, 1);
+        }
+      }
+    } catch (e) { /* ignore */ }
+  },
+
+  /**
    * Future online admission: map approved application softcopy → enroll.
    * Keep field mapping in one place so the Add Child form can reuse applyPrefill.
    */
@@ -183,6 +330,9 @@ const ChildRegistry = {
     // Flexible mapping — online form may use different keys
     return {
       name: application.childName || application.name || '',
+      lastName: application.lastName || '',
+      firstName: application.firstName || '',
+      middleInitial: application.middleInitial || '',
       sex: application.sex || application.gender || 'Female',
       birthDate: application.birthDate || application.dateOfBirth || '',
       sectionKey: application.sectionKey || application.preferredSection || 'explorers',
@@ -193,6 +343,7 @@ const ChildRegistry = {
       municipality: application.municipality || (application.address && application.address.municipality) || 'Medina',
       province: application.province || (application.address && application.address.province) || 'Misamis Oriental',
       region: application.region || (application.address && application.address.region) || 'X',
+      purok: application.purok || '',
       siblings: application.siblings != null ? application.siblings : '',
       birthOrder: application.birthOrder || '',
       allergies: application.allergies || '',
@@ -200,6 +351,12 @@ const ChildRegistry = {
       immunizations: application.immunizations || '',
       heightCm: application.heightCm || '',
       weightKg: application.weightKg || '',
+      registered: application.registered,
+      bornAt: application.bornAt || '',
+      motherTongue: application.motherTongue || '',
+      motherTongueOther: application.motherTongueOther || '',
+      otherDialects: application.otherDialects || '',
+      vaccines: application.vaccines || null,
       applicationId: application.id || application.applicationId || null
     };
   },

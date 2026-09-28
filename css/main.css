@@ -1267,3 +1267,190 @@ p {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ---------- Print ---------- */
+@media print {
+  body {
+    background: white !important;
+    color: #000 !important;
+  }
+  header,
+  .sidebar,
+  .parent-header,
+  .bs-modal-header .bs-modal-close,
+  .bs-modal-footer,
+  .nav-item,
+  .ecc-toast,
+  button.btn,
+  .no-print {
+    display: none !important;
+  }
+  .container {
+    display: block !important;
+    height: auto !important;
+  }
+  .main-content,
+  #main-content {
+    padding: 0 !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
+  .bs-overlay {
+    position: static !important;
+    background: none !important;
+    display: block !important;
+    padding: 0 !important;
+  }
+  .bs-modal-panel {
+    box-shadow: none !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    border-radius: 0 !important;
+  }
+  .bs-modal-header {
+    background: #1565C0 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .card {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+    break-inside: avoid;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
+.print-only { display: none; }
+
+
+/* ---------- ECCD checklist covers (Record 1 blue / Record 2 green) ---------- */
+.eccd-cover-wrap {
+  line-height: 0;
+  margin: 0 0 0.75rem;
+  border-radius: 10px;
+  overflow: visible;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  /* scrolls with checklist — not fixed */
+  flex-shrink: 0;
+}
+
+.eccd-cover-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: none !important;
+  object-fit: contain !important;
+  object-position: top center;
+}
+
+/* Domain jump links stick under header while cover scrolls away */
+.eccd-toolbar-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  margin: 0 0 0.75rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+/* Record 1 — cyan / light blue (matches PDF cover) */
+.eccd-theme-record1 .eccd-checklist-header,
+.eccd-theme-record1 .bs-modal-header {
+  background: #0288D1 !important;
+}
+
+.eccd-theme-record1 .eccd-form-scroll {
+  background: #B3E5FC;
+}
+
+.eccd-theme-record1 .eccd-toolbar {
+  background: #E1F5FE;
+  border-bottom-color: #81D4FA;
+}
+
+.eccd-theme-record1 .eccd-jump {
+  color: #01579B;
+}
+
+.eccd-theme-record1 .eccd-form-note {
+  border-left-color: #0288D1;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.eccd-theme-record1 .eccd-domain-block {
+  border-left-color: #0288D1;
+  background: #fff;
+}
+
+.eccd-theme-record1 .eccd-domain-title {
+  color: #01579B;
+  border-bottom-color: #B3E5FC;
+}
+
+.eccd-theme-record1 .eccd-table thead th {
+  background: #E1F5FE;
+  color: #01579B;
+}
+
+.eccd-theme-record1 .bs-modal-footer {
+  background: #E1F5FE;
+  border-top: 1px solid #81D4FA;
+}
+
+/* Record 2 — lime green (matches PDF cover) */
+.eccd-theme-record2 .eccd-checklist-header,
+.eccd-theme-record2 .bs-modal-header {
+  background: #7CB342 !important;
+}
+
+.eccd-theme-record2 .eccd-form-scroll {
+  background: #C5E1A5;
+}
+
+.eccd-theme-record2 .eccd-toolbar {
+  background: #F1F8E9;
+  border-bottom-color: #AED581;
+}
+
+.eccd-theme-record2 .eccd-jump {
+  color: #33691E;
+}
+
+.eccd-theme-record2 .eccd-form-note {
+  border-left-color: #7CB342;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.eccd-theme-record2 .eccd-domain-block {
+  border-left-color: #7CB342;
+  background: #fff;
+}
+
+.eccd-theme-record2 .eccd-domain-title {
+  color: #33691E;
+  border-bottom-color: #C5E1A5;
+}
+
+.eccd-theme-record2 .eccd-table thead th {
+  background: #F1F8E9;
+  color: #33691E;
+}
+
+.eccd-theme-record2 .bs-modal-footer {
+  background: #F1F8E9;
+  border-top: 1px solid #AED581;
+}
+
+.eccd-checklist-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: 94vh;
+  overflow: hidden;
+}
+
+.eccd-checklist-panel .eccd-form-scroll {
+  flex: 1;
+  overflow-y: auto;
+}

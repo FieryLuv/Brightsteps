@@ -85,6 +85,8 @@ const ParentDashboard = {
 
       return (
         '<div class="card mb-3">' +
+        '<div class="no-print" style="text-align:right;margin-bottom:0.5rem;">' +
+        '<button class="btn" style="background:#fff3e0;color:#e65100;" onclick="window.print()">🖨 Print report</button></div>' +
         '<h3 style="text-align:center;">🌟 Progress Report – ' + approved.period + ' Evaluation</h3>' +
         (approved.overallLabel
           ? '<p style="text-align:center;margin:0.5rem 0 1rem;"><strong>' + approved.overallLabel + '</strong>' +
