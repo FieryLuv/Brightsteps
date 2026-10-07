@@ -51,15 +51,31 @@ const ApplicationStore = {
       rejectReason: null,
       enrolledChildId: null,
       enrolledChildCode: null,
-      // Child
+      // Child identity
       childName: (data.childName || '').trim(),
+      lastName: (data.lastName || '').trim(),
+      firstName: (data.firstName || '').trim(),
+      middleInitial: (data.middleInitial || '').trim(),
       sex: data.sex || 'Female',
       birthDate: data.birthDate || '',
       preferredSection: data.preferredSection || 'explorers',
-      // Family
+      birthOrder: data.birthOrder || '',
+      registered: data.registered || 'No',
+      bornAt: data.bornAt || '',
+      motherTongue: data.motherTongue || '',
+      otherDialects: data.otherDialects || '',
+      // Family / contact
       guardianName: (data.guardianName || '').trim(),
       motherName: (data.motherName || '').trim(),
+      motherLastName: (data.motherLastName || '').trim(),
+      motherFirstName: (data.motherFirstName || '').trim(),
+      motherMiddleInitial: (data.motherMiddleInitial || '').trim(),
       fatherName: (data.fatherName || '').trim(),
+      fatherLastName: (data.fatherLastName || '').trim(),
+      fatherFirstName: (data.fatherFirstName || '').trim(),
+      fatherMiddleInitial: (data.fatherMiddleInitial || '').trim(),
+      motherProfile: data.motherProfile || null,
+      fatherProfile: data.fatherProfile || null,
       contactPhone: (data.contactPhone || '').trim(),
       contactEmail: (data.contactEmail || '').trim(),
       barangay: (data.barangay || '').trim(),
@@ -67,13 +83,19 @@ const ApplicationStore = {
       province: (data.province || 'Misamis Oriental').trim(),
       region: (data.region || 'X').trim(),
       siblings: data.siblings != null && data.siblings !== '' ? Number(data.siblings) : 0,
-      birthOrder: data.birthOrder || '',
-      // Health optional
+      siblingsDetail: Array.isArray(data.siblingsDetail) ? data.siblingsDetail : [],
+      // Health / docs
+      documents: data.documents || { eccdCard: false, motherChildBook: false, other: '' },
       allergies: data.allergies || '',
       medicalConditions: data.medicalConditions || '',
       immunizations: data.immunizations || '',
+      vaccines: data.vaccines || null,
       heightCm: data.heightCm || '',
       weightKg: data.weightKg || '',
+      physicalAttributes: data.physicalAttributes || null,
+      priorEce: data.priorEce || null,
+      transport: data.transport || [],
+      accompanies: data.accompanies || [],
       notes: data.notes || ''
     };
     list.push(record);

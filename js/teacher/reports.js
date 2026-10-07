@@ -4,7 +4,41 @@
  */
 
 const TeacherReports = {
+  tab: 'eccd', // eccd | sfp
+
   render(container) {
+    this._container = container;
+    if (typeof ChildRegistry !== 'undefined') ChildRegistry.ensureMerged();
+    if (typeof SfpStore !== 'undefined') SfpStore.ensureSeed();
+    this._draw();
+  },
+
+  setTab(key) {
+    this.tab = key;
+    this._draw();
+  },
+
+  _draw() {
+    const tabs = [
+      { key: 'eccd', label: '📈 ECCD progress (parents)' },
+      { key: 'sfp', label: '🍎 SFP / MSWDO' }
+    ].map(t => {
+      const active = this.tab === t.key;
+      return `<button class="btn ${active ? 'btn-blue' : ''}"
+        style="${active ? '' : 'background:#e8e8e8;color:var(--text);'}"
+        onclick="TeacherReports.setTab('${t.key}')">${t.label}</button>`;
+    }).join('');
+
+    const body = this.tab === 'sfp' ? this._sfpReportsHtml() : this._eccdReportsHtml();
+
+    this._container.innerHTML = `
+      ${UI.pageHeader('📊 Reports', 'ECCD parent progress reports and DSWD SFP forms for MSWDO / liquidation.')}
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">${tabs}</div>
+      ${body}
+    `;
+  },
+
+  _eccdReportsHtml() {
     const children = typeof SampleChildren !== 'undefined' ? SampleChildren : [];
     const rows = children.map(c => {
       const history = typeof AssessmentStore !== 'undefined'
@@ -41,9 +75,9 @@ const TeacherReports = {
         </tr>`;
     }).join('');
 
-    container.innerHTML = `
-      ${UI.pageHeader('📊 Reports', 'Parent-friendly progress reports from ECCD assessments. Review, edit, and approve before parents see them.')}
+    return `
       <div class="card">
+        <p class="text-muted" style="margin-top:0;">Parent-friendly progress reports from ECCD assessments. Review, edit, and approve before parents see them.</p>
         <div class="eccd-table-wrap">
           <table class="eccd-table">
             <thead>
@@ -60,9 +94,272 @@ const TeacherReports = {
             </tbody>
           </table>
         </div>
-      </div>
-    `;
+      </div>`;
   },
+
+  _sfpReportsHtml() {
+    const cycle = typeof SfpStore !== 'undefined' ? SfpStore.getActiveCycle() : null;
+    const stats = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
+    const hotDays = typeof SfpStore !== 'undefined' ? SfpStore.countHotFeedingDays() : 0;
+    const altDays = typeof SfpStore !== 'undefined' ? SfpStore.countAltFeedingDays() : 0;
+    const benCount = stats ? stats.beneficiaries.total : 0;
+    const today = new Date().toISOString().slice(0, 10);
+
+    return `
+      <div class="card" style="margin-bottom:1rem;">
+        <h3 style="margin-top:0;">SFP cycle snapshot</h3>
+        <p style="margin:0.35rem 0;"><strong>${(cycle && cycle.cycleLabel) || '—'}</strong>
+          · SY ${(cycle && cycle.schoolYear) || '—'}
+          · ${(cycle && cycle.facilityName) || 'NCDC Medina'}</p>
+        <p style="margin:0.35rem 0;">Beneficiaries on file: <strong>${benCount}</strong>
+          · Hot meal days logged: <strong>${hotDays}</strong>
+          · NUTRICombo deliveries: <strong>${altDays}</strong></p>
+        <p class="text-muted" style="margin:0.5rem 0 0;font-size:0.85rem;">
+          Counts come from Health → SFP profiles and SFP Feeding logs. Print forms use browser Print → Save as PDF.
+        </p>
+      </div>
+
+      <div class="dashboard-grid" style="margin-bottom:1rem;">
+        <div class="card" style="margin:0;">
+          <h3 style="margin-top:0;">Certification -A <span class="text-muted" style="font-weight:500;font-size:0.85rem;">Hot meals</span></h3>
+          <p class="text-muted" style="font-size:0.88rem;">For liquidation — children who received cooked meals over a period.</p>
+          <div class="profile-grid">
+            <div>
+              <label class="ecc-field-label">Period start</label>
+              <input type="date" id="cert-a-start" class="ecc-field-input" />
+            </div>
+            <div>
+              <label class="ecc-field-label">Period end</label>
+              <input type="date" id="cert-a-end" class="ecc-field-input" value="${today}" />
+            </div>
+            <div>
+              <label class="ecc-field-label">Feeding days (override)</label>
+              <input type="number" id="cert-a-days" class="ecc-field-input" min="0" placeholder="Auto: ${hotDays}" />
+            </div>
+            <div>
+              <label class="ecc-field-label"># of children (override)</label>
+              <input type="number" id="cert-a-n" class="ecc-field-input" min="0" placeholder="Auto: ${benCount || '—'}" />
+            </div>
+          </div>
+          <button class="btn btn-blue" style="margin-top:0.75rem;" onclick="TeacherReports.printCertA()">🖨 Print Certification -A</button>
+        </div>
+        <div class="card" style="margin:0;">
+          <h3 style="margin-top:0;">Certification -C <span class="text-muted" style="font-weight:500;font-size:0.85rem;">NUTRICombo</span></h3>
+          <p class="text-muted" style="font-size:0.88rem;">For liquidation — alternative meals (NUTRICombo) received.</p>
+          <div class="profile-grid">
+            <div>
+              <label class="ecc-field-label">Period / delivery date</label>
+              <input type="date" id="cert-c-date" class="ecc-field-input" value="${today}" />
+            </div>
+            <div>
+              <label class="ecc-field-label">Feeding days (override)</label>
+              <input type="number" id="cert-c-days" class="ecc-field-input" min="0" placeholder="Auto: ${altDays}" />
+            </div>
+            <div>
+              <label class="ecc-field-label"># of children (override)</label>
+              <input type="number" id="cert-c-n" class="ecc-field-input" min="0" placeholder="Auto: ${benCount || '—'}" />
+            </div>
+          </div>
+          <button class="btn btn-blue" style="margin-top:0.75rem;" onclick="TeacherReports.printCertC()">🖨 Print Certification -C</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0;">Consolidated Report (Figures)</h3>
+        <p class="text-muted" style="font-size:0.88rem;margin-top:0;">
+          MSWDO format — physical status + nutritional status (entry vs after 6 months).
+          Auto-filled from SFP beneficiary flags where available.
+        </p>
+        <button class="btn btn-blue" onclick="TeacherReports.printConsolidation()">🖨 Print consolidation report</button>
+      </div>`;
+  },
+
+  _printWindow(title, bodyHtml) {
+    const w = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
+    if (!w) {
+      alert('Please allow pop-ups to print SFP forms.');
+      return;
+    }
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
+      <style>
+        body{font-family:Arial,sans-serif;font-size:12px;color:#000;margin:16px;}
+        h1,h2,h3,p{text-align:center;margin:4px 0;}
+        table{width:100%;border-collapse:collapse;margin-top:10px;}
+        th,td{border:1px solid #000;padding:5px;vertical-align:top;}
+        .label{font-weight:bold;}
+        .sub{padding-left:20px;}
+        .sig{margin-top:48px;display:flex;justify-content:space-between;gap:24px;}
+        .sig div{text-align:center;flex:1;}
+        .left{text-align:left;}
+        @media print{button{display:none;}}
+      </style></head><body>
+      ${bodyHtml}
+      <p style="text-align:center;margin-top:24px;"><button onclick="window.print()">Print / Save as PDF</button></p>
+      </body></html>`);
+    w.document.close();
+  },
+
+  printCertA() {
+    const cycle = typeof SfpStore !== 'undefined' ? SfpStore.getActiveCycle() : {};
+    const stats = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
+    const hotDays = typeof SfpStore !== 'undefined' ? SfpStore.countHotFeedingDays() : 0;
+    const nEl = document.getElementById('cert-a-n');
+    const dEl = document.getElementById('cert-a-days');
+    const start = (document.getElementById('cert-a-start') || {}).value || '________';
+    const end = (document.getElementById('cert-a-end') || {}).value || '________';
+    const n = (nEl && nEl.value) ? nEl.value : (stats ? stats.beneficiaries.total : '____');
+    const days = (dEl && dEl.value) ? dEl.value : (hotDays || '____');
+    const facility = (cycle && cycle.facilityName) || 'National Child Development Center — Medina';
+    const cycleNum = (cycle && (cycle.cycleNumber || cycle.cycleLabel)) || '15th';
+
+    const body = `
+      <p>Republic of the Philippines</p>
+      <p>Department of Social Welfare and Development</p>
+      <p>Field Office X</p>
+      <h2>CERTIFICATION</h2>
+      <p class="left" style="margin-top:24px;line-height:1.7;text-align:left;">
+        This is to certify that the total <strong>${n}</strong> Day Care Children have received and
+        consumed the foods prepared and served at <strong>${facility}</strong>
+        for the period of <strong>${start}</strong> to <strong>${end}</strong>
+        for a total of <strong>${days}</strong> feeding days.
+      </p>
+      <p class="left" style="text-align:left;margin-top:16px;">
+        This certification is issued for liquidation purposes only. (For the ${cycleNum} cycle implementation)
+      </p>
+      <div class="sig">
+        <div><br><br>_________________________<br>Signature over Printed name of CDW</div>
+        <div><br><br>_________________________<br>Signature over Printed name of<br>CDWF / C/MSWDO</div>
+      </div>
+      <p style="margin-top:32px;font-size:10px;color:#444;">Form style: DSWD FO X — Certification -A (Hot meals)</p>`;
+    this._printWindow('SFP Certification -A', body);
+  },
+
+  printCertC() {
+    const cycle = typeof SfpStore !== 'undefined' ? SfpStore.getActiveCycle() : {};
+    const stats = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
+    const altDays = typeof SfpStore !== 'undefined' ? SfpStore.countAltFeedingDays() : 0;
+    const nEl = document.getElementById('cert-c-n');
+    const dEl = document.getElementById('cert-c-days');
+    const date = (document.getElementById('cert-c-date') || {}).value || '________';
+    const n = (nEl && nEl.value) ? nEl.value : (stats ? stats.beneficiaries.total : '____');
+    const days = (dEl && dEl.value) ? dEl.value : (altDays || '____');
+    const facility = (cycle && cycle.facilityName) || 'NCDC Medina';
+    const cycleNum = (cycle && (cycle.cycleNumber || cycle.cycleLabel)) || '15th';
+
+    const body = `
+      <p>Republic of the Philippines</p>
+      <p>Department of Social Welfare and Development</p>
+      <p>Field Office X</p>
+      <h2>CERTIFICATION</h2>
+      <p class="left" style="margin-top:24px;line-height:1.7;text-align:left;">
+        This is to certify that the total <strong>${n}</strong> Day Care Children have received and
+        consumed alternative meals (NUTRICombo) at <strong>${facility}</strong>
+        for the period of <strong>${date}</strong>
+        for a total of <strong>${days}</strong> feeding days.
+      </p>
+      <p class="left" style="text-align:left;margin-top:16px;">
+        This certification is issued for liquidation purposes only. (For the ${cycleNum} cycle implementation)
+      </p>
+      <div class="sig">
+        <div><br><br>_________________________<br>Signature over Printed name of CDW</div>
+        <div><br><br>_________________________<br>Signature over Printed name of<br>CDWF / C/MSWDO</div>
+      </div>
+      <p style="margin-top:32px;font-size:10px;color:#444;">Form style: DSWD FO X — Certification -C (NUTRICombo)</p>`;
+    this._printWindow('SFP Certification -C', body);
+  },
+
+  printConsolidation() {
+    const cycle = typeof SfpStore !== 'undefined' ? SfpStore.getActiveCycle() : {};
+    const s = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
+    const z = (b) => (b && b.total != null ? b.total : '');
+    const m = (b) => (b && b.male != null ? b.male : '');
+    const f = (b) => (b && b.female != null ? b.female : '');
+    const age = (y) => (s && s.ageBands && s.ageBands[y]) ? s.ageBands[y] : { total: '', male: '', female: '' };
+
+    const body = `
+      <p>Republic of the Philippines</p>
+      <p>Region X</p>
+      <p>Province of Misamis Oriental</p>
+      <p>Municipality of MEDINA</p>
+      <h3>MUNICIPAL SOCIAL WELFARE AND DEVELOPMENT OFFICE</h3>
+      <p><b>Supplementary Feeding Program</b></p>
+      <p>${(cycle && cycle.cycleLabel) || '15th Cycle'} Implementation</p>
+      <p>SY ${(cycle && cycle.schoolYear) || '—'}</p>
+      <h3>CONSOLIDATED REPORT (FIGURES)</h3>
+
+      <h3>CONSOLIDATED PHYSICAL STATUS REPORT</h3>
+      <table>
+        <tr><td class="label">Total No. of Beneficiaries:</td><td>${s ? z(s.beneficiaries) : ''}</td></tr>
+        <tr><td class="sub">No. of Male Beneficiaries:</td><td>${s ? m(s.beneficiaries) : ''}</td></tr>
+        <tr><td class="sub">No. of Female Beneficiaries:</td><td>${s ? f(s.beneficiaries) : ''}</td></tr>
+        <tr><td class="label">Total No. of CDCs/SNPs:</td><td>1</td></tr>
+        <tr><td class="sub">No. of CDCs:</td><td>1</td></tr>
+        <tr><td class="sub">No. of SNPs:</td><td>0</td></tr>
+        <tr><td class="label">Total No. Of Children Beneficiaries (Age Bracket):</td><td></td></tr>
+        <tr><td class="sub">2 yrs. Old:</td><td>${z(age(2))}</td></tr>
+        <tr><td class="sub">3 yrs. Old:</td><td>${z(age(3))}</td></tr>
+        <tr><td class="sub">4 yrs. Old:</td><td>${z(age(4))}</td></tr>
+        <tr><td class="sub">5 yrs. Old:</td><td>${z(age(5))}</td></tr>
+        <tr><td class="label">Total No. of 4Ps Beneficiaries:</td><td>${s ? z(s.fourPs) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td>${s ? m(s.fourPs) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td>${s ? f(s.fourPs) : ''}</td></tr>
+        <tr><td class="label">Total No. of Child with Disability Beneficiaries:</td><td>${s ? z(s.disability) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td>${s ? m(s.disability) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td>${s ? f(s.disability) : ''}</td></tr>
+        <tr><td class="label">Total No. of Indigenous Child Beneficiaries:</td><td>${s ? z(s.indigenous) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td>${s ? m(s.indigenous) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td>${s ? f(s.indigenous) : ''}</td></tr>
+        <tr><td class="label">Total No. of Child with Solo Parent:</td><td>${s ? z(s.soloParent) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td>${s ? m(s.soloParent) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td>${s ? f(s.soloParent) : ''}</td></tr>
+        <tr><td class="label">Total No. of Child Dewormed:</td><td>${s ? z(s.dewormed) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td>${s ? m(s.dewormed) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td>${s ? f(s.dewormed) : ''}</td></tr>
+        <tr><td class="label">Total No. of Child Supplemented with Vitamin A:</td><td>${s ? z(s.vitaminA) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td>${s ? m(s.vitaminA) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td>${s ? f(s.vitaminA) : ''}</td></tr>
+      </table>
+
+      <h3 style="margin-top:20px;">CONSOLIDATED NUTRITIONAL STATUS REPORT</h3>
+      <p><b>Total no. of Beneficiaries Weighed: ${s ? z(s.beneficiaries) : '__________'}</b></p>
+      <p class="left" style="text-align:left;font-size:11px;">
+        Detailed weight-for-age / height-for-age / weight-for-length breakdowns can be completed from
+        entry vs after-6-months measurements recorded on each SFP beneficiary profile.
+        (Teacher may fill remaining cells on the printed form if needed.)
+      </p>
+      <table>
+        <tr>
+          <th rowspan="2">Nutritional Status Indicator</th>
+          <th colspan="2">Upon Entry</th>
+          <th colspan="2">After 6 Mos.</th>
+        </tr>
+        <tr><th>Male</th><th>Female</th><th>Male</th><th>Female</th></tr>
+        <tr><th colspan="5">WEIGHT-FOR-AGE (UNDERWEIGHT)</th></tr>
+        <tr><td>Normal (N)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>Underweight (UW)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>Severely Underweight (SUW)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>Overweight (OW)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><th colspan="5">HEIGHT-FOR-AGE (STUNTING)</th></tr>
+        <tr><td>Normal (N)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>Stunted (S)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>Severely Stunted (SS)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>Tall (T)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><th colspan="5">WEIGHT-FOR-LENGTH (WASTING)</th></tr>
+        <tr><td>Normal (N)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>Wasted (W)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>Severely Wasted (SW)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>Overweight (OW)</td><td></td><td></td><td></td><td></td></tr>
+        <tr><td>Obese (OB)</td><td></td><td></td><td></td><td></td></tr>
+      </table>
+
+      <p style="margin-top:28px;text-align:left;">I hereby certify that the above information is true and correct.</p>
+      <div class="sig">
+        <div><b>Prepared by:</b><br><br>_________________________<br>ECCD / SFP Focal Person</div>
+        <div><b>Noted by:</b><br><br>_________________________<br>MSWDO — MEDINA</div>
+      </div>`;
+    this._printWindow('SFP Consolidated Report', body);
+  },
+
 
   _buildDraft(child, assessment) {
     const insight = assessment.insight || {};
@@ -108,13 +405,22 @@ const TeacherReports = {
 
     const strengths = insight.strengths || [];
     const needs = insight.needs || [];
+    const parentActivities = insight.parentActivities || [];
+    const teacherPriorities = insight.teacherPriorities || [];
 
     const tips = [];
-    if (needs.length) {
+    parentActivities.forEach(pa => {
+      (pa.activities || []).slice(0, 2).forEach(a => {
+        tips.push(pa.domainName + ': ' + a);
+      });
+    });
+    if (!tips.length && needs.length) {
       needs.slice(0, 3).forEach(n => tips.push('Support at home: ' + n));
     }
-    tips.push('Read or tell stories together for 10–15 minutes daily');
-    tips.push('Encourage outdoor play and movement games');
+    if (tips.length < 3) {
+      tips.push('Read or tell stories together for 10–15 minutes daily');
+      tips.push('Encourage outdoor play and movement games');
+    }
     if (tips.length < 4) {
       tips.push('Praise effort and practice everyday self-help skills (dressing, feeding)');
     }
@@ -128,9 +434,15 @@ const TeacherReports = {
         'Your child\'s teacher can explain these results and suggest simple activities at home.'
       ].filter(Boolean).join(' ');
 
-    const teacherNote = strengths.length
-      ? child.name + ' shows progress in ' + strengths.slice(0, 2).join(' and ') + '. Continue encouraging learning through play.'
-      : child.name + ' is being monitored with the ECCD checklist. Please see the domain summary and tips below.';
+    const priorityLines = teacherPriorities
+      .filter(tp => tp.domainCode !== 'OVERALL')
+      .slice(0, 3)
+      .map(tp => tp.domainName + ': ' + ((tp.priorities && tp.priorities[0]) || tp.reason));
+    const teacherNote = priorityLines.length
+      ? 'Learning priorities — ' + priorityLines.join(' · ')
+      : (strengths.length
+        ? child.name + ' shows progress in ' + strengths.slice(0, 2).join(' and ') + '. Continue encouraging learning through play.'
+        : child.name + ' is being monitored with the ECCD checklist. Please see the domain summary and tips below.');
 
     return {
       domains,
@@ -139,9 +451,11 @@ const TeacherReports = {
       overallLabel,
       strengths,
       needs,
+      parentActivities,
+      teacherPriorities,
       parentDraft,
       teacherNote,
-      tips: tips.slice(0, 5)
+      tips: tips.slice(0, 6)
     };
   },
 
@@ -271,6 +585,7 @@ const TeacherReports = {
     this.closeEditor();
     const main = document.getElementById('main-content') || document.querySelector('.main-content');
     if (main) this.render(main);
+    this.tab = 'eccd';
     this._toast('Report approved — visible on the Parent Portal for this child.');
   },
 

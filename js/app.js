@@ -20,15 +20,28 @@ const BrightSteps = (() => {
     const app = document.getElementById('app');
     app.innerHTML = `
       <div class="login-screen">
-        <div class="login-card">
-          <div class="brand">🌱 BrightSteps</div>
-          <p class="tagline">Child Development Monitoring System<br>National Child Development Center — Medina</p>
+        <div class="login-card login-card-roles">
+          <div class="login-identity">
+            <img class="login-eccd-logo" src="assets/eccd-council-logo.png" alt="ECCD Council" width="88" height="88" />
+            <div class="login-identity-text">
+              <div class="brand">BrightSteps</div>
+              <p class="login-ncdc-line">National Child Development Center</p>
+              <p class="login-place-line">Medina, Misamis Oriental</p>
+            </div>
+          </div>
+          <div class="login-banner-bar" aria-hidden="true">
+            <span>ECCD Council</span>
+            <span class="login-banner-dot">·</span>
+            <span>NCDC Medina</span>
+          </div>
+          <p class="tagline">Child Development Monitoring System<br>Choose how you want to continue</p>
           <div class="role-buttons">
             <button class="role-btn teacher" onclick="BrightSteps.login('teacher')">👩‍🏫  Login as Teacher</button>
             <button class="role-btn parent"  onclick="BrightSteps.showParentLogin()">👨‍👧  Login as Parent / Guardian</button>
-            <button class="role-btn" style="background:#fff3e0;border:2px solid #ffb74d;"
-              onclick="BrightSteps.login('visitor')">👋  Visitor — Apply for Enrollment</button>
+            <button class="role-btn role-btn-visitor"
+              onclick="BrightSteps.login('visitor')">👋  Visitor — About &amp; Enrollment</button>
           </div>
+          <p class="login-footnote">Community-based early learning for children ages 0–4</p>
         </div>
       </div>
     `;
@@ -44,10 +57,15 @@ const BrightSteps = (() => {
     const app = document.getElementById('app');
     app.innerHTML = `
       <div class="login-screen">
-        <div class="login-card" style="max-width:440px;">
-          <div class="brand">🌱 BrightSteps</div>
-          <p class="tagline">Parent / Guardian access</p>
-          <p class="text-muted" style="font-size:0.9rem;margin:0 0 1.25rem;line-height:1.45;">
+        <div class="login-card login-card-roles" style="max-width:440px;">
+          <div class="login-identity login-identity-compact">
+            <img class="login-eccd-logo login-eccd-logo-sm" src="assets/eccd-council-logo.png" alt="ECCD Council" width="56" height="56" />
+            <div class="login-identity-text">
+              <div class="brand" style="font-size:1.35rem;">BrightSteps</div>
+              <p class="login-ncdc-line">Parent / Guardian access</p>
+            </div>
+          </div>
+          <p class="text-muted" style="font-size:0.9rem;margin:0 0 1.25rem;line-height:1.45;text-align:left;">
             Enter the guardian name on the child’s enrollment record.
             Optionally add the <strong>Child ID</strong> (e.g. NCDC-001) to open one child directly.
             If you have more than one child at the center, you can switch between them after login.
@@ -198,20 +216,51 @@ const BrightSteps = (() => {
   function showVisitorShell() {
     const app = document.getElementById('app');
     app.innerHTML = `
-      <header class="parent-header">
+      <header class="parent-header visitor-header">
         <div class="logo">🌱 BrightSteps</div>
+        <nav class="visitor-nav" aria-label="Visitor">
+          <button type="button" class="visitor-nav-btn is-active" id="visitor-nav-about" onclick="BrightSteps.showVisitorAbout()">About NCDC</button>
+          <button type="button" class="visitor-nav-btn" id="visitor-nav-enroll" onclick="BrightSteps.showVisitorEnrollment()">Enrollment</button>
+        </nav>
         <div class="user-info">
-          Visitor · Enrollment
-          <button class="btn" style="margin-left:1rem; padding:0.3rem 0.7rem; font-size:0.8rem;" onclick="BrightSteps.logout()">Exit</button>
+          Visitor
+          <button class="btn" style="margin-left:0.75rem; padding:0.3rem 0.7rem; font-size:0.8rem;" onclick="BrightSteps.logout()">Exit</button>
         </div>
       </header>
-      <div style="padding:1.75rem 2rem; overflow-y:auto; height:calc(100vh - var(--header-height));" id="main-content"></div>
+      <div class="visitor-main" id="main-content"></div>
     `;
-    if (typeof VisitorEnrollment !== 'undefined') {
-      VisitorEnrollment.render(document.getElementById('main-content'));
+    showVisitorAbout();
+  }
+
+  function _setVisitorNav(page) {
+    const about = document.getElementById('visitor-nav-about');
+    const enroll = document.getElementById('visitor-nav-enroll');
+    if (about) about.classList.toggle('is-active', page === 'about');
+    if (enroll) enroll.classList.toggle('is-active', page === 'enrollment');
+  }
+
+  function showVisitorAbout() {
+    const main = document.getElementById('main-content');
+    if (!main) return;
+    _setVisitorNav('about');
+    main.className = 'visitor-main';
+    if (typeof VisitorAbout !== 'undefined') {
+      VisitorAbout.render(main);
     } else {
-      document.getElementById('main-content').innerHTML =
-        '<div class="card"><p>Enrollment form failed to load. Hard-refresh the page.</p></div>';
+      main.innerHTML = '<div class="card" style="margin:1.5rem;"><p>About page failed to load. Hard-refresh the page.</p></div>';
+    }
+  }
+
+  function showVisitorEnrollment() {
+    const main = document.getElementById('main-content');
+    if (!main) return;
+    _setVisitorNav('enrollment');
+    if (typeof VisitorAbout !== 'undefined' && VisitorAbout.destroy) VisitorAbout.destroy();
+    main.className = 'visitor-main visitor-main-form';
+    if (typeof VisitorEnrollment !== 'undefined') {
+      VisitorEnrollment.render(main);
+    } else {
+      main.innerHTML = '<div class="card" style="margin:1.5rem;"><p>Enrollment form failed to load. Hard-refresh the page.</p></div>';
     }
   }
 
@@ -236,7 +285,9 @@ const BrightSteps = (() => {
       children: () => TeacherChildren.render(main),
       development: () => TeacherDevelopment.render(main),
       health: () => TeacherHealth.render(main),
+      feeding: () => TeacherFeeding.render(main),
       attendance: () => TeacherAttendance.render(main),
+      contributions: () => TeacherContributions.render(main),
       reports: () => TeacherReports.render(main),
       calendar: () => TeacherCalendar.render(main),
       applications: () => TeacherChildren.render(main) /* merged into Children */
@@ -284,6 +335,8 @@ const BrightSteps = (() => {
     showParentLogin,
     submitParentLogin,
     selectChild,
-    findChildrenForGuardian
+    findChildrenForGuardian,
+    showVisitorAbout,
+    showVisitorEnrollment
   };
 })();

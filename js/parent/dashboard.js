@@ -34,6 +34,8 @@ const ParentDashboard = {
       this._profileBlock(childName, ageLabel, section, childCode) +
       this._progressCard(child) +
       this._healthCard(child) +
+      this._sfpCard(child) +
+      this._contribCard(child) +
       this._attendanceCard(child) +
       this._upcomingCard();
   },
@@ -177,7 +179,14 @@ const ParentDashboard = {
         (latest.bmi != null ? ' (' + latest.bmi + ')' : '') + '</div></div>' +
         '<div style="text-align:center;background:#f8f9fa;padding:1rem;border-radius:12px;">' +
         '<div style="font-size:1.5rem;font-weight:700;color:#7b1fa2;">' +
-        (latest.feedingParticipating ? 'Yes' : 'No') + '</div>' +
+        (function() {
+          if (child && typeof SfpStore !== 'undefined') {
+            var b = SfpStore.getBeneficiary(child.id);
+            if (b && b.enrolledInSfp !== false && (b.childId || b.consent)) return 'Yes';
+            if (b && b.enrolledInSfp === false) return 'No';
+          }
+          return latest.feedingParticipating ? 'Yes' : 'No';
+        })() + '</div>' +
         '<div class="text-muted">Feeding program</div></div></div>' +
         '<p class="text-muted" style="text-align:center;font-size:0.85rem;margin:0 0 0.75rem;">Last measured: ' +
         (latest.date || '—') +
@@ -228,7 +237,120 @@ const ParentDashboard = {
     );
   },
 
-  _attendanceCard(child) {
+  /**
+   * Minimal SFP view for parents — no other children's data, no matrices.
+   */
+  _contribCard(child) {
+    if (!child || typeof ContributionStore === 'undefined') {
+      return (
+        '<div class="card mb-3" style="text-align:center;">' +
+        '<h3>💵 Monthly contribution</h3>' +
+        '<p class="text-muted">Contribution status will appear when the center records payments.</p></div>'
+      );
+    }
+    const ym = ContributionStore.currentYearMonth();
+    const rec = ContributionStore.get(child.id, ym);
+    if (!rec) {
+      return (
+        '<div class="card mb-3" style="text-align:center;">' +
+        '<h3>💵 Monthly contribution</h3>' +
+        '<p class="text-muted" style="margin:0.35rem 0;">No record for <strong>' + ym + '</strong> yet.</p>' +
+        '<p class="text-muted" style="margin:0;font-size:0.88rem;">Ask the teacher about this month’s contribution.</p></div>'
+      );
+    }
+    const color = rec.status === 'paid' ? 'var(--success)'
+      : rec.status === 'partial' ? 'var(--orange)'
+      : rec.status === 'waived' ? 'var(--primary)'
+      : '#c62828';
+    const label = (rec.status || 'unpaid').charAt(0).toUpperCase() + (rec.status || 'unpaid').slice(1);
+    return (
+      '<div class="card mb-3">' +
+      '<h3 style="text-align:center;">💵 Monthly contribution</h3>' +
+      '<p style="text-align:center;margin:0.35rem 0;" class="text-muted">' + ym + '</p>' +
+      '<p style="text-align:center;margin:0.5rem 0;">' +
+      '<span style="font-size:1.25rem;font-weight:700;color:' + color + ';">' + label + '</span></p>' +
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;max-width:320px;margin:0.75rem auto 0;">' +
+      '<div style="text-align:center;background:#f8f9fa;padding:0.75rem;border-radius:10px;">' +
+      '<div style="font-weight:700;">₱' + Number(rec.amountDue || 0).toLocaleString() + '</div>' +
+      '<div class="text-muted" style="font-size:0.8rem;">Amount due</div></div>' +
+      '<div style="text-align:center;background:#f8f9fa;padding:0.75rem;border-radius:10px;">' +
+      '<div style="font-weight:700;">₱' + Number(rec.amountPaid || 0).toLocaleString() + '</div>' +
+      '<div class="text-muted" style="font-size:0.8rem;">Amount paid</div></div></div>' +
+      (rec.paidAt ? '<p class="text-muted" style="text-align:center;font-size:0.85rem;margin:0.75rem 0 0;">Paid date: ' + rec.paidAt + '</p>' : '') +
+      (rec.notes ? '<p class="text-muted" style="text-align:center;font-size:0.85rem;margin:0.35rem 0 0;">' + rec.notes + '</p>' : '') +
+      '</div>'
+    );
+  },
+
+    _sfpCard(child) {
+    if (!child || typeof SfpStore === 'undefined') {
+      return (
+        '<div class="card mb-3" style="text-align:center;">' +
+        '<h3>🍎 Supplementary Feeding (SFP)</h3>' +
+        '<p class="text-muted">When the center enrolls your child in the feeding program, a short summary will appear here.</p></div>'
+      );
+    }
+    const b = SfpStore.getBeneficiary(child.id);
+    const enrolled = b && b.enrolledInSfp !== false && (b.childId || b.consent || b.fourPs != null || b.dewormed != null);
+    if (!enrolled) {
+      return (
+        '<div class="card mb-3" style="text-align:center;">' +
+        '<h3>🍎 Supplementary Feeding (SFP)</h3>' +
+        '<p style="margin:0.5rem 0;font-size:1.1rem;"><strong style="color:var(--muted);">Not enrolled</strong></p>' +
+        '<p class="text-muted" style="margin:0;font-size:0.9rem;">Ask the teacher if your child will join the DSWD Supplementary Feeding Program.</p></div>'
+      );
+    }
+
+    const cycle = SfpStore.getActiveCycle();
+    const cycleLine = cycle
+      ? ((cycle.cycleLabel || ('Cycle ' + cycle.cycleNumber)) + (cycle.schoolYear ? ' · SY ' + cycle.schoolYear : ''))
+      : '';
+
+    const yesNo = (v) => (v === true ? 'Yes' : (v === false ? 'No' : '—'));
+    const entryH = b.entryHeightCm != null ? b.entryHeightCm + ' cm' : '—';
+    const entryW = b.entryWeightKg != null ? b.entryWeightKg + ' kg' : '—';
+    const entryDate = b.entryWeighDate || '—';
+
+    // Recent hot meal: was this child fed on latest days?
+    const hotDays = SfpStore.listHotMealDays().slice(-5).reverse();
+    let fedNote = '';
+    if (hotDays.length) {
+      const bits = hotDays.map(d => {
+        const st = (d.childStatuses || []).find(x => String(x.childId) === String(child.id));
+        if (!st) return null;
+        const label = st.status === 'fed' ? 'Fed' : (st.status === 'not_fed' ? 'Not fed' : 'Absent');
+        return d.actualDate + ': ' + label;
+      }).filter(Boolean);
+      if (bits.length) {
+        fedNote = '<p style="margin:0.75rem 0 0;font-size:0.88rem;"><strong>Recent feeding days:</strong> ' +
+          bits.join(' · ') + '</p>';
+      }
+    }
+
+    return (
+      '<div class="card mb-3">' +
+      '<h3 style="text-align:center;">🍎 Supplementary Feeding (SFP)</h3>' +
+      '<p style="text-align:center;margin:0.35rem 0;"><span style="background:#e8f5e9;color:#2e7d32;font-weight:700;padding:4px 12px;border-radius:16px;">Enrolled</span></p>' +
+      (cycleLine ? '<p class="text-muted" style="text-align:center;margin:0.35rem 0;font-size:0.9rem;">' + cycleLine + '</p>' : '') +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0.75rem;margin:1rem 0;">' +
+      '<div style="text-align:center;background:#f8f9fa;padding:0.85rem;border-radius:12px;">' +
+      '<div style="font-weight:700;">' + entryDate + '</div><div class="text-muted" style="font-size:0.8rem;">Entry weighing</div></div>' +
+      '<div style="text-align:center;background:#f8f9fa;padding:0.85rem;border-radius:12px;">' +
+      '<div style="font-weight:700;">' + entryH + '</div><div class="text-muted" style="font-size:0.8rem;">Entry height</div></div>' +
+      '<div style="text-align:center;background:#f8f9fa;padding:0.85rem;border-radius:12px;">' +
+      '<div style="font-weight:700;">' + entryW + '</div><div class="text-muted" style="font-size:0.8rem;">Entry weight</div></div>' +
+      '<div style="text-align:center;background:#f8f9fa;padding:0.85rem;border-radius:12px;">' +
+      '<div style="font-weight:700;">' + yesNo(b.dewormed) + '</div><div class="text-muted" style="font-size:0.8rem;">Dewormed</div></div>' +
+      '<div style="text-align:center;background:#f8f9fa;padding:0.85rem;border-radius:12px;">' +
+      '<div style="font-weight:700;">' + yesNo(b.vitaminA) + '</div><div class="text-muted" style="font-size:0.8rem;">Vitamin A</div></div>' +
+      '</div>' +
+      fedNote +
+      '<p class="text-muted" style="text-align:center;font-size:0.82rem;margin:0.75rem 0 0;">' +
+      'Details are managed by the center for the DSWD feeding program. Contact the teacher for questions.</p></div>'
+    );
+  },
+
+    _attendanceCard(child) {
     if (!child || typeof AttendanceStore === 'undefined') {
       return (
         '<div class="card mb-3" style="text-align:center;">' +

@@ -157,30 +157,9 @@ const TeacherApplications = {
     const a = ApplicationStore.get(id);
     if (!a) return;
     this.closeReview();
-    // Map to Add Child form (same shape as online autofill)
+    // Map full application record (structured names + profile fields)
     const mapped = typeof ChildRegistry !== 'undefined'
-      ? ChildRegistry.mapApplicationToForm({
-          id: a.id,
-          applicationId: a.id,
-          childName: a.childName,
-          sex: a.sex,
-          birthDate: a.birthDate,
-          preferredSection: a.preferredSection,
-          guardianName: a.guardianName,
-          motherName: a.motherName,
-          fatherName: a.fatherName,
-          barangay: a.barangay,
-          municipality: a.municipality,
-          province: a.province,
-          region: a.region,
-          siblings: a.siblings,
-          birthOrder: a.birthOrder,
-          allergies: a.allergies,
-          medicalConditions: a.medicalConditions,
-          immunizations: a.immunizations,
-          heightCm: a.heightCm,
-          weightKg: a.weightKg
-        })
+      ? ChildRegistry.mapApplicationToForm(a)
       : {};
 
     // Hook: after successful enroll, mark application enrolled

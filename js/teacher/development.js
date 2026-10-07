@@ -485,6 +485,43 @@ const TeacherDevelopment = {
       ? `<p style="margin-top:0.75rem;"><strong>Strengths:</strong> ${insight.strengths.join('; ')}</p>` : '';
     const needs = insight && insight.needs && insight.needs.length
       ? `<p><strong>Needs monitoring:</strong> ${insight.needs.join('; ')}</p>` : '';
+
+    let teacherPriHtml = '';
+    if (insight && insight.teacherPriorities && insight.teacherPriorities.length) {
+      teacherPriHtml = `
+        <div class="card" style="margin-top:1rem;border-left:5px solid var(--primary);">
+          <h3 style="margin-top:0;">Teacher learning priorities</h3>
+          <p class="text-muted" style="font-size:0.85rem;margin-top:0;">Based on ECCD domains that need support or monitoring for this child.</p>
+          ${insight.teacherPriorities.map(tp => `
+            <div style="margin-bottom:0.85rem;">
+              <strong>${tp.domainName}</strong>
+              <span class="text-muted" style="font-size:0.85rem;"> — ${tp.reason || ''}</span>
+              <ul style="margin:0.35rem 0 0;padding-left:1.25rem;font-size:0.9rem;">
+                ${(tp.priorities || []).map(p => `<li>${p}</li>`).join('')}
+              </ul>
+            </div>
+          `).join('')}
+        </div>`;
+    }
+
+    let parentActHtml = '';
+    if (insight && insight.parentActivities && insight.parentActivities.length) {
+      parentActHtml = `
+        <div class="card" style="margin-top:1rem;border-left:5px solid var(--success);">
+          <h3 style="margin-top:0;">Suggested activities for parents</h3>
+          <p class="text-muted" style="font-size:0.85rem;margin-top:0;">Home ideas matched to domains for this checklist. Review before sharing.</p>
+          ${insight.parentActivities.map(pa => `
+            <div style="margin-bottom:0.85rem;">
+              <strong>${pa.domainName}</strong>
+              <span class="text-muted" style="font-size:0.85rem;"> — ${pa.reason || ''}</span>
+              <ul style="margin:0.35rem 0 0;padding-left:1.25rem;font-size:0.9rem;">
+                ${(pa.activities || []).map(a => `<li>${a}</li>`).join('')}
+              </ul>
+            </div>
+          `).join('')}
+        </div>`;
+    }
+
     const draft = insight && insight.parentFriendlyDraft
       ? `<div class="card" style="margin-top:1rem;background:var(--primary-light);"><strong>Parent-friendly draft</strong><p style="margin:0.5rem 0 0;font-size:0.9rem;">${insight.parentFriendlyDraft}</p></div>`
       : '';
@@ -531,6 +568,8 @@ const TeacherDevelopment = {
             ${tableNote}
             ${strengths}
             ${needs}
+            ${teacherPriHtml}
+            ${parentActHtml}
             ${draft}
           </div>
           <div class="bs-modal-footer">

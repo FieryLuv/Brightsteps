@@ -251,6 +251,88 @@ const ChildRegistry = {
   },
 
   /**
+   * Map an existing child record → Add/Edit form prefill shape.
+   */
+  childToFormPrefill(child) {
+    if (!child) return {};
+    const a = child.address || {};
+    return {
+      _editId: child.id,
+      id: child.id,
+      childCode: child.childCode,
+      name: child.name || '',
+      lastName: child.lastName || '',
+      firstName: child.firstName || '',
+      middleInitial: child.middleInitial || '',
+      sex: child.sex || '',
+      birthDate: child.birthDate || '',
+      sectionKey: child.sectionKey || 'explorers',
+      parentName: child.parentName || '',
+      motherName: child.motherName || '',
+      fatherName: child.fatherName || '',
+      siblings: child.siblings,
+      birthOrder: child.birthOrder || '',
+      barangay: a.barangay || '',
+      municipality: a.municipality || 'Medina',
+      province: a.province || 'Misamis Oriental',
+      region: a.region || 'X',
+      heightCm: (child.enrollmentHealth && child.enrollmentHealth.heightCm) || '',
+      weightKg: (child.enrollmentHealth && child.enrollmentHealth.weightKg) || '',
+      allergies: (child.enrollmentHealth && child.enrollmentHealth.allergies) || '',
+      medicalConditions: (child.enrollmentHealth && child.enrollmentHealth.medicalConditions) || '',
+      registered: child.registered ? 'Yes' : 'No',
+      bornAt: child.bornAt || '',
+      motherTongue: child.motherTongue || '',
+      motherTongueOther: child.motherTongueOther || '',
+      otherDialects: child.otherDialects || '',
+      documents: child.documents || {},
+      vaccines: child.vaccines || {},
+      motherProfile: child.motherProfile || null,
+      fatherProfile: child.fatherProfile || null,
+      physicalAttributes: child.physicalAttributes || null,
+      siblingsDetail: child.siblingsDetail || null,
+      priorEce: child.priorEce || null,
+      transport: child.transport || [],
+      accompanies: child.accompanies || [],
+      profileMeta: child.profileMeta || null,
+      applicationId: child.applicationId || null,
+      enrollmentSource: child.enrollmentSource || 'walk_in'
+    };
+  },
+
+  /**
+   * Full replace of profile fields from the enrollment form while preserving
+   * id, childCode, enrolledAt, application link, and development status fields.
+   */
+  updateFromForm(id, data, opts = {}) {
+    this.ensureMerged();
+    if (typeof SampleChildren === 'undefined') return { ok: false, error: 'No children list.' };
+    const idx = SampleChildren.findIndex(c => c.id === id || String(c.id) === String(id));
+    if (idx < 0) return { ok: false, error: 'Child not found.' };
+    const existing = SampleChildren[idx];
+    const rebuilt = this.buildChildRecord({
+      ...data,
+      id: existing.id,
+      childCode: existing.childCode,
+      enrolledAt: existing.enrolledAt,
+      enrollmentSource: existing.enrollmentSource || data.enrollmentSource || opts.source || 'walk_in',
+      applicationId: existing.applicationId || data.applicationId || null,
+      status: existing.status,
+      statusLabel: existing.statusLabel,
+      focusArea: existing.focusArea
+    }, {
+      source: existing.enrollmentSource || opts.source || 'walk_in',
+      applicationId: existing.applicationId || data.applicationId || null
+    });
+    rebuilt.updatedAt = new Date().toISOString();
+    SampleChildren[idx] = rebuilt;
+    const enrolled = this._readEnrolled().filter(c => c.id !== existing.id && String(c.id) !== String(existing.id));
+    enrolled.push(rebuilt);
+    this._writeEnrolled(enrolled);
+    return { ok: true, child: rebuilt };
+  },
+
+  /**
    * Move one or more children to a class/section.
    */
   transferToClass(ids, sectionKey) {
@@ -325,20 +407,107 @@ const ChildRegistry = {
    * Future online admission: map approved application softcopy → enroll.
    * Keep field mapping in one place so the Add Child form can reuse applyPrefill.
    */
+  /**
+   * Split a free-text full name into first / middle / last when parts are missing.
+   * Prefer explicit part fields from the online form.
+   */
+  _splitFullName(full) {
+    const parts = String(full || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return { firstName: '', middleInitial: '', lastName: '' };
+    if (parts.length === 1) return { firstName: parts[0], middleInitial: '', lastName: '' };
+    if (parts.length === 2) return { firstName: parts[0], middleInitial: '', lastName: parts[1] };
+    return {
+      firstName: parts[0],
+      middleInitial: parts.slice(1, -1).map(p => p[0]).join('').slice(0, 5),
+      lastName: parts[parts.length - 1]
+    };
+  },
+
   mapApplicationToForm(application) {
     if (!application) return {};
-    // Flexible mapping — online form may use different keys
+    // Child name parts — prefer structured fields
+    let lastName = (application.lastName || '').trim();
+    let firstName = (application.firstName || '').trim();
+    let middleInitial = (application.middleInitial || '').trim();
+    const fullChild = application.childName || application.name || '';
+    if (!lastName && !firstName && fullChild) {
+      const s = this._splitFullName(fullChild);
+      firstName = s.firstName;
+      middleInitial = s.middleInitial;
+      lastName = s.lastName;
+    }
+    const displayName = fullChild || [firstName, middleInitial, lastName].filter(Boolean).join(' ').trim();
+
+    // Mother — structured parts first; never dump full string into firstName only
+    let mLast = (application.motherLastName || '').trim();
+    let mFirst = (application.motherFirstName || '').trim();
+    let mMid = (application.motherMiddleInitial || '').trim();
+    const motherFull = (application.motherName || '').trim();
+    if (!mLast && !mFirst && motherFull) {
+      const s = this._splitFullName(motherFull);
+      mFirst = s.firstName;
+      mMid = s.middleInitial;
+      mLast = s.lastName;
+    }
+    const motherDisplay = motherFull || [mFirst, mMid, mLast].filter(Boolean).join(' ').trim();
+
+    let fLast = (application.fatherLastName || '').trim();
+    let fFirst = (application.fatherFirstName || '').trim();
+    let fMid = (application.fatherMiddleInitial || '').trim();
+    const fatherFull = (application.fatherName || '').trim();
+    if (!fLast && !fFirst && fatherFull) {
+      const s = this._splitFullName(fatherFull);
+      fFirst = s.firstName;
+      fMid = s.middleInitial;
+      fLast = s.lastName;
+    }
+    const fatherDisplay = fatherFull || [fFirst, fMid, fLast].filter(Boolean).join(' ').trim();
+
     return {
-      name: application.childName || application.name || '',
-      lastName: application.lastName || '',
-      firstName: application.firstName || '',
-      middleInitial: application.middleInitial || '',
+      name: displayName,
+      lastName,
+      firstName,
+      middleInitial,
       sex: application.sex || application.gender || 'Female',
       birthDate: application.birthDate || application.dateOfBirth || '',
       sectionKey: application.sectionKey || application.preferredSection || 'explorers',
       parentName: application.guardianName || application.parentName || '',
-      motherName: application.motherName || '',
-      fatherName: application.fatherName || '',
+      motherName: motherDisplay,
+      fatherName: fatherDisplay,
+      motherProfile: {
+        ...(application.motherProfile || {}),
+        lastName: mLast || (application.motherProfile && application.motherProfile.lastName) || '',
+        firstName: mFirst || (application.motherProfile && application.motherProfile.firstName) || '',
+        middleInitial: mMid || (application.motherProfile && application.motherProfile.middleInitial) || '',
+        birthDate: (application.motherProfile && application.motherProfile.birthDate) || '',
+        age: (application.motherProfile && application.motherProfile.age) || '',
+        pregnant: (application.motherProfile && application.motherProfile.pregnant) || '',
+        civilStatus: (application.motherProfile && application.motherProfile.civilStatus) || '',
+        education: (application.motherProfile && application.motherProfile.education) || '',
+        occupation: (application.motherProfile && application.motherProfile.occupation) || '',
+        occupationOther: (application.motherProfile && application.motherProfile.occupationOther) || '',
+        motherTongue: (application.motherProfile && application.motherProfile.motherTongue) || '',
+        otherDialects: (application.motherProfile && application.motherProfile.otherDialects) || '',
+        district: (application.motherProfile && application.motherProfile.district) || '',
+        purok: (application.motherProfile && application.motherProfile.purok) || ''
+      },
+      fatherProfile: {
+        ...(application.fatherProfile || {}),
+        lastName: fLast || (application.fatherProfile && application.fatherProfile.lastName) || '',
+        firstName: fFirst || (application.fatherProfile && application.fatherProfile.firstName) || '',
+        middleInitial: fMid || (application.fatherProfile && application.fatherProfile.middleInitial) || '',
+        birthDate: (application.fatherProfile && application.fatherProfile.birthDate) || '',
+        age: (application.fatherProfile && application.fatherProfile.age) || '',
+        civilStatus: (application.fatherProfile && application.fatherProfile.civilStatus) || '',
+        education: (application.fatherProfile && application.fatherProfile.education) || '',
+        occupation: (application.fatherProfile && application.fatherProfile.occupation) || '',
+        occupationOther: (application.fatherProfile && application.fatherProfile.occupationOther) || '',
+        motherTongue: (application.fatherProfile && application.fatherProfile.motherTongue) || '',
+        otherDialects: (application.fatherProfile && application.fatherProfile.otherDialects) || '',
+        district: (application.fatherProfile && application.fatherProfile.district) || '',
+        purok: (application.fatherProfile && application.fatherProfile.purok) || ''
+      },
+      siblingsDetail: Array.isArray(application.siblingsDetail) ? application.siblingsDetail : [],
       barangay: application.barangay || (application.address && application.address.barangay) || '',
       municipality: application.municipality || (application.address && application.address.municipality) || 'Medina',
       province: application.province || (application.address && application.address.province) || 'Misamis Oriental',
@@ -351,13 +520,19 @@ const ChildRegistry = {
       immunizations: application.immunizations || '',
       heightCm: application.heightCm || '',
       weightKg: application.weightKg || '',
-      registered: application.registered,
+      registered: application.registered || 'No',
       bornAt: application.bornAt || '',
       motherTongue: application.motherTongue || '',
       motherTongueOther: application.motherTongueOther || '',
       otherDialects: application.otherDialects || '',
+      documents: application.documents || {},
       vaccines: application.vaccines || null,
-      applicationId: application.id || application.applicationId || null
+      transport: application.transport || [],
+      accompanies: application.accompanies || [],
+      physicalAttributes: application.physicalAttributes || null,
+      priorEce: application.priorEce || null,
+      applicationId: application.id || application.applicationId || null,
+      enrollmentSource: 'online_application'
     };
   },
 

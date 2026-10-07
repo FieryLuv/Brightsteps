@@ -20,7 +20,9 @@ const TeacherLayout = {
           <div class="nav-item" onclick="BrightSteps.navigate('children')">👦 Children</div>
           <div class="nav-item" onclick="BrightSteps.navigate('development')">📈 Development Tracking</div>
           <div class="nav-item" onclick="BrightSteps.navigate('health')">❤️ Health Records</div>
+          <div class="nav-item" onclick="BrightSteps.navigate('feeding')">🍎 SFP Feeding</div>
           <div class="nav-item" onclick="BrightSteps.navigate('attendance')">📅 Attendance</div>
+          <div class="nav-item" onclick="BrightSteps.navigate('contributions')">💵 Contributions</div>
           <div class="nav-item" onclick="BrightSteps.navigate('reports')">📊 Reports</div>
           <div class="nav-item" onclick="BrightSteps.navigate('calendar')">🗓️ Calendar</div>
         </aside>

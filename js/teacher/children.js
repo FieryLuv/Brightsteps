@@ -341,38 +341,66 @@ const TeacherChildren = {
    * @param {object} [prefill] — optional mapped application fields for autofill
    *   (from online enrollment approval via ChildRegistry.mapApplicationToForm)
    */
+  openEditChild(id) {
+    const child = SampleChildren.find(c => c.id === id || String(c.id) === String(id));
+    if (!child) {
+      alert('Child not found.');
+      return;
+    }
+    const prefill = ChildRegistry.childToFormPrefill(child);
+    // Latest health measurement / profile if available
+    if (typeof HealthStore !== 'undefined') {
+      const latest = HealthStore.getLatest && HealthStore.getLatest(child.id);
+      const profile = HealthStore.getProfile && HealthStore.getProfile(child.id);
+      if (latest) {
+        if (latest.heightCm != null) prefill.heightCm = latest.heightCm;
+        if (latest.weightKg != null) prefill.weightKg = latest.weightKg;
+      }
+      if (profile) {
+        if (profile.allergies) prefill.allergies = profile.allergies;
+        if (profile.medicalConditions) prefill.medicalConditions = profile.medicalConditions;
+        if (profile.vaccines) prefill.vaccines = profile.vaccines;
+      }
+    }
+    this.openAddChild(prefill);
+  },
+
   openAddChild(prefill) {
     this.closeModal();
     const p = prefill || {};
-    const codePreview = typeof ChildRegistry !== 'undefined'
-      ? ChildRegistry.nextChildCode()
-      : 'NCDC-—';
+    const isEdit = !!(p._editId || p.id);
+    const editId = p._editId || p.id || '';
+    const codePreview = isEdit && p.childCode
+      ? p.childCode
+      : (typeof ChildRegistry !== 'undefined' ? ChildRegistry.nextChildCode() : 'NCDC-—');
     const today = new Date().toISOString().slice(0, 10);
-    const source = p.applicationId ? 'online_application' : 'walk_in';
+    const source = p.enrollmentSource || (p.applicationId ? 'online_application' : 'walk_in');
 
     const html = `
       <div id="bs-modal-overlay" class="bs-overlay">
         <div class="bs-modal-panel ecc-modal-wide">
           <div class="bs-modal-header">
-            <h2 style="margin:0;font-size:1.25rem;color:white;">+ Enroll Child</h2>
+            <h2 style="margin:0;font-size:1.25rem;color:white;">${isEdit ? 'Edit Child Profile' : '+ Enroll Child'}</h2>
             <button class="bs-modal-close" onclick="TeacherChildren.closeModal()">×</button>
           </div>
           <div class="bs-modal-body">
             <p class="text-muted" style="margin-top:0;">
-              Walk-in: encode from the hard-copy form.
-              Online application (future): fields can be auto-filled after approval, then the teacher reviews and saves.
+              ${isEdit
+                ? 'Update the ECCD profile fields for this enrolled child. Child ID stays the same.'
+                : 'Walk-in: encode from the hard-copy form. Online application: fields can be auto-filled after approval, then the teacher reviews and saves.'}
             </p>
             <div style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;align-items:center;">
               <span style="font-size:0.85rem;background:#e3f2fd;color:var(--primary-dark);padding:4px 10px;border-radius:20px;">
-                Child ID (auto): <strong id="enroll-code-preview">${codePreview}</strong>
+                Child ID: <strong id="enroll-code-preview">${codePreview}</strong>
               </span>
               <span style="font-size:0.85rem;background:#f5f5f5;padding:4px 10px;border-radius:20px;">
-                Source: <strong id="enroll-source-label">${source === 'online_application' ? 'Online application' : 'Walk-in'}</strong>
+                Source: <strong id="enroll-source-label">${source === 'online_application' ? 'Online application' : 'Walk-in'}${isEdit ? ' · Editing' : ''}</strong>
               </span>
               ${p.applicationId ? `<span class="text-muted" style="font-size:0.85rem;">Application: ${p.applicationId}</span>` : ''}
             </div>
             <input type="hidden" id="enroll-source" value="${source}" />
             <input type="hidden" id="enroll-application-id" value="${p.applicationId || ''}" />
+            <input type="hidden" id="enroll-edit-id" value="${editId}" />
 
             <div class="card" style="margin-bottom:1rem;">
               <h3 style="margin-top:0;">1. Personal information <span class="text-muted" style="font-weight:500;font-size:0.85rem;">(ECCD Child Profile)</span></h3>
@@ -517,7 +545,8 @@ const TeacherChildren = {
                 </div>
                 <div>
                   <label class="ecc-field-label">Date of birth</label>
-                  <input type="date" id="m-birth" class="ecc-field-input" value="${this._escAttr((p.motherProfile && p.motherProfile.birthDate) || '')}" />
+                  <input type="date" id="m-birth" class="ecc-field-input" value="${this._escAttr((p.motherProfile && p.motherProfile.birthDate) || '')}"
+                    onchange="TeacherChildren._fillAgeFromBirth('m-birth','m-age')" />
                 </div>
                 <div>
                   <label class="ecc-field-label">Age</label>
@@ -604,7 +633,8 @@ const TeacherChildren = {
                 </div>
                 <div>
                   <label class="ecc-field-label">Date of birth</label>
-                  <input type="date" id="f-birth" class="ecc-field-input" value="${this._escAttr((p.fatherProfile && p.fatherProfile.birthDate) || '')}" />
+                  <input type="date" id="f-birth" class="ecc-field-input" value="${this._escAttr((p.fatherProfile && p.fatherProfile.birthDate) || '')}"
+                    onchange="TeacherChildren._fillAgeFromBirth('f-birth','f-age')" />
                 </div>
                 <div>
                   <label class="ecc-field-label">Age</label>
@@ -819,8 +849,8 @@ const TeacherChildren = {
           </div>
           <div class="bs-modal-footer" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;">
             <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherChildren.closeModal()">Cancel</button>
-            <button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.demoAutofillOnline()">Demo: autofill online app</button>
-            <button class="btn btn-blue" onclick="TeacherChildren.saveEnrollment()">💾 Save enrollment</button>
+            ${isEdit ? '' : '<button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.demoAutofillOnline()">Demo: autofill online app</button>'}
+            <button class="btn btn-blue" onclick="TeacherChildren.saveEnrollment()">${isEdit ? '💾 Save changes' : '💾 Save enrollment'}</button>
           </div>
         </div>
       </div>`;
@@ -990,19 +1020,21 @@ const TeacherChildren = {
       return;
     }
 
-    const result = ChildRegistry.enroll(data, {
-      source,
-      applicationId: data.applicationId
-    });
+    const editId = (document.getElementById('enroll-edit-id') || {}).value;
+    const isEdit = !!(editId && String(editId).trim());
+
+    const result = isEdit
+      ? ChildRegistry.updateFromForm(editId, data, { source, applicationId: data.applicationId })
+      : ChildRegistry.enroll(data, { source, applicationId: data.applicationId });
 
     if (!result.ok) {
-      showErr(result.error || 'Could not save enrollment.');
+      showErr(result.error || (isEdit ? 'Could not save changes.' : 'Could not save enrollment.'));
       return;
     }
 
     const child = result.child;
 
-    // Optional health seed
+    // Health: seed on enroll; on edit update profile + optional new measurement if H/W given
     if (typeof HealthStore !== 'undefined') {
       const h = parseFloat(data.heightCm);
       const w = parseFloat(data.weightKg);
@@ -1018,8 +1050,8 @@ const TeacherChildren = {
           status: bmi != null ? HealthStore.suggestStatus(bmi) : 'Normal',
           nutritionStatus: 'Normal',
           feedingParticipating: true,
-          notes: 'Recorded at enrollment',
-          recordedBy: 'Teacher (enrollment)'
+          notes: isEdit ? 'Updated from profile edit' : 'Recorded at enrollment',
+          recordedBy: isEdit ? 'Teacher (profile edit)' : 'Teacher (enrollment)'
         });
       }
       if (data.allergies || data.medicalConditions || data.immunizations || data.vaccines) {
@@ -1028,7 +1060,7 @@ const TeacherChildren = {
           medicalConditions: data.medicalConditions || '',
           immunizations: data.immunizations || '',
           vaccines: data.vaccines || null,
-          notes: 'From enrollment'
+          notes: isEdit ? 'Updated from profile edit' : 'From enrollment'
         });
       }
     }
@@ -1037,9 +1069,24 @@ const TeacherChildren = {
     this._draw();
     const toast = document.createElement('div');
     toast.className = 'ecc-toast';
-    toast.textContent = 'Enrolled ' + child.name + ' (' + child.childCode + ')';
+    toast.textContent = isEdit
+      ? ('Updated ' + child.name + ' (' + child.childCode + ')')
+      : ('Enrolled ' + child.name + ' (' + child.childCode + ')');
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2800);
+
+    // Complete online application → enrolled + show parent login credentials
+    if (!isEdit && data.applicationId && typeof ApplicationStore !== 'undefined') {
+      ApplicationStore.updateStatus(data.applicationId, 'enrolled', {
+        reviewedBy: 'Teacher Irish',
+        enrolledChildId: child.id,
+        enrolledChildCode: child.childCode
+      });
+      window._pendingApplicationEnroll = null;
+      if (typeof TeacherApplications !== 'undefined' && TeacherApplications.showCredentials) {
+        setTimeout(() => TeacherApplications.showCredentials(data.applicationId), 500);
+      }
+    }
   },
 
   showAddChildDemo() {
@@ -1072,8 +1119,10 @@ const TeacherChildren = {
           </div>
           <span style="color:${statusColor}; font-weight:600; font-size:0.9rem;">${statusText}</span>
         </div>
-        <div style="display:flex;gap:0.35rem;margin-top:0.75rem;padding-top:0.5rem;border-top:1px solid var(--border);"
+        <div style="display:flex;gap:0.35rem;margin-top:0.75rem;padding-top:0.5rem;border-top:1px solid var(--border);flex-wrap:wrap;"
           onclick="event.stopPropagation();">
+          <button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#e8f5e9;color:#2e7d32;"
+            onclick="TeacherChildren.openEditChild(${c.id})">Edit</button>
           <button class="btn" style="padding:4px 10px;font-size:0.78rem;"
             onclick="TeacherChildren.openTransfer([${c.id}])">Transfer</button>
           <button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#ffebee;color:#c62828;"
@@ -1246,6 +1295,7 @@ const TeacherChildren = {
           </div>
 
           <div class="no-print" style="padding:1rem 1.5rem;border-top:1px solid var(--border);background:#fafafa;display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;flex-shrink:0;">
+            <button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.closeModal();TeacherChildren.openEditChild(${child.id})">✏️ Edit profile</button>
             <button class="btn" style="background:#e3f2fd;color:#1565c0;" onclick="TeacherChildren.closeModal();TeacherChildren.openTransfer([${child.id}])">⇄ Transfer class</button>
             <button class="btn" style="background:#ffebee;color:#c62828;" onclick="TeacherChildren.confirmDelete([${child.id}])">🗑 Delete</button>
             <button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.printEccdForms()">🖨 Print ECCD forms</button>

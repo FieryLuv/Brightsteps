@@ -9,8 +9,113 @@
  */
 
 const ProgressEngine = {
-  version: '0.5.0-trends',
+  version: '0.6.0-guidance',
   tables: null,
+
+  /**
+   * Domain guidance aligned with ECCD checklist domains.
+   * Used for parent home activities + teacher classroom priorities.
+   */
+  DOMAIN_GUIDANCE: {
+    GM: {
+      name: 'Gross Motor',
+      parentActivities: [
+        'Daily outdoor play: walking, running, climbing safe playground equipment.',
+        'Practice balancing (stand on one foot, walk on a line) for short, playful sessions.',
+        'Encourage ball play — throw, catch, kick with a soft ball.',
+        'Dance or move to music together to build coordination and body awareness.'
+      ],
+      teacherPriorities: [
+        'Schedule structured outdoor/gross-motor time and observe specific checklist skills.',
+        'Offer climbing, balance beams, and large-muscle stations in free play.',
+        'Note which items remain unchecked and plan targeted movement games before next evaluation.'
+      ]
+    },
+    FM: {
+      name: 'Fine Motor',
+      parentActivities: [
+        'Provide crayons, pencils, and paper for free drawing daily.',
+        'Practice stacking blocks, stringing large beads, or simple puzzles.',
+        'Involve the child in simple self-help tasks (opening containers, buttoning with help).',
+        'Play with playdough or clay to strengthen hand muscles.'
+      ],
+      teacherPriorities: [
+        'Rotate fine-motor centers: beads, pegs, scissors (if age-appropriate), drawing.',
+        'Observe grasp and hand preference during table work; support weak skills with short practice.',
+        'Link fine-motor tasks to art and practical life routines already in the schedule.'
+      ]
+    },
+    SH: {
+      name: 'Self-Help',
+      parentActivities: [
+        'Let the child try feeding, dressing, and washing hands with gentle coaching.',
+        'Use consistent routines for toileting and mealtime independence.',
+        'Praise attempts, not only perfect success.',
+        'Keep clothing and utensils child-sized so independence is realistic.'
+      ],
+      teacherPriorities: [
+        'Build arrival, meal, and dismissal routines that require self-help steps.',
+        'Scaffold only as needed; fade help as the child masters each skill.',
+        'Track self-help checklist items that are still “not present” and practice them daily.'
+      ]
+    },
+    RL: {
+      name: 'Receptive Language',
+      parentActivities: [
+        'Give simple one- and two-step directions during daily routines (“Get your shoes and sit down”).',
+        'Read picture books and ask the child to point to objects or actions.',
+        'Name objects and actions during play and chores.',
+        'Play “Simon says” or simple listening games.'
+      ],
+      teacherPriorities: [
+        'Use clear, consistent classroom language and visual cues.',
+        'Check understanding of directions before moving on to group activities.',
+        'Plan listening games and story-time questions tied to unchecked receptive items.'
+      ]
+    },
+    EL: {
+      name: 'Expressive Language',
+      parentActivities: [
+        'Talk with the child about their day; pause so they can respond.',
+        'Expand short phrases into fuller sentences without correcting harshly.',
+        'Sing songs and recite rhymes together.',
+        'Encourage the child to request, describe, and retell simple events.'
+      ],
+      teacherPriorities: [
+        'Create talk-rich circles: show-and-tell, story retell, and partner talk.',
+        'Model vocabulary related to themes and checklist items still emerging.',
+        'Document new words and sentence length for the next evaluation period.'
+      ]
+    },
+    COG: {
+      name: 'Cognitive',
+      parentActivities: [
+        'Sort household objects by color, size, or type.',
+        'Count everyday items (steps, spoons, toys) in play.',
+        'Play matching and simple memory games.',
+        'Explore cause-and-effect toys and ask “what happens if…?” questions.'
+      ],
+      teacherPriorities: [
+        'Offer sorting, counting, and problem-solving centers matched to age band.',
+        'Observe how the child approaches puzzles and multi-step tasks.',
+        'Target cognitive checklist gaps with short guided activities during small group.'
+      ]
+    },
+    SE: {
+      name: 'Social-Emotional',
+      parentActivities: [
+        'Name feelings (“You look happy/sad”) and model calm ways to cope.',
+        'Arrange short playdates or sibling play with turn-taking support.',
+        'Keep predictable home routines so the child feels secure.',
+        'Praise sharing, waiting, and helping others.'
+      ],
+      teacherPriorities: [
+        'Use circle time and free play to practice sharing, waiting, and friendship skills.',
+        'Coach conflict resolution with simple language and consistent expectations.',
+        'Note social-emotional items not yet present and plan peer-pairing activities.'
+      ]
+    }
+  },
 
   async loadTables() {
     if (this.tables) return this.tables;
@@ -196,12 +301,76 @@ const ProgressEngine = {
       }
     }
 
+    // --- Guidance: parent activities + teacher priorities from domain needs ---
+    const priorityDomains = domainResults.filter(d => {
+      if (d.interpretation && (d.interpretation.level === 'needs_support' || d.interpretation.level === 'emerging')) {
+        return true;
+      }
+      if (d.percent != null && d.percent < 60) return true;
+      return false;
+    });
+    // If no weak domains, still offer 1–2 maintenance tips from lowest percent
+    const guidanceTargets = priorityDomains.length
+      ? priorityDomains
+      : domainResults
+          .slice()
+          .sort((a, b) => (a.percent != null ? a.percent : 100) - (b.percent != null ? b.percent : 100))
+          .slice(0, 2);
+
+    const parentActivities = [];
+    const teacherPriorities = [];
+    const seen = new Set();
+
+    guidanceTargets.forEach(d => {
+      const g = this.DOMAIN_GUIDANCE[d.code];
+      if (!g || seen.has(d.code)) return;
+      seen.add(d.code);
+      const why = d.interpretation
+        ? d.interpretation.label
+        : (d.percent != null ? `${d.percent}% items present` : 'focus area');
+      parentActivities.push({
+        domainCode: d.code,
+        domainName: d.name || g.name,
+        reason: why,
+        activities: (g.parentActivities || []).slice(0, 3)
+      });
+      teacherPriorities.push({
+        domainCode: d.code,
+        domainName: d.name || g.name,
+        reason: why,
+        level: (d.interpretation && d.interpretation.level) || (d.percent < 60 ? 'needs_support' : 'maintain'),
+        priorities: (g.teacherPriorities || []).slice(0, 3)
+      });
+    });
+
+    // General classroom priority when overall needs monitoring
+    if (overallInterpretation.level === 'needs_support' || overallInterpretation.level === 'emerging') {
+      teacherPriorities.unshift({
+        domainCode: 'OVERALL',
+        domainName: 'Learning priorities (overall)',
+        reason: overallInterpretation.label,
+        level: overallInterpretation.level,
+        priorities: [
+          'Revisit unchecked ECCD items for priority domains before the next evaluation column.',
+          'Share 2–3 home activities with the parent and document follow-up.',
+          'Monitor progress in the next 3–6 months per official scaled-score guidance.'
+        ]
+      });
+    }
+
+    const activityLines = parentActivities.slice(0, 3).map(pa =>
+      pa.domainName + ': ' + (pa.activities[0] || '')
+    );
+
     const parentFriendlyDraft = [
       assessment.period ? `Assessment period: ${assessment.period}.` : '',
       overallInterpretation.description,
       strengths.length ? 'Strengths: ' + strengths.slice(0, 4).join('; ') + '.' : '',
       needs.length ? 'Areas to support: ' + needs.slice(0, 4).join('; ') + '.' : '',
-      'Based on the ECCD checklist. Teacher will review before sharing with parents.'
+      activityLines.length
+        ? 'Suggested activities at home — ' + activityLines.join(' ')
+        : '',
+      'Based on the ECCD checklist. Teacher will review and approve before sharing with parents.'
     ]
       .filter(Boolean)
       .join(' ');
@@ -221,6 +390,8 @@ const ProgressEngine = {
       overallInterpretation,
       strengths,
       needs,
+      parentActivities,
+      teacherPriorities,
       parentFriendlyDraft,
       tablesComplete: !!(
         band &&
