@@ -21,18 +21,12 @@ const BrightSteps = (() => {
     app.innerHTML = `
       <div class="login-screen">
         <div class="login-card login-card-roles">
-          <div class="login-identity">
-            <img class="login-eccd-logo" src="assets/eccd-council-logo.png" alt="ECCD Council" width="88" height="88" />
-            <div class="login-identity-text">
-              <div class="brand">BrightSteps</div>
-              <p class="login-ncdc-line">National Child Development Center</p>
-              <p class="login-place-line">Medina, Misamis Oriental</p>
+          <div class="login-identity login-identity-simple">
+            <div class="login-identity-text" style="text-align:center;width:100%;">
+              <div class="brand">🌱 BrightSteps</div>
+              <p class="login-ncdc-line">National Child Development Center — Medina</p>
+              <p class="login-place-line">Misamis Oriental</p>
             </div>
-          </div>
-          <div class="login-banner-bar" aria-hidden="true">
-            <span>ECCD Council</span>
-            <span class="login-banner-dot">·</span>
-            <span>NCDC Medina</span>
           </div>
           <p class="tagline">Child Development Monitoring System<br>Choose how you want to continue</p>
           <div class="role-buttons">
@@ -58,10 +52,9 @@ const BrightSteps = (() => {
     app.innerHTML = `
       <div class="login-screen">
         <div class="login-card login-card-roles" style="max-width:440px;">
-          <div class="login-identity login-identity-compact">
-            <img class="login-eccd-logo login-eccd-logo-sm" src="assets/eccd-council-logo.png" alt="ECCD Council" width="56" height="56" />
-            <div class="login-identity-text">
-              <div class="brand" style="font-size:1.35rem;">BrightSteps</div>
+          <div class="login-identity login-identity-simple login-identity-compact">
+            <div class="login-identity-text" style="text-align:center;width:100%;">
+              <div class="brand" style="font-size:1.45rem;">🌱 BrightSteps</div>
               <p class="login-ncdc-line">Parent / Guardian access</p>
             </div>
           </div>

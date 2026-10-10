@@ -66,12 +66,37 @@ const TeacherDevelopment = {
 
       <div class="card">
         <h3>Overall Class Snapshot</h3>
-        <p class="text-muted" style="margin-bottom:1rem;">Sample domain averages for the selected section (demo). Real averages will come from saved assessments.</p>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1rem;">
-          ${this._snapshotPills(children)}
-        </div>
+        ${this._classSnapshotBlock(children)}
       </div>
     `;
+  },
+
+  _classSnapshotBlock(children) {
+    const snap = (typeof UI !== 'undefined' && UI.classDomainSnapshot)
+      ? UI.classDomainSnapshot(children)
+      : { domains: [], childrenWithData: 0, childrenTotal: children.length, periods: [] };
+
+    if (!snap.childrenWithData) {
+      return `
+        <p class="text-muted" style="margin:0.35rem 0 0.75rem;">
+          No saved assessments for this class yet. Encode and save an ECCD checklist for a child to fill domain averages.
+        </p>
+        ${typeof UI !== 'undefined' ? UI.domainDonutGrid(snap.domains) : ''}`;
+    }
+
+    const periodNote = snap.periods.length
+      ? 'Based on each child’s <strong>latest</strong> saved evaluation' +
+        (snap.periods.length === 1 ? ` (${snap.periods[0]})` : ` (${snap.periods.sort().join(', ')})`) + '.'
+      : 'Based on each child’s latest saved evaluation.';
+
+    return `
+      <p class="text-muted" style="margin:0.35rem 0 1rem;">
+        Domain averages for this section ·
+        <strong>${snap.childrenWithData}</strong> of <strong>${snap.childrenTotal}</strong> children with data.
+        ${periodNote}
+        Percent = items marked <em>Present</em> ÷ items in domain.
+      </p>
+      ${UI.domainDonutGrid(snap.domains)}`;
   },
 
   setSection(key) {
@@ -166,22 +191,7 @@ const TeacherDevelopment = {
     document.body.insertAdjacentHTML('beforeend', html);
   },
 
-  _snapshotPills(children) {
-    const domains = [
-      { name: 'Gross Motor', pct: 90, color: 'var(--success)' },
-      { name: 'Fine Motor', pct: 82, color: 'var(--primary)' },
-      { name: 'Self-Help', pct: 85, color: 'var(--orange)' },
-      { name: 'Language', pct: 88, color: 'var(--purple)' },
-      { name: 'Cognitive', pct: 91, color: 'var(--cyan)' },
-      { name: 'Social-Emotional', pct: 93, color: 'var(--lime)' }
-    ];
-    return domains.map(d => `
-      <div style="text-align:center;background:#f8f9fa;padding:0.85rem;border-radius:10px;">
-        <div style="font-size:1.35rem;font-weight:700;color:${d.color};">${d.pct}%</div>
-        <div style="font-size:0.8rem;color:var(--muted);">${d.name}</div>
-      </div>
-    `).join('');
-  },
+
 
   /* ---------- Assessment modal ---------- */
 
@@ -391,6 +401,31 @@ const TeacherDevelopment = {
   },
 
   /**
+   * Item-level results for the insight engine (present/not + teacher comments).
+   */
+  _itemResultsForPeriod(child, record, period) {
+    const out = [];
+    this.catalog.domains.forEach(d => {
+      const items = record.domains[d.code] || [];
+      items.forEach(it => {
+        const presentKey = `${child.id}:${it.item_id}:${period}`;
+        const commentKey = `${child.id}:${it.item_id}:comment`;
+        const present = !!this._responses[presentKey];
+        const comment = this._responses[commentKey] != null ? String(this._responses[commentKey]) : '';
+        out.push({
+          domainCode: d.code,
+          domainName: d.name,
+          itemId: it.item_id,
+          title: it.title || it.item_id,
+          present,
+          comment: comment.trim()
+        });
+      });
+    });
+    return out;
+  },
+
+  /**
    * Snapshot of checkbox/comment keys for one period (plus shared comments).
    */
   _responsesSnapshotForPeriod(child, record, period) {
@@ -432,6 +467,7 @@ const TeacherDevelopment = {
       const { domainScores, anyPresent } = this._scoresForPeriod(child, record, period);
       if (anyPresent === 0) continue; // only persist columns that have marks
 
+      const itemResults = this._itemResultsForPeriod(child, record, period);
       let insight = null;
       if (typeof ProgressEngine !== 'undefined' && ProgressEngine.analyze) {
         insight = await ProgressEngine.analyze({
@@ -439,7 +475,8 @@ const TeacherDevelopment = {
           recordType: child.recordType,
           ageMonths: child.ageMonths,
           period,
-          domainScores
+          domainScores,
+          itemResults
         });
         lastInsight = insight;
       }
@@ -485,6 +522,33 @@ const TeacherDevelopment = {
       ? `<p style="margin-top:0.75rem;"><strong>Strengths:</strong> ${insight.strengths.join('; ')}</p>` : '';
     const needs = insight && insight.needs && insight.needs.length
       ? `<p><strong>Needs monitoring:</strong> ${insight.needs.join('; ')}</p>` : '';
+
+    let commentsHtml = '';
+    if (insight && insight.teacherComments && insight.teacherComments.length) {
+      commentsHtml = `
+        <div class="card" style="margin-top:1rem;border-left:5px solid #f9a825;">
+          <h3 style="margin-top:0;">Teacher comments (checklist)</h3>
+          <ul style="margin:0;padding-left:1.25rem;font-size:0.9rem;">
+            ${insight.teacherComments.slice(0, 8).map(c =>
+              `<li><strong>${c.itemTitle}</strong>${c.present ? '' : ' <span class="text-muted">(not yet present)</span>'}: ${c.comment}</li>`
+            ).join('')}
+          </ul>
+        </div>`;
+    }
+
+    let focusHtml = '';
+    if (insight && insight.focusItems && insight.focusItems.length) {
+      focusHtml = `
+        <div class="card" style="margin-top:1rem;border-left:5px solid var(--orange, #e65100);">
+          <h3 style="margin-top:0;">Skills still developing (sample)</h3>
+          <p class="text-muted" style="font-size:0.85rem;margin-top:0;">Unchecked items used to shape parent tips.</p>
+          <ul style="margin:0;padding-left:1.25rem;font-size:0.9rem;">
+            ${insight.focusItems.slice(0, 8).map(fi =>
+              `<li><strong>${fi.domainName}:</strong> ${fi.itemTitle}</li>`
+            ).join('')}
+          </ul>
+        </div>`;
+    }
 
     let teacherPriHtml = '';
     if (insight && insight.teacherPriorities && insight.teacherPriorities.length) {
@@ -568,6 +632,8 @@ const TeacherDevelopment = {
             ${tableNote}
             ${strengths}
             ${needs}
+            ${commentsHtml}
+            ${focusHtml}
             ${teacherPriHtml}
             ${parentActHtml}
             ${draft}

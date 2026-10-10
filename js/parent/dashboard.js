@@ -65,12 +65,49 @@ const ParentDashboard = {
     );
   },
 
-  _progressCard(child) {
-    const approved = child && typeof ReportStore !== 'undefined'
-      ? ReportStore.getApproved(child.id)
-      : null;
+  /** Selected evaluation period for progress report (parent). */
+  reportPeriod: null,
 
-    if (approved) {
+  selectReportPeriod(period) {
+    this.reportPeriod = period;
+    if (this._container && this._user) this.render(this._container, this._user);
+  },
+
+  _progressCard(child) {
+    if (!child || typeof ReportStore === 'undefined') {
+      return (
+        '<div class="card mb-3" style="text-align:center;">' +
+        '<h3>🌟 Progress Report</h3>' +
+        '<p class="text-muted">No approved progress report yet.</p></div>'
+      );
+    }
+
+    const approvedList = ReportStore.listApprovedForChild
+      ? ReportStore.listApprovedForChild(child.id)
+      : (ReportStore.getApproved(child.id) ? [ReportStore.getApproved(child.id)] : []);
+
+    if (approvedList.length) {
+      let approved = approvedList[approvedList.length - 1];
+      if (this.reportPeriod) {
+        const match = approvedList.find(r => r.period === this.reportPeriod);
+        if (match) approved = match;
+        else this.reportPeriod = approved.period;
+      } else {
+        this.reportPeriod = approved.period;
+      }
+
+      const periodTabs = approvedList.length > 1
+        ? '<div class="no-print" style="display:flex;flex-wrap:wrap;gap:0.4rem;justify-content:center;margin-bottom:1rem;">' +
+          approvedList.map(r => {
+            const active = r.period === approved.period;
+            return '<button class="btn ' + (active ? 'btn-blue' : '') + '" style="' +
+              (active ? '' : 'background:#e8e8e8;color:var(--text);') +
+              'padding:6px 14px;font-size:0.85rem;" onclick="ParentDashboard.selectReportPeriod(\'' +
+              r.period + '\')">' + r.period + ' Evaluation</button>';
+          }).join('') +
+          '</div>'
+        : '';
+
       const pills = (approved.domainScores || []).map(d => {
         const main = d.scaled != null && d.scaled !== '' ? 'SS ' + d.scaled : (d.label || '—');
         const color = d.label === 'Advanced' ? 'var(--primary)'
@@ -81,14 +118,25 @@ const ParentDashboard = {
       }).join('');
 
       const tips = (approved.tips || []).map(t => '<li>' + t + '</li>').join('');
+      const comments = (approved.teacherComments || []).map(c =>
+        '<li><strong>' + (c.itemTitle || '') + '</strong>' +
+        (c.present ? '' : ' <span class="text-muted">(still developing)</span>') +
+        ': ' + (c.comment || '') + '</li>'
+      ).join('');
       const approvedDate = approved.approvedAt
         ? new Date(approved.approvedAt).toLocaleDateString()
         : '';
 
       return (
         '<div class="card mb-3">' +
-        '<div class="no-print" style="text-align:right;margin-bottom:0.5rem;">' +
+        '<div class="no-print" style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:0.5rem;margin-bottom:0.5rem;">' +
+        '<span class="text-muted" style="font-size:0.85rem;">' +
+        (approvedList.length > 1
+          ? approvedList.length + ' approved evaluations — select a period'
+          : 'Approved evaluation') +
+        '</span>' +
         '<button class="btn" style="background:#fff3e0;color:#e65100;" onclick="window.print()">🖨 Print report</button></div>' +
+        periodTabs +
         '<h3 style="text-align:center;">🌟 Progress Report – ' + approved.period + ' Evaluation</h3>' +
         (approved.overallLabel
           ? '<p style="text-align:center;margin:0.5rem 0 1rem;"><strong>' + approved.overallLabel + '</strong>' +
@@ -99,13 +147,18 @@ const ParentDashboard = {
         '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:1rem;">' +
         '<div style="background:#f8f9fa;padding:1.1rem;border-radius:12px;">' +
-        '<h4 style="color:var(--primary-dark);margin:0 0 0.5rem;">👩‍🏫 Teacher’s Note</h4>' +
+        '<h4 style="color:var(--primary-dark);margin:0 0 0.5rem;">👩‍🏫 Teacher\u2019s Note</h4>' +
         '<p style="margin:0;font-size:0.95rem;">' + (approved.teacherNote || '—') + '</p></div>' +
         '<div style="background:#e8f5e9;padding:1.1rem;border-radius:12px;">' +
         '<h4 style="color:#2e7d32;margin:0 0 0.5rem;">💡 Tips & Activity Suggestions</h4>' +
         '<ul style="padding-left:1.1rem;margin:0;line-height:1.7;font-size:0.95rem;">' +
-        (tips || '<li>Talk with your child’s teacher for home activity ideas.</li>') +
+        (tips || '<li>Talk with your child\u2019s teacher for home activity ideas.</li>') +
         '</ul></div></div>' +
+        (comments
+          ? '<div style="margin-top:1.25rem;padding:1rem;background:#fff8e1;border-radius:12px;border-left:4px solid #f9a825;">' +
+            '<h4 style="margin:0 0 0.5rem;color:#f57f17;">📝 Teacher comments on skills</h4>' +
+            '<ul style="padding-left:1.1rem;margin:0;line-height:1.7;font-size:0.95rem;">' + comments + '</ul></div>'
+          : '') +
         (approved.parentDraft
           ? '<div style="margin-top:1.25rem;padding:1rem;background:var(--primary-light);border-radius:12px;">' +
             '<h4 style="margin:0 0 0.5rem;color:var(--primary-dark);">Summary</h4>' +
@@ -118,7 +171,7 @@ const ParentDashboard = {
       );
     }
 
-    const latestAssess = child && typeof AssessmentStore !== 'undefined'
+      const latestAssess = child && typeof AssessmentStore !== 'undefined'
       ? AssessmentStore.getLatest(child.id)
       : null;
     let waitMsg = 'No approved progress report yet. Once the teacher completes and approves an ECCD assessment report, it will appear here.';

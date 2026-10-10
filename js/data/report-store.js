@@ -29,6 +29,12 @@ const ReportStore = {
   /**
    * Save or replace report for child + period.
    */
+  /** Evaluation period order for sorting (1st … 6th). */
+  periodRank(period) {
+    const map = { '1st': 1, '2nd': 2, '3rd': 3, '4th': 4, '5th': 5, '6th': 6 };
+    return map[period] || 99;
+  },
+
   save(report) {
     const list = this._read();
     const id = report.id || `r_${report.childId}_${report.period}_${Date.now()}`;
@@ -46,13 +52,15 @@ const ReportStore = {
       teacherNote: report.teacherNote || '',
       tips: report.tips || [],
       parentDraft: report.parentDraft || '',
+      teacherComments: report.teacherComments || [],
+      focusItems: report.focusItems || [],
       status: report.status || 'draft', // draft | approved
       approvedAt: report.approvedAt || null,
       updatedAt: new Date().toISOString()
     };
 
     const idx = list.findIndex(
-      r => r.childId === record.childId && r.period === record.period
+      r => String(r.childId) === String(record.childId) && r.period === record.period
     );
     if (idx >= 0) list[idx] = { ...list[idx], ...record, id: list[idx].id };
     else list.push(record);
@@ -63,12 +71,24 @@ const ReportStore = {
 
   listForChild(childId) {
     return this._read()
-      .filter(r => r.childId === childId)
-      .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''));
+      .filter(r => String(r.childId) === String(childId))
+      .sort((a, b) => this.periodRank(a.period) - this.periodRank(b.period));
   },
 
+  /** All approved reports for a child, one per evaluation period, oldest → newest. */
+  listApprovedForChild(childId) {
+    return this.listForChild(childId).filter(r => r.status === 'approved');
+  },
+
+  /** Latest approved period (highest 1st…6th rank). */
   getApproved(childId) {
-    return this.listForChild(childId).find(r => r.status === 'approved') || null;
+    const approved = this.listApprovedForChild(childId);
+    if (!approved.length) return null;
+    return approved[approved.length - 1];
+  },
+
+  getApprovedPeriod(childId, period) {
+    return this.listApprovedForChild(childId).find(r => r.period === period) || null;
   },
 
   get(childId, period) {

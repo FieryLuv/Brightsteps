@@ -1530,6 +1530,12 @@ const TeacherChildren = {
       ? 'ECCD Checklist — Child’s Record 1 (0–36 months)'
       : 'ECCD Checklist — Child’s Record 2 (3+ years)';
 
+    const snap = (typeof UI !== 'undefined' && UI.childDomainSnapshot)
+      ? UI.childDomainSnapshot(child.id)
+      : [];
+    const hasData = snap.some(d => d.percent != null);
+    const period = hasData && snap[0] && snap[0].period ? snap[0].period : null;
+
     return `
       <div class="card" style="margin-bottom:1rem;">
         <h3>Development Summary</h3>
@@ -1541,31 +1547,23 @@ const TeacherChildren = {
           </span>
         </p>
         <p class="text-muted" style="margin-top:0.75rem;font-size:0.9rem;">
-          Full digital checklist encoding and rule-based domain insights will live in the Development Tracking module.
+          Domain rings use the child’s latest saved ECCD evaluation (Present items ÷ domain total).
         </p>
         <button class="btn btn-blue mt-2" onclick="TeacherChildren.closeModal(); BrightSteps.navigate('development')">
           Open Development Tracking
         </button>
       </div>
       <div class="card" style="margin-bottom:0;">
-        <h3>Domain Snapshot (sample)</h3>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1rem;margin-top:0.75rem;">
-          ${this._domainPill('Gross Motor', 92, 'var(--success)')}
-          ${this._domainPill('Fine Motor', child.focusArea === 'Fine Motor' ? 68 : 85, child.focusArea === 'Fine Motor' ? 'var(--orange)' : 'var(--primary)')}
-          ${this._domainPill('Self-Help', 88, 'var(--orange)')}
-          ${this._domainPill('Language', child.focusArea === 'Language' ? 70 : 90, child.focusArea === 'Language' ? 'var(--orange)' : 'var(--purple)')}
-          ${this._domainPill('Cognitive', 94, 'var(--cyan)')}
-          ${this._domainPill('Social-Emotional', 96, 'var(--lime)')}
-        </div>
-      </div>
-    `;
-  },
-
-  _domainPill(label, pct, color) {
-    return `
-      <div style="text-align:center;background:#f8f9fa;padding:0.85rem;border-radius:10px;">
-        <div style="font-size:1.4rem;font-weight:700;color:${color};">${pct}%</div>
-        <div style="font-size:0.8rem;color:var(--muted);">${label}</div>
+        <h3>Domain Snapshot</h3>
+        ${hasData
+          ? `<p class="text-muted" style="margin:0.35rem 0 1rem;font-size:0.88rem;">
+               Latest evaluation${period ? ': <strong>' + period + '</strong>' : ''}.
+               Percent = items marked Present in that domain.
+             </p>`
+          : `<p class="text-muted" style="margin:0.35rem 0 1rem;font-size:0.88rem;">
+               No saved assessment yet. Encode the ECCD checklist in Development Tracking to fill these rings.
+             </p>`}
+        ${typeof UI !== 'undefined' ? UI.domainDonutGrid(snap) : ''}
       </div>
     `;
   },

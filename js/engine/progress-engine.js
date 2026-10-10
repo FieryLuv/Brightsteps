@@ -9,7 +9,7 @@
  */
 
 const ProgressEngine = {
-  version: '0.6.0-guidance',
+  version: '0.7.0-item-guidance',
   tables: null,
 
   /**
@@ -301,6 +301,31 @@ const ProgressEngine = {
       }
     }
 
+    // --- Item-level: not present + teacher comments (from checklist) ---
+    const items = Array.isArray(assessment.itemResults) ? assessment.itemResults : [];
+    const notPresent = items.filter(it => !it.present);
+    const withComments = items.filter(it => it.comment && String(it.comment).trim());
+    const teacherComments = withComments.map(it => ({
+      domainCode: it.domainCode,
+      domainName: it.domainName || it.domainCode,
+      itemId: it.itemId,
+      itemTitle: it.title || it.itemId,
+      comment: String(it.comment).trim(),
+      present: !!it.present
+    }));
+    // Prefer comments on skills not yet present (most useful for parents)
+    const focusComments = teacherComments
+      .filter(c => !c.present)
+      .concat(teacherComments.filter(c => c.present))
+      .slice(0, 12);
+
+    const focusItems = notPresent.slice(0, 10).map(it => ({
+      domainCode: it.domainCode,
+      domainName: it.domainName || it.domainCode,
+      itemId: it.itemId,
+      itemTitle: it.title || it.itemId
+    }));
+
     // --- Guidance: parent activities + teacher priorities from domain needs ---
     const priorityDomains = domainResults.filter(d => {
       if (d.interpretation && (d.interpretation.level === 'needs_support' || d.interpretation.level === 'emerging')) {
@@ -309,7 +334,6 @@ const ProgressEngine = {
       if (d.percent != null && d.percent < 60) return true;
       return false;
     });
-    // If no weak domains, still offer 1–2 maintenance tips from lowest percent
     const guidanceTargets = priorityDomains.length
       ? priorityDomains
       : domainResults
@@ -319,6 +343,7 @@ const ProgressEngine = {
 
     const parentActivities = [];
     const teacherPriorities = [];
+    const tipLines = [];
     const seen = new Set();
 
     guidanceTargets.forEach(d => {
@@ -328,22 +353,50 @@ const ProgressEngine = {
       const why = d.interpretation
         ? d.interpretation.label
         : (d.percent != null ? `${d.percent}% items present` : 'focus area');
+
+      // Item-specific tips for this domain (skills not yet marked Present)
+      const domainGaps = focusItems.filter(fi => fi.domainCode === d.code).slice(0, 3);
+      const itemTips = domainGaps.map(fi =>
+        'Practice: “' + fi.itemTitle + '” (' + (fi.domainName || d.name) + ').'
+      );
+      const generic = (g.parentActivities || []).slice(0, 3);
+      const activities = itemTips.concat(generic).slice(0, 4);
+
       parentActivities.push({
         domainCode: d.code,
         domainName: d.name || g.name,
         reason: why,
-        activities: (g.parentActivities || []).slice(0, 3)
+        focusItems: domainGaps,
+        activities
       });
+
+      const gapPriorities = domainGaps.map(fi =>
+        'Target checklist item: ' + fi.itemTitle
+      );
       teacherPriorities.push({
         domainCode: d.code,
         domainName: d.name || g.name,
         reason: why,
         level: (d.interpretation && d.interpretation.level) || (d.percent < 60 ? 'needs_support' : 'maintain'),
-        priorities: (g.teacherPriorities || []).slice(0, 3)
+        priorities: gapPriorities.concat(g.teacherPriorities || []).slice(0, 4)
       });
+
+      activities.slice(0, 2).forEach(a => tipLines.push((d.name || g.name) + ': ' + a));
     });
 
-    // General classroom priority when overall needs monitoring
+    // Tips from remaining not-present items outside priority domains
+    focusItems.forEach(fi => {
+      if (seen.has(fi.domainCode)) return;
+      const line = 'Practice: “' + fi.itemTitle + '” (' + fi.domainName + ').';
+      if (tipLines.length < 8) tipLines.push(line);
+    });
+
+    // Teacher comment tips for parents (when teacher wrote on an item)
+    focusComments.forEach(c => {
+      const line = 'Teacher note on “' + c.itemTitle + '”: ' + c.comment;
+      if (tipLines.length < 10) tipLines.push(line);
+    });
+
     if (overallInterpretation.level === 'needs_support' || overallInterpretation.level === 'emerging') {
       teacherPriorities.unshift({
         domainCode: 'OVERALL',
@@ -358,8 +411,22 @@ const ProgressEngine = {
       });
     }
 
+    // Ensure maintenance tips if still thin
+    if (tipLines.length < 3) {
+      const filler = [
+        'Read or tell stories together for 10–15 minutes daily.',
+        'Encourage outdoor play and movement games.',
+        'Praise effort and practice everyday self-help skills (dressing, feeding).'
+      ];
+      filler.forEach(f => { if (tipLines.length < 4) tipLines.push(f); });
+    }
+
     const activityLines = parentActivities.slice(0, 3).map(pa =>
       pa.domainName + ': ' + (pa.activities[0] || '')
+    );
+
+    const commentSummary = focusComments.slice(0, 4).map(c =>
+      '“' + c.itemTitle + '” — ' + c.comment
     );
 
     const parentFriendlyDraft = [
@@ -367,6 +434,12 @@ const ProgressEngine = {
       overallInterpretation.description,
       strengths.length ? 'Strengths: ' + strengths.slice(0, 4).join('; ') + '.' : '',
       needs.length ? 'Areas to support: ' + needs.slice(0, 4).join('; ') + '.' : '',
+      focusItems.length
+        ? 'Skills still developing (examples): ' + focusItems.slice(0, 5).map(fi => fi.itemTitle).join('; ') + '.'
+        : '',
+      commentSummary.length
+        ? 'Teacher observations: ' + commentSummary.join(' | ') + '.'
+        : '',
       activityLines.length
         ? 'Suggested activities at home — ' + activityLines.join(' ')
         : '',
@@ -390,6 +463,9 @@ const ProgressEngine = {
       overallInterpretation,
       strengths,
       needs,
+      focusItems,
+      teacherComments: focusComments,
+      tipLines: tipLines.slice(0, 10),
       parentActivities,
       teacherPriorities,
       parentFriendlyDraft,

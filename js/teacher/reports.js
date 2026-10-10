@@ -40,57 +40,66 @@ const TeacherReports = {
 
   _eccdReportsHtml() {
     const children = typeof SampleChildren !== 'undefined' ? SampleChildren : [];
+    const periodOrder = { '1st': 1, '2nd': 2, '3rd': 3, '4th': 4, '5th': 5, '6th': 6 };
     const rows = children.map(c => {
       const history = typeof AssessmentStore !== 'undefined'
-        ? AssessmentStore.listForChild(c.id)
+        ? AssessmentStore.listForChild(c.id).slice().sort((a, b) =>
+            (periodOrder[a.period] || 99) - (periodOrder[b.period] || 99))
         : [];
-      const latest = history.length ? history[history.length - 1] : null;
-      const report = latest && typeof ReportStore !== 'undefined'
-        ? ReportStore.get(c.id, latest.period)
-        : null;
-      const approved = typeof ReportStore !== 'undefined'
-        ? ReportStore.getApproved(c.id)
-        : null;
 
-      let statusHtml = '<span class="text-muted">No assessment yet</span>';
-      if (approved) {
-        statusHtml = `<span class="success-text">✓ Approved (${approved.period})</span>`;
-      } else if (report && report.status === 'draft') {
-        statusHtml = `<span style="color:var(--orange);">Draft (${report.period})</span>`;
-      } else if (latest) {
-        statusHtml = `<span style="color:var(--primary);">Ready to draft (${latest.period})</span>`;
+      if (!history.length) {
+        return `
+        <tr>
+          <td><strong>${c.name}</strong><div class="text-muted" style="font-size:0.8rem;">${c.section} · ${c.ageLabel}</div></td>
+          <td>${c.parentName || '—'}</td>
+          <td><span class="text-muted">No assessment yet</span>
+            <button class="btn" style="background:#e0e0e0;color:#666;margin-left:0.5rem;" disabled>Encode checklist first</button></td>
+        </tr>`;
       }
 
-      const action = latest
-        ? `<button class="btn btn-blue" onclick="TeacherReports.openEditor(${c.id})">Open report</button>`
-        : `<button class="btn" style="background:#e0e0e0;color:#666;" disabled>Encode checklist first</button>`;
+      const periodCells = history.map(h => {
+        const rep = typeof ReportStore !== 'undefined' ? ReportStore.get(c.id, h.period) : null;
+        let badge = '<span class="text-muted">Ready</span>';
+        if (rep && rep.status === 'approved') {
+          badge = '<span class="success-text">✓ Approved (editable)</span>';
+        } else if (rep && rep.status === 'draft') {
+          badge = '<span style="color:var(--orange);">Draft</span>';
+        }
+        const label = rep && rep.status === 'approved' ? 'Edit ' + h.period : 'Open ' + h.period;
+        return `<div style="display:flex;align-items:center;gap:0.5rem;margin:0.25rem 0;flex-wrap:wrap;">
+          <strong style="min-width:2.5rem;">${h.period}</strong>
+          ${badge}
+          ${h.finalized ? '<span class="text-muted" style="font-size:0.78rem;">scores finalized</span>' : ''}
+          <button class="btn btn-blue" style="padding:4px 12px;font-size:0.82rem;"
+            onclick="TeacherReports.openEditor(${c.id}, '${h.period}')">${label}</button>
+        </div>`;
+      }).join('');
 
       return `
         <tr>
           <td><strong>${c.name}</strong><div class="text-muted" style="font-size:0.8rem;">${c.section} · ${c.ageLabel}</div></td>
           <td>${c.parentName || '—'}</td>
-          <td>${history.length ? history.map(h => h.period).join(', ') : '—'}</td>
-          <td>${statusHtml}</td>
-          <td>${action}</td>
+          <td>${periodCells}</td>
         </tr>`;
     }).join('');
 
     return `
       <div class="card">
-        <p class="text-muted" style="margin-top:0;">Parent-friendly progress reports from ECCD assessments. Review, edit, and approve before parents see them.</p>
+        <p class="text-muted" style="margin-top:0;">
+          Parent progress reports by evaluation period. <strong>Approved reports stay editable</strong>
+          so teachers can update tips or notes later and refresh the parent view.
+        </p>
         <div class="eccd-table-wrap">
           <table class="eccd-table">
             <thead>
               <tr>
                 <th>Child</th>
                 <th>Parent</th>
-                <th>Assessments</th>
-                <th>Report status</th>
-                <th></th>
+                <th>Evaluation periods</th>
               </tr>
             </thead>
             <tbody>
-              ${rows || '<tr><td colspan="5">No children loaded.</td></tr>'}
+              ${rows || '<tr><td colspan="3">No children loaded.</td></tr>'}
             </tbody>
           </table>
         </div>
@@ -141,7 +150,12 @@ const TeacherReports = {
               <input type="number" id="cert-a-n" class="ecc-field-input" min="0" placeholder="Auto: ${benCount || '—'}" />
             </div>
           </div>
-          <button class="btn btn-blue" style="margin-top:0.75rem;" onclick="TeacherReports.printCertA()">🖨 Print Certification -A</button>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
+            <button class="btn btn-blue" onclick="TeacherReports.printPackA()">🖨 Print Cert + Matrix -A</button>
+            <button class="btn" style="background:#e3f2fd;color:#1565c0;" onclick="TeacherReports.printCertA()">Cert only</button>
+            <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherReports.printMatrixA()">Matrix only</button>
+          </div>
+          <p class="text-muted" style="font-size:0.8rem;margin:0.5rem 0 0;">Matrix rows come from SFP Feeding → Hot meal logs (day #, menu, commodities, notes).</p>
         </div>
         <div class="card" style="margin:0;">
           <h3 style="margin-top:0;">Certification -C <span class="text-muted" style="font-weight:500;font-size:0.85rem;">NUTRICombo</span></h3>
@@ -159,8 +173,22 @@ const TeacherReports = {
               <label class="ecc-field-label"># of children (override)</label>
               <input type="number" id="cert-c-n" class="ecc-field-input" min="0" placeholder="Auto: ${benCount || '—'}" />
             </div>
+            <div>
+              <label class="ecc-field-label">Matrix delivery</label>
+              <select id="cert-c-delivery" class="ecc-field-input">
+                <option value="">Latest delivery</option>
+                ${(typeof SfpStore !== 'undefined' ? SfpStore.listAltDeliveries() : []).map(d =>
+                  `<option value="${d.id}">#${d.deliveryNumber != null ? d.deliveryNumber : '—'} · ${d.actualDate} (${(d.receipts||[]).length} children)</option>`
+                ).join('')}
+              </select>
+            </div>
           </div>
-          <button class="btn btn-blue" style="margin-top:0.75rem;" onclick="TeacherReports.printCertC()">🖨 Print Certification -C</button>
+          <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
+            <button class="btn btn-blue" onclick="TeacherReports.printPackC()">🖨 Print Cert + Matrix -C</button>
+            <button class="btn" style="background:#e3f2fd;color:#1565c0;" onclick="TeacherReports.printCertC()">Cert only</button>
+            <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherReports.printMatrixC()">Matrix only</button>
+          </div>
+          <p class="text-muted" style="font-size:0.8rem;margin:0.5rem 0 0;">Matrix rows come from SFP Feeding → NUTRICombo deliveries (child, parent, qty, signature).</p>
         </div>
       </div>
 
@@ -174,33 +202,58 @@ const TeacherReports = {
       </div>`;
   },
 
+  /**
+   * In-page print preview (no pop-up). Avoids blocked window.open.
+   */
   _printWindow(title, bodyHtml) {
-    const w = window.open('', '_blank', 'noopener,noreferrer,width=900,height=700');
-    if (!w) {
-      alert('Please allow pop-ups to print SFP forms.');
-      return;
-    }
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title>
-      <style>
-        body{font-family:Arial,sans-serif;font-size:12px;color:#000;margin:16px;}
-        h1,h2,h3,p{text-align:center;margin:4px 0;}
-        table{width:100%;border-collapse:collapse;margin-top:10px;}
-        th,td{border:1px solid #000;padding:5px;vertical-align:top;}
-        .label{font-weight:bold;}
-        .sub{padding-left:20px;}
-        .sig{margin-top:48px;display:flex;justify-content:space-between;gap:24px;}
-        .sig div{text-align:center;flex:1;}
-        .left{text-align:left;}
-        @media print{button{display:none;}}
-      </style></head><body>
-      ${bodyHtml}
-      <p style="text-align:center;margin-top:24px;"><button onclick="window.print()">Print / Save as PDF</button></p>
-      </body></html>`);
-    w.document.close();
+    const existing = document.getElementById('sfp-print-overlay');
+    if (existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'sfp-print-overlay';
+    overlay.innerHTML = `
+      <div class="sfp-print-backdrop no-print" onclick="if(event.target===this)TeacherReports.closeSfpPrint()"></div>
+      <div class="sfp-print-shell">
+        <div class="sfp-print-toolbar no-print">
+          <strong style="color:white;flex:1;">${title}</strong>
+          <button class="btn" style="background:white;color:var(--primary-dark);" onclick="TeacherReports.doSfpPrint()">🖨 Print / Save as PDF</button>
+          <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherReports.closeSfpPrint()">Close</button>
+        </div>
+        <div class="sfp-print-page" id="sfp-print-page">
+          ${bodyHtml}
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.body.classList.add('sfp-print-open');
   },
 
-  printCertA() {
+  doSfpPrint() {
+    window.print();
+  },
+
+  closeSfpPrint() {
+    const el = document.getElementById('sfp-print-overlay');
+    if (el) el.remove();
+    document.body.classList.remove('sfp-print-open');
+  },
+
+  _cycleMeta() {
     const cycle = typeof SfpStore !== 'undefined' ? SfpStore.getActiveCycle() : {};
+    return {
+      cycle: cycle || {},
+      province: (cycle && cycle.province) || 'MISAMIS ORIENTAL',
+      municipality: (cycle && cycle.municipality) || 'MEDINA',
+      barangay: (cycle && cycle.barangay) || '',
+      facility: (cycle && cycle.facilityName) || 'National Child Development Center — Medina',
+      worker: (cycle && cycle.workerName) || '',
+      startDate: (cycle && cycle.startDate) || '',
+      cycleLabel: (cycle && (cycle.cycleLabel || cycle.cycleNumber)) || '15th',
+      schoolYear: (cycle && cycle.schoolYear) || ''
+    };
+  },
+
+  _certABodyHtml() {
+    const meta = this._cycleMeta();
     const stats = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
     const hotDays = typeof SfpStore !== 'undefined' ? SfpStore.countHotFeedingDays() : 0;
     const nEl = document.getElementById('cert-a-n');
@@ -209,33 +262,36 @@ const TeacherReports = {
     const end = (document.getElementById('cert-a-end') || {}).value || '________';
     const n = (nEl && nEl.value) ? nEl.value : (stats ? stats.beneficiaries.total : '____');
     const days = (dEl && dEl.value) ? dEl.value : (hotDays || '____');
-    const facility = (cycle && cycle.facilityName) || 'National Child Development Center — Medina';
-    const cycleNum = (cycle && (cycle.cycleNumber || cycle.cycleLabel)) || '15th';
-
-    const body = `
-      <p>Republic of the Philippines</p>
-      <p>Department of Social Welfare and Development</p>
-      <p>Field Office X</p>
-      <h2>CERTIFICATION</h2>
-      <p class="left" style="margin-top:24px;line-height:1.7;text-align:left;">
-        This is to certify that the total <strong>${n}</strong> Day Care Children have received and
-        consumed the foods prepared and served at <strong>${facility}</strong>
-        for the period of <strong>${start}</strong> to <strong>${end}</strong>
-        for a total of <strong>${days}</strong> feeding days.
+    const periodLine = (start && start !== '________') || (end && end !== '________')
+      ? `${start} to ${end}`
+      : '________________________';
+    return `
+      ${this._dswdCertHeader('-A')}
+      <h2 class="cert-title">CERTIFICATION</h2>
+      <p class="cert-body">
+        This is to certify that the total <u>&nbsp;&nbsp;<strong>${n}</strong>&nbsp;&nbsp;</u>
+        (<em># OF CHILDREN</em>) Day Care Children have received and
+        consumed the foods prepared and served at
+        <u>&nbsp;&nbsp;<strong>${meta.facility}</strong>&nbsp;&nbsp;</u>
+        (<em>(NAME OF CHILD DEVELOPMENT CENTER/SNP)</em>
+        for the period of
+        <u>&nbsp;&nbsp;<strong>${periodLine}</strong>&nbsp;&nbsp;</u>
+        (<em>(DATE OF FEEDING-ONCE A DAY FEEDING)</em>
+        for a total of <u>&nbsp;&nbsp;<strong>${days}</strong>&nbsp;&nbsp;</u> feeding days.
       </p>
-      <p class="left" style="text-align:left;margin-top:16px;">
-        This certification is issued for liquidation purposes only. (For the ${cycleNum} cycle implementation)
+      <p class="cert-body" style="margin-top:18px;">
+        This certification is issued for liquidation purposes only.
+        (For the ${meta.cycleLabel} cycle implementation)
       </p>
-      <div class="sig">
-        <div><br><br>_________________________<br>Signature over Printed name of CDW</div>
-        <div><br><br>_________________________<br>Signature over Printed name of<br>CDWF / C/MSWDO</div>
+      <div class="sig cert-sig">
+        <div><br><br><br>_________________________<br><strong>Signature over Printed name of CDW</strong></div>
+        <div><br><br><br>_________________________<br><strong>Signature over Printed name of<br>CDWF / C/MSWDO</strong></div>
       </div>
-      <p style="margin-top:32px;font-size:10px;color:#444;">Form style: DSWD FO X — Certification -A (Hot meals)</p>`;
-    this._printWindow('SFP Certification -A', body);
+      ${this._dswdCertFooter()}`;
   },
 
-  printCertC() {
-    const cycle = typeof SfpStore !== 'undefined' ? SfpStore.getActiveCycle() : {};
+  _certCBodyHtml() {
+    const meta = this._cycleMeta();
     const stats = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
     const altDays = typeof SfpStore !== 'undefined' ? SfpStore.countAltFeedingDays() : 0;
     const nEl = document.getElementById('cert-c-n');
@@ -243,29 +299,247 @@ const TeacherReports = {
     const date = (document.getElementById('cert-c-date') || {}).value || '________';
     const n = (nEl && nEl.value) ? nEl.value : (stats ? stats.beneficiaries.total : '____');
     const days = (dEl && dEl.value) ? dEl.value : (altDays || '____');
-    const facility = (cycle && cycle.facilityName) || 'NCDC Medina';
-    const cycleNum = (cycle && (cycle.cycleNumber || cycle.cycleLabel)) || '15th';
-
-    const body = `
-      <p>Republic of the Philippines</p>
-      <p>Department of Social Welfare and Development</p>
-      <p>Field Office X</p>
-      <h2>CERTIFICATION</h2>
-      <p class="left" style="margin-top:24px;line-height:1.7;text-align:left;">
-        This is to certify that the total <strong>${n}</strong> Day Care Children have received and
-        consumed alternative meals (NUTRICombo) at <strong>${facility}</strong>
-        for the period of <strong>${date}</strong>
-        for a total of <strong>${days}</strong> feeding days.
+    return `
+      ${this._dswdCertHeader('-C')}
+      <h2 class="cert-title">CERTIFICATION</h2>
+      <p class="cert-body">
+        This is to certify that the total <u>&nbsp;&nbsp;<strong>${n}</strong>&nbsp;&nbsp;</u>
+        (<em># OF CHILDREN</em>) Day Care Children have received and
+        consumed alternative meals (NUTRICombo) at
+        <u>&nbsp;&nbsp;<strong>${meta.facility}</strong>&nbsp;&nbsp;</u>
+        (<em>(NAME OF CHILD DEVELOPMENT CENTER/SNP)</em>
+        for the period of
+        <u>&nbsp;&nbsp;<strong>${date}</strong>&nbsp;&nbsp;</u>
+        (<em>(DATE OF FEEDING-ONCE A DAY FEEDING)</em>
+        for a total of <u>&nbsp;&nbsp;<strong>${days}</strong>&nbsp;&nbsp;</u> feeding days.
       </p>
-      <p class="left" style="text-align:left;margin-top:16px;">
-        This certification is issued for liquidation purposes only. (For the ${cycleNum} cycle implementation)
+      <p class="cert-body" style="margin-top:18px;">
+        This certification is issued for liquidation purposes only.
+        (For the ${meta.cycleLabel} cycle implementation)
       </p>
-      <div class="sig">
-        <div><br><br>_________________________<br>Signature over Printed name of CDW</div>
-        <div><br><br>_________________________<br>Signature over Printed name of<br>CDWF / C/MSWDO</div>
+      <div class="sig cert-sig">
+        <div><br><br><br>_________________________<br><strong>Signature over Printed name of CDW</strong></div>
+        <div><br><br><br>_________________________<br><strong>Signature over Printed name of<br>CDWF / C/MSWDO</strong></div>
       </div>
-      <p style="margin-top:32px;font-size:10px;color:#444;">Form style: DSWD FO X — Certification -C (NUTRICombo)</p>`;
-    this._printWindow('SFP Certification -C', body);
+      ${this._dswdCertFooter()}`;
+  },
+
+  _matrixAHtml() {
+    const meta = this._cycleMeta();
+    const stats = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
+    const n = (document.getElementById('cert-a-n') || {}).value
+      || (stats ? stats.beneficiaries.total : '');
+    const days = typeof SfpStore !== 'undefined' ? SfpStore.listHotMealDays() : [];
+    const start = (document.getElementById('cert-a-start') || {}).value || '';
+    const end = (document.getElementById('cert-a-end') || {}).value || '';
+    let filtered = days;
+    if (start) filtered = filtered.filter(d => !d.actualDate || d.actualDate >= start);
+    if (end) filtered = filtered.filter(d => !d.actualDate || d.actualDate <= end);
+
+    const rows = filtered.length
+      ? filtered.map(d => {
+          const items = (d.commoditiesNote || '').trim()
+            || (d.menuLabel ? d.menuLabel : '—');
+          const itemsHtml = String(items).split(/[,;]+/).map(s => s.trim()).filter(Boolean)
+            .map(s => `<div>${s}</div>`).join('') || '—';
+          return `<tr>
+            <td style="text-align:center;font-weight:700;">${d.dayNumber}</td>
+            <td style="text-align:center;">${d.actualDate || ''}</td>
+            <td style="font-size:11px;">${itemsHtml}</td>
+            <td style="font-size:11px;">${d.menuLabel || '—'}</td>
+            <td style="font-size:10px;">${d.committeeNote || ''}</td>
+          </tr>`;
+        }).join('')
+      : `<tr><td colspan="5" style="text-align:center;padding:16px;">No hot meal logs for this period.
+           Encode days under <em>SFP Feeding → Hot meal log</em>.</td></tr>`;
+
+    return `
+      ${this._dswdCertHeader('-A')}
+      <h2 class="cert-title" style="font-size:14px;text-decoration:none;">
+        DEPARTMENT OF SOCIAL WELFARE AND DEVELOPMENT<br>
+        <span style="font-size:12px;font-weight:600;">Supplementary Feeding Program ${meta.cycleLabel} Cycle Implementation</span>
+      </h2>
+      <h3 style="text-align:center;margin:6px 0 10px;font-size:13px;">FOOD ALLOCATION MATRIX — HOT MEALS</h3>
+      <table class="sfp-meta-table">
+        <tr><td><strong>Province:</strong> ${meta.province}</td>
+            <td><strong>City/Municipality:</strong> ${meta.municipality}</td></tr>
+        <tr><td><strong>Location/Barangay:</strong> ${meta.barangay || '______________'}</td>
+            <td><strong>Number of Children beneficiaries:</strong> ${n || '____'}</td></tr>
+        <tr><td colspan="2"><strong>Name of Child Development Center:</strong> ${meta.facility}</td></tr>
+        <tr><td><strong>Name of Child Development Worker:</strong> ${meta.worker || '______________'}</td>
+            <td><strong>Date started the feeding:</strong> ${meta.startDate || '______________'}</td></tr>
+      </table>
+      <table class="sfp-matrix-table">
+        <thead>
+          <tr>
+            <th style="width:8%;">DAY OF FEEDING</th>
+            <th style="width:12%;">ACTUAL DATE OF FEEDING</th>
+            <th style="width:28%;">ITEMS/FOODS RECEIVED</th>
+            <th style="width:28%;">MENU</th>
+            <th style="width:24%;">FOOD COMMITTEE / DCSPG NAME AND SIGNATURE</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="sig cert-sig" style="margin-top:28px;">
+        <div>_________________________<br><strong>Prepared by:</strong><br>CDW / DCSPG President</div>
+        <div>_________________________<br><strong>Reviewed by:</strong><br>C/MSWDO / Focal Person / CDW Federated President</div>
+      </div>
+      ${this._dswdCertFooter()}`;
+  },
+
+  _matrixCHtml() {
+    const meta = this._cycleMeta();
+    const deliveries = typeof SfpStore !== 'undefined' ? SfpStore.listAltDeliveries() : [];
+    const selId = (document.getElementById('cert-c-delivery') || {}).value || '';
+    let delivery = null;
+    if (selId) delivery = deliveries.find(d => d.id === selId) || null;
+    if (!delivery && deliveries.length) delivery = deliveries[deliveries.length - 1];
+
+    const stats = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
+    const nOverride = (document.getElementById('cert-c-n') || {}).value;
+    const nBen = nOverride || (delivery && delivery.receipts ? delivery.receipts.length : (stats ? stats.beneficiaries.total : ''));
+
+    let rows = '';
+    if (delivery && delivery.receipts && delivery.receipts.length) {
+      rows = delivery.receipts.map(r => {
+        const sig = r.parentSigned ? '(Signed)' : '';
+        return `<tr>
+          <td style="font-size:10px;">${delivery.particulars || 'NUTRI-COMBO'}</td>
+          <td style="text-align:center;">${r.quantity != null ? r.quantity : ''}</td>
+          <td>${r.childName || r.childId || ''}</td>
+          <td>${r.parentName || ''}</td>
+          <td style="text-align:center;font-size:10px;">${sig}</td>
+        </tr>`;
+      }).join('');
+    } else {
+      rows = `<tr><td colspan="5" style="text-align:center;padding:16px;">No NUTRICombo delivery selected or logged.
+        Encode under <em>SFP Feeding → NUTRICombo</em>.</td></tr>`;
+    }
+
+    const delNum = delivery && delivery.deliveryNumber != null ? delivery.deliveryNumber : '____';
+    const delDate = delivery && delivery.actualDate ? delivery.actualDate : '______________';
+
+    return `
+      ${this._dswdCertHeader('-C')}
+      <h2 class="cert-title" style="font-size:14px;text-decoration:none;">
+        DEPARTMENT OF SOCIAL WELFARE AND DEVELOPMENT<br>
+        <span style="font-size:12px;font-weight:600;">Supplementary Feeding Program ${meta.cycleLabel} Cycle Implementation</span>
+      </h2>
+      <h3 style="text-align:center;margin:6px 0 4px;font-size:13px;">FOOD ALLOCATION MATRIX — ${delNum} DELIVERY</h3>
+      <p style="text-align:center;margin:0 0 10px;font-size:11px;">
+        <strong>ALTERNATIVE MEAL — NUTRI COMBO</strong> (High Protein Cookie 60g &amp; Nutri Juice 200mL)
+      </p>
+      <table class="sfp-meta-table">
+        <tr><td><strong>Province:</strong> ${meta.province}</td>
+            <td><strong>City/Municipality:</strong> ${meta.municipality}</td></tr>
+        <tr><td><strong>Location/Barangay:</strong> ${meta.barangay || '______________'}</td>
+            <td><strong>Number of Children beneficiaries:</strong> ${nBen || '____'}</td></tr>
+        <tr><td colspan="2"><strong>Name of Child Development Center:</strong> ${meta.facility}</td></tr>
+        <tr><td><strong>Name of Child Development Worker:</strong> ${meta.worker || '______________'}</td>
+            <td><strong>Date of actual feeding:</strong> ${delDate}</td></tr>
+        <tr><td colspan="2"><strong>Date started the feeding (${meta.cycleLabel} cycle):</strong> ${meta.startDate || '______________'}</td></tr>
+      </table>
+      <table class="sfp-matrix-table">
+        <thead>
+          <tr>
+            <th style="width:22%;">PARTICULARS</th>
+            <th style="width:10%;">QUANTITY</th>
+            <th style="width:26%;">NAME OF CHILD</th>
+            <th style="width:26%;">NAME OF PARENT/GUARDIAN</th>
+            <th style="width:16%;">SIGNATURE</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="sig cert-sig" style="margin-top:28px;">
+        <div>_________________________<br><strong>Prepared by:</strong><br>CDW / DCSPG President</div>
+        <div>_________________________<br><strong>Reviewed by:</strong><br>C/MSWDO / Focal Person / CDW Federated President</div>
+      </div>
+      ${this._dswdCertFooter()}`;
+  },
+
+  printMatrixA() {
+    this._printWindow('SFP Food Allocation Matrix -A', this._matrixAHtml());
+  },
+
+  printMatrixC() {
+    this._printWindow('SFP Food Allocation Matrix -C', this._matrixCHtml());
+  },
+
+  printPackA() {
+    const body = `
+      <div class="sfp-print-section">${this._certABodyHtml()}</div>
+      <div class="sfp-page-break"></div>
+      <div class="sfp-print-section">${this._matrixAHtml()}</div>`;
+    this._printWindow('SFP Cert + Matrix -A', body);
+  },
+
+  printPackC() {
+    const body = `
+      <div class="sfp-print-section">${this._certCBodyHtml()}</div>
+      <div class="sfp-page-break"></div>
+      <div class="sfp-print-section">${this._matrixCHtml()}</div>`;
+    this._printWindow('SFP Cert + Matrix -C', body);
+  },
+
+    /** DSWD FO X letterhead matching paper certificates (text/CSS banner). */
+  _dswdCertHeader(formCode) {
+    return `
+      <div class="dswd-letterhead">
+        <div class="dswd-lh-top">
+          <div class="dswd-lh-brand">
+            <div class="dswd-logo-mark">
+              <div class="dswd-logo-text">DSWD</div>
+              <div class="dswd-logo-sub">Department of Social Welfare<br>and Development</div>
+            </div>
+          </div>
+          <div class="dswd-lh-center">
+            <div class="dswd-rep">Republic of the Philippines</div>
+            <div class="dswd-dept">Department of Social Welfare and Development</div>
+            <div class="dswd-fo">Field Office X</div>
+            <div class="dswd-fo-sub">Northern Mindanao</div>
+          </div>
+          <div class="dswd-form-code">${formCode || ''}</div>
+        </div>
+        <div class="dswd-lh-line"></div>
+      </div>`;
+  },
+
+  _dswdCertFooter() {
+    return `
+      <div class="dswd-footer">
+        <div class="dswd-footer-line"></div>
+        <p class="dswd-footer-text">
+          DSWD Field Office X, Masterson Ave., Upper Carmen, Cagayan de Oro City, Philippines (9000)<br>
+          Website: https://fo10.dswd.gov.ph/ &nbsp;|&nbsp; Tel Nos.: (088) 565 5795
+        </p>
+        <p class="dswd-footer-page">PAGE 1 of 1</p>
+      </div>`;
+  },
+
+  _mswdoHeader(cycleLabel, schoolYear) {
+    return `
+      <div class="mswdo-letterhead">
+        <p class="mswdo-rep">Republic of the Philippines</p>
+        <p>Region X</p>
+        <p>Province of Misamis Oriental</p>
+        <p>Municipality of <strong>MEDINA</strong></p>
+        <h3 class="mswdo-office">MUNICIPAL SOCIAL WELFARE AND DEVELOPMENT OFFICE</h3>
+        <div class="mswdo-banner">
+          <strong>Supplementary Feeding Program</strong><br>
+          ${(cycleLabel || '15th Cycle')} Implementation<br>
+          SY ${(schoolYear || '—')}
+        </div>
+      </div>`;
+  },
+
+  printCertA() {
+    this._printWindow('SFP Certification -A', this._certABodyHtml());
+  },
+
+  printCertC() {
+    this._printWindow('SFP Certification -C', this._certCBodyHtml());
   },
 
   printConsolidation() {
@@ -277,15 +551,11 @@ const TeacherReports = {
     const age = (y) => (s && s.ageBands && s.ageBands[y]) ? s.ageBands[y] : { total: '', male: '', female: '' };
 
     const body = `
-      <p>Republic of the Philippines</p>
-      <p>Region X</p>
-      <p>Province of Misamis Oriental</p>
-      <p>Municipality of MEDINA</p>
-      <h3>MUNICIPAL SOCIAL WELFARE AND DEVELOPMENT OFFICE</h3>
-      <p><b>Supplementary Feeding Program</b></p>
-      <p>${(cycle && cycle.cycleLabel) || '15th Cycle'} Implementation</p>
-      <p>SY ${(cycle && cycle.schoolYear) || '—'}</p>
-      <h3>CONSOLIDATED REPORT (FIGURES)</h3>
+      ${this._mswdoHeader(
+        (cycle && cycle.cycleLabel) || '15th Cycle',
+        (cycle && cycle.schoolYear) || '—'
+      )}
+      <h3 class="cert-title" style="margin-top:12px;">CONSOLIDATED REPORT (FIGURES)</h3>
 
       <h3>CONSOLIDATED PHYSICAL STATUS REPORT</h3>
       <table>
@@ -361,6 +631,42 @@ const TeacherReports = {
   },
 
 
+  /**
+   * Rebuild item-level results from saved assessment.responses + catalog
+   * so older saves still yield tips and comments when possible.
+   */
+  _itemResultsFromAssessment(assessment) {
+    const responses = assessment.responses || {};
+    const recordType = assessment.recordType || 1;
+    let catalog = null;
+    if (typeof TeacherDevelopment !== 'undefined' && TeacherDevelopment.catalog) {
+      catalog = TeacherDevelopment.catalog;
+    }
+    if (!catalog) return [];
+    const recordKey = recordType === 2 ? 'record2' : 'record1';
+    const record = catalog.records && catalog.records[recordKey];
+    if (!record || !record.domains) return [];
+    const period = assessment.period || '1st';
+    const childId = assessment.childId;
+    const out = [];
+    (catalog.domains || []).forEach(d => {
+      const items = record.domains[d.code] || [];
+      items.forEach(it => {
+        const presentKey = childId + ':' + it.item_id + ':' + period;
+        const commentKey = childId + ':' + it.item_id + ':comment';
+        out.push({
+          domainCode: d.code,
+          domainName: d.name,
+          itemId: it.item_id,
+          title: it.title || it.item_id,
+          present: !!responses[presentKey],
+          comment: responses[commentKey] != null ? String(responses[commentKey]).trim() : ''
+        });
+      });
+    });
+    return out;
+  },
+
   _buildDraft(child, assessment) {
     const insight = assessment.insight || {};
     const finalScores = assessment.finalScores || null;
@@ -408,41 +714,91 @@ const TeacherReports = {
     const parentActivities = insight.parentActivities || [];
     const teacherPriorities = insight.teacherPriorities || [];
 
-    const tips = [];
-    parentActivities.forEach(pa => {
-      (pa.activities || []).slice(0, 2).forEach(a => {
-        tips.push(pa.domainName + ': ' + a);
-      });
-    });
-    if (!tips.length && needs.length) {
-      needs.slice(0, 3).forEach(n => tips.push('Support at home: ' + n));
-    }
-    if (tips.length < 3) {
-      tips.push('Read or tell stories together for 10–15 minutes daily');
-      tips.push('Encourage outdoor play and movement games');
-    }
-    if (tips.length < 4) {
-      tips.push('Praise effort and practice everyday self-help skills (dressing, feeding)');
+    let teacherComments = Array.isArray(insight.teacherComments) ? insight.teacherComments.slice() : [];
+    let focusItems = Array.isArray(insight.focusItems) ? insight.focusItems.slice() : [];
+    if ((!teacherComments.length || !focusItems.length) && assessment.responses) {
+      const items = this._itemResultsFromAssessment(assessment);
+      if (!focusItems.length) {
+        focusItems = items.filter(it => !it.present).slice(0, 10).map(it => ({
+          domainCode: it.domainCode,
+          domainName: it.domainName,
+          itemId: it.itemId,
+          itemTitle: it.title
+        }));
+      }
+      if (!teacherComments.length) {
+        teacherComments = items.filter(it => it.comment).map(it => ({
+          domainCode: it.domainCode,
+          domainName: it.domainName,
+          itemId: it.itemId,
+          itemTitle: it.title,
+          comment: it.comment,
+          present: it.present
+        }));
+      }
     }
 
-    const parentDraft = insight.parentFriendlyDraft
-      || [
+    const tips = [];
+    if (Array.isArray(insight.tipLines) && insight.tipLines.length) {
+      insight.tipLines.forEach(line => tips.push(line));
+    }
+    parentActivities.forEach(pa => {
+      (pa.activities || []).slice(0, 2).forEach(a => {
+        const line = pa.domainName + ': ' + a;
+        if (tips.indexOf(line) < 0) tips.push(line);
+      });
+    });
+    focusItems.slice(0, 5).forEach(fi => {
+      tips.push('Practice: "' + fi.itemTitle + '" (' + fi.domainName + ').');
+    });
+    teacherComments.slice(0, 5).forEach(c => {
+      tips.push('Teacher note on "' + c.itemTitle + '": ' + c.comment);
+    });
+    // de-dupe
+    const seenTips = new Set();
+    const uniqueTips = [];
+    tips.forEach(line => {
+      if (!seenTips.has(line)) { seenTips.add(line); uniqueTips.push(line); }
+    });
+    while (uniqueTips.length < 3) {
+      const filler = [
+        'Read or tell stories together for 10–15 minutes daily.',
+        'Encourage outdoor play and movement games.',
+        'Praise effort and practice everyday self-help skills (dressing, feeding).'
+      ];
+      filler.forEach(f => { if (uniqueTips.length < 4 && uniqueTips.indexOf(f) < 0) uniqueTips.push(f); });
+      break;
+    }
+
+    let parentDraft = insight.parentFriendlyDraft || '';
+    if (!parentDraft || (teacherComments.length && parentDraft.indexOf('Teacher observations') < 0)) {
+      parentDraft = [
         'Assessment period: ' + assessment.period + '.',
         overallLabel !== '—' ? 'Overall: ' + overallLabel + '.' : '',
         strengths.length ? 'Strengths: ' + strengths.slice(0, 3).join('; ') + '.' : '',
         needs.length ? 'Areas to support: ' + needs.slice(0, 3).join('; ') + '.' : '',
-        'Your child\'s teacher can explain these results and suggest simple activities at home.'
+        focusItems.length
+          ? 'Skills still developing (examples): ' + focusItems.slice(0, 5).map(fi => fi.itemTitle).join('; ') + '.'
+          : '',
+        teacherComments.length
+          ? 'Teacher observations: ' + teacherComments.slice(0, 4).map(c => '"' + c.itemTitle + '" — ' + c.comment).join(' | ') + '.'
+          : '',
+        "Your child's teacher can explain these results and suggest simple activities at home."
       ].filter(Boolean).join(' ');
+    }
 
     const priorityLines = teacherPriorities
       .filter(tp => tp.domainCode !== 'OVERALL')
       .slice(0, 3)
       .map(tp => tp.domainName + ': ' + ((tp.priorities && tp.priorities[0]) || tp.reason));
-    const teacherNote = priorityLines.length
+    let teacherNote = priorityLines.length
       ? 'Learning priorities — ' + priorityLines.join(' · ')
       : (strengths.length
         ? child.name + ' shows progress in ' + strengths.slice(0, 2).join(' and ') + '. Continue encouraging learning through play.'
         : child.name + ' is being monitored with the ECCD checklist. Please see the domain summary and tips below.');
+    if (teacherComments.length) {
+      teacherNote += ' Checklist comments — ' + teacherComments.slice(0, 3).map(c => c.itemTitle + ': ' + c.comment).join(' · ');
+    }
 
     return {
       domains,
@@ -453,13 +809,15 @@ const TeacherReports = {
       needs,
       parentActivities,
       teacherPriorities,
+      teacherComments,
+      focusItems,
       parentDraft,
       teacherNote,
-      tips: tips.slice(0, 6)
+      tips: uniqueTips.slice(0, 10)
     };
   },
 
-  openEditor(childId) {
+  openEditor(childId, period) {
     const child = SampleChildren.find(c => c.id === childId);
     if (!child) return;
 
@@ -469,15 +827,30 @@ const TeacherReports = {
       return;
     }
 
-    const assessment = [...history].reverse().find(a => a.finalized) || history[history.length - 1];
+    let assessment = period
+      ? (history.find(a => a.period === period) || AssessmentStore.get(childId, period))
+      : null;
+    if (!assessment) {
+      const order = { '1st': 1, '2nd': 2, '3rd': 3, '4th': 4, '5th': 5, '6th': 6 };
+      const sorted = history.slice().sort((a, b) => (order[a.period] || 99) - (order[b.period] || 99));
+      assessment = sorted[sorted.length - 1];
+    }
     const existing = ReportStore.get(childId, assessment.period);
     const draft = this._buildDraft(child, assessment);
 
-    const teacherNote = existing && existing.teacherNote ? existing.teacherNote : draft.teacherNote;
-    const parentDraft = existing && existing.parentDraft ? existing.parentDraft : draft.parentDraft;
-    const tipsText = existing && existing.tips && existing.tips.length
-      ? existing.tips.join('\n')
-      : draft.tips.join('\n');
+    // Prefer saved report text when editing (including approved).
+    // Fall back to engine draft only when nothing was saved yet.
+    const existingTips = existing && existing.tips && existing.tips.length ? existing.tips : [];
+    const hasSaved = !!(existing && (existing.teacherNote || existing.parentDraft || existingTips.length));
+    const teacherNote = hasSaved && existing.teacherNote
+      ? existing.teacherNote
+      : draft.teacherNote;
+    const parentDraft = hasSaved && existing.parentDraft
+      ? existing.parentDraft
+      : draft.parentDraft;
+    const tipsText = existingTips.length
+      ? existingTips.join('\n')
+      : (draft.tips || []).join('\n');
 
     const domainPills = draft.domains.map(d => {
       const color = d.label === 'Advanced' || (typeof d.scaled === 'number' && d.scaled >= 14)
@@ -493,7 +866,7 @@ const TeacherReports = {
     }).join('');
 
     const statusLabel = existing && existing.status === 'approved'
-      ? '<span class="success-text">✓ Already approved</span>'
+      ? '<span class="success-text">✓ Approved — still editable</span>'
       : existing
         ? '<span style="color:var(--orange);">Draft saved</span>'
         : '<span class="text-muted">New draft</span>';
@@ -522,12 +895,23 @@ const TeacherReports = {
       '<textarea id="report-teacher-note" rows="3" class="ecc-report-textarea">' + this._esc(teacherNote) + '</textarea></div>' +
       '<div class="card" style="margin-bottom:1rem;"><label style="font-weight:600;display:block;margin-bottom:0.35rem;">📝 Parent-friendly summary</label>' +
       '<textarea id="report-parent-draft" rows="4" class="ecc-report-textarea">' + this._esc(parentDraft) + '</textarea></div>' +
-      '<div class="card" style="margin-bottom:1rem;"><label style="font-weight:600;display:block;margin-bottom:0.35rem;">💡 Tips & activities (one per line)</label>' +
-      '<textarea id="report-tips" rows="5" class="ecc-report-textarea">' + this._esc(tipsText) + '</textarea></div>' +
+      '<div class="card" style="margin-bottom:1rem;"><label style="font-weight:600;display:block;margin-bottom:0.35rem;">💡 Tips & activities (one per line — from checklist gaps + teacher comments)</label>' +
+      '<textarea id="report-tips" rows="8" class="ecc-report-textarea">' + this._esc(tipsText) + '</textarea></div>' +
+      (draft.teacherComments && draft.teacherComments.length
+        ? '<div class="card" style="margin-bottom:1rem;border-left:4px solid #f9a825;"><h3 style="margin-top:0;">Checklist teacher comments</h3><ul style="margin:0;padding-left:1.2rem;font-size:0.9rem;">' +
+          draft.teacherComments.slice(0, 10).map(function(c) {
+            return '<li><strong>' + c.itemTitle + '</strong>' +
+              (c.present ? '' : ' <span class="text-muted">(not yet present)</span>') +
+              ': ' + c.comment + '</li>';
+          }).join('') +
+          '</ul><p class="text-muted" style="font-size:0.8rem;margin:0.5rem 0 0;">These feed the parent tips and summary. Edit tips/notes above if needed before approve.</p></div>'
+        : '<div class="card" style="margin-bottom:1rem;"><p class="text-muted" style="margin:0;font-size:0.88rem;">No checklist comments found for this period. Add comments on unchecked items in Development Tracking, then re-save the assessment for richer parent tips.</p></div>') +
       '</div><div class="bs-modal-footer" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;">' +
       '<button class="btn" style="background:#e0e0e0;color:#333;" onclick="TeacherReports.closeEditor()">Cancel</button>' +
-      '<button class="btn btn-blue" onclick="TeacherReports.saveDraft(' + child.id + ', \'' + assessment.period + '\')">Save draft</button>' +
-      '<button class="btn" style="background:var(--success);" onclick="TeacherReports.approve(' + child.id + ', \'' + assessment.period + '\')">✓ Approve for parent</button>' +
+      '<button class="btn btn-blue" onclick="TeacherReports.saveDraft(' + child.id + ', \'' + assessment.period + '\')">' +
+      (existing && existing.status === 'approved' ? 'Save changes (keep approved)' : 'Save draft') + '</button>' +
+      '<button class="btn" style="background:var(--success);" onclick="TeacherReports.approve(' + child.id + ', \'' + assessment.period + '\')">' +
+      (existing && existing.status === 'approved' ? '✓ Update parent view' : '✓ Approve for parent') + '</button>' +
       '</div></div></div>';
 
     document.body.insertAdjacentHTML('beforeend', html);
@@ -562,23 +946,37 @@ const TeacherReports = {
       overallLabel: base.overallLabel,
       teacherNote: teacherNote,
       tips: tips,
-      parentDraft: parentDraft
+      parentDraft: parentDraft,
+      teacherComments: base.teacherComments || [],
+      focusItems: base.focusItems || []
     };
   },
 
   saveDraft(childId, period) {
     const payload = this._readForm(childId, period);
-    payload.status = 'draft';
-    payload.approvedAt = null;
-    ReportStore.save(payload);
-    this.closeEditor();
-    const main = document.getElementById('main-content') || document.querySelector('.main-content');
-    if (main) this.render(main);
-    this._toast('Draft saved. Approve when ready for the parent portal.');
+    const prev = ReportStore.get(childId, period);
+    if (prev && prev.status === 'approved') {
+      payload.status = 'approved';
+      payload.approvedAt = prev.approvedAt || new Date().toISOString();
+      ReportStore.save(payload);
+      this.closeEditor();
+      const main = document.getElementById('main-content') || document.querySelector('.main-content');
+      if (main) this.render(main);
+      this._toast('Changes saved — parent view for ' + period + ' stays approved.');
+    } else {
+      payload.status = 'draft';
+      payload.approvedAt = null;
+      ReportStore.save(payload);
+      this.closeEditor();
+      const main = document.getElementById('main-content') || document.querySelector('.main-content');
+      if (main) this.render(main);
+      this._toast('Draft saved. Approve when ready for the parent portal.');
+    }
   },
 
   approve(childId, period) {
     const payload = this._readForm(childId, period);
+    const prev = ReportStore.get(childId, period);
     payload.status = 'approved';
     payload.approvedAt = new Date().toISOString();
     ReportStore.save(payload);
@@ -586,7 +984,9 @@ const TeacherReports = {
     const main = document.getElementById('main-content') || document.querySelector('.main-content');
     if (main) this.render(main);
     this.tab = 'eccd';
-    this._toast('Report approved — visible on the Parent Portal for this child.');
+    this._toast(prev && prev.status === 'approved'
+      ? 'Parent view updated for ' + period + ' evaluation.'
+      : 'Report approved — visible on the Parent Portal for this child.');
   },
 
   printEditor() {

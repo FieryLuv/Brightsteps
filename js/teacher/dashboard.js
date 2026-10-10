@@ -1,5 +1,5 @@
 /**
- * Teacher Dashboard — live counts from stores where available.
+ * Teacher Dashboard — live counts; cleaner card layout with aligned actions.
  */
 const TeacherDashboard = {
   render(container) {
@@ -9,6 +9,8 @@ const TeacherDashboard = {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
     });
     const todayISO = new Date().toISOString().slice(0, 10);
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
 
     const total = (typeof SampleChildren !== 'undefined') ? SampleChildren.length : 0;
     const needsSupport = (SampleChildren || []).filter(c => c.status === 'needs_support');
@@ -19,10 +21,13 @@ const TeacherDashboard = {
       ? ApplicationStore.pendingCount()
       : 0;
 
-    // Attendance today across all sections
+    // Attendance today — use ClassStore keys when available
     let attPresent = 0, attAbsent = 0, attSections = 0;
+    const sectionKeys = (typeof ClassStore !== 'undefined' && ClassStore.options)
+      ? ClassStore.options(false).map(o => o.key)
+      : ['explorers', 'stars', 'sunshine'];
     if (typeof AttendanceStore !== 'undefined' && typeof SampleChildren !== 'undefined') {
-      ['explorers', 'stars', 'sunshine'].forEach(sk => {
+      sectionKeys.forEach(sk => {
         const day = AttendanceStore.getDay(todayISO, sk);
         if (!day || !day.marks) return;
         attSections++;
@@ -35,9 +40,14 @@ const TeacherDashboard = {
     const attTotal = attPresent + attAbsent;
     const attRate = attTotal ? Math.round((attPresent / attTotal) * 100) : null;
 
-    // Feeding participation from latest health records
+    // SFP beneficiaries preferred; fall back to health feeding flag
     let feedYes = 0, feedKnown = 0;
-    if (typeof HealthStore !== 'undefined' && typeof SampleChildren !== 'undefined') {
+    if (typeof SfpStore !== 'undefined') {
+      const bens = SfpStore.listBeneficiaries();
+      feedKnown = bens.length;
+      feedYes = bens.length;
+    }
+    if (!feedKnown && typeof HealthStore !== 'undefined' && typeof SampleChildren !== 'undefined') {
       SampleChildren.forEach(c => {
         const latest = HealthStore.getLatest(c.id);
         if (!latest) return;
@@ -46,7 +56,6 @@ const TeacherDashboard = {
       });
     }
 
-    // Upcoming calendar
     let upcomingHtml = '<li class="text-muted">No upcoming events</li>';
     if (typeof CalendarStore !== 'undefined') {
       const up = CalendarStore.upcoming(4);
@@ -54,89 +63,133 @@ const TeacherDashboard = {
         upcomingHtml = up.map(e => {
           const d = new Date(e.date + 'T00:00:00');
           const label = d.toLocaleDateString('en', { month: 'short', day: 'numeric' });
-          return `<li><strong>${label}</strong> — ${e.title}${e.time ? ' (' + e.time + ')' : ''}</li>`;
+          return `<li><strong>${label}</strong> — ${e.title}${e.time ? ' · ' + e.time : ''}</li>`;
         }).join('');
       }
     }
 
     const attentionList = needsSupport.length
-      ? needsSupport.map(c => `
-          <li style="margin-bottom:0.35rem;">
-            <a href="#" onclick="event.preventDefault(); BrightSteps.navigate('children'); setTimeout(()=>TeacherChildren.openProfile(${c.id}),80)"
-               style="color:var(--text); text-decoration:none; font-weight:600;">
+      ? needsSupport.slice(0, 5).map(c => `
+          <li>
+            <button type="button" class="dash-link"
+              onclick="BrightSteps.navigate('children'); setTimeout(function(){ if (window.TeacherChildren) TeacherChildren.openProfile(${c.id}); }, 80)">
               ${c.name}
-            </a>
-            <span style="color:var(--orange);"> — ${c.focusArea || 'Needs support'}</span>
+            </button>
+            <span class="dash-tag">${c.focusArea || 'Needs support'}</span>
           </li>
         `).join('')
       : `<li class="text-muted">No children currently flagged</li>`;
 
-    const attStat = attRate != null
-      ? `${attPresent} / ${attTotal}`
-      : '—';
+    const attStat = attRate != null ? `${attPresent} / ${attTotal}` : '—';
     const attBar = attRate != null ? attRate : 0;
     const attMsg = attRate != null
       ? (attRate >= 90 ? 'Strong attendance today.' : 'Attendance recorded for today.')
       : 'No attendance saved for today yet.';
 
+    const feedLine = feedKnown
+      ? `${feedYes} / ${feedKnown}`
+      : '—';
+    const feedSub = feedKnown
+      ? (typeof SfpStore !== 'undefined' && SfpStore.listBeneficiaries().length
+          ? 'SFP beneficiaries on file'
+          : 'From health participation flags')
+      : 'No feeding records yet';
+
     container.innerHTML = `
-      <div class="flex justify-between items-center mb-3" style="flex-wrap:wrap; gap:1rem;">
+      <div class="dash-hero">
         <div>
-          <h1>Good Morning, Teacher Irish! 👋</h1>
-          <p class="text-muted">${today} | National Child Development Center — Medina</p>
+          <h1 class="dash-hero-title">${greeting}, Teacher Irish!</h1>
+          <p class="text-muted dash-hero-sub">${today} · National Child Development Center — Medina</p>
         </div>
       </div>
 
-      <div class="dashboard-grid">
-        <div class="card">
-          <h3>📝 Enrollment Applications</h3>
-          <p style="font-size:1.5rem;font-weight:700;color:${pendingApps ? 'var(--orange)' : 'var(--success)'};margin:0.35rem 0;">
-            ${pendingApps} pending
-          </p>
-          <p class="text-muted" style="margin:0;">Visitor applications under Children.</p>
-          <button class="btn btn-blue mt-2" onclick="BrightSteps.navigate('children')">Open Children</button>
+      <div class="dash-quick no-print">
+        <span class="dash-quick-label">Quick actions</span>
+        <div class="dash-quick-btns">
+          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('children')">Children</button>
+          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('attendance')">Attendance</button>
+          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('development')">Development</button>
+          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('feeding')">SFP Feeding</button>
+          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('reports')">Reports</button>
+          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('calendar')">Calendar</button>
+        </div>
+      </div>
+
+      <div class="dashboard-grid dash-stats">
+        <div class="card dash-card">
+          <div class="dash-card-body">
+            <div class="dash-card-icon" aria-hidden="true">📝</div>
+            <h3>Enrollment</h3>
+            <p class="dash-metric ${pendingApps ? 'is-warn' : 'is-ok'}">${pendingApps} pending</p>
+            <p class="text-muted dash-card-desc">Visitor applications waiting under Children.</p>
+          </div>
+          <div class="dash-card-actions">
+            <button type="button" class="btn btn-blue" onclick="BrightSteps.navigate('children')">Review applications</button>
+          </div>
         </div>
 
-        <div class="card">
-          <h3>Today's Attendance</h3>
-          ${typeof UI !== 'undefined' ? UI.bigStat(attStat) : `<div style="font-size:1.8rem;font-weight:700;">${attStat}</div>`}
-          ${typeof UI !== 'undefined' && attRate != null ? UI.progressBar(attBar) : ''}
-          <p class="mt-2">${attMsg}${attSections ? ` <span class="text-muted">(${attSections} section${attSections > 1 ? 's' : ''})</span>` : ''}</p>
-          <button class="btn btn-blue mt-2" onclick="BrightSteps.navigate('attendance')">Check Class Attendance</button>
+        <div class="card dash-card">
+          <div class="dash-card-body">
+            <div class="dash-card-icon" aria-hidden="true">📅</div>
+            <h3>Today’s attendance</h3>
+            <p class="dash-metric">${attStat}</p>
+            ${attRate != null
+              ? `<div class="dash-progress"><div class="dash-progress-bar" style="width:${attBar}%"></div></div>
+                 <p class="text-muted dash-card-desc">${attMsg}${attSections ? ' · ' + attSections + ' class' + (attSections > 1 ? 'es' : '') : ''}</p>`
+              : `<p class="text-muted dash-card-desc">${attMsg}</p>`}
+          </div>
+          <div class="dash-card-actions">
+            <button type="button" class="btn btn-blue" onclick="BrightSteps.navigate('attendance')">Take attendance</button>
+          </div>
         </div>
 
-        <div class="card">
-          <h3>🍎 Feeding Program</h3>
-          <p><strong>Participating (latest records):</strong>
-            ${feedKnown ? `${feedYes} / ${feedKnown}` : '— (no health records yet)'}</p>
-          <p class="text-muted" style="font-size:0.85rem;margin:0;">From Health Records participation flag.</p>
-          <button class="btn btn-blue mt-2" onclick="BrightSteps.navigate('health')">Open Health Records</button>
+        <div class="card dash-card">
+          <div class="dash-card-body">
+            <div class="dash-card-icon" aria-hidden="true">🍎</div>
+            <h3>Feeding / SFP</h3>
+            <p class="dash-metric">${feedLine}</p>
+            <p class="text-muted dash-card-desc">${feedSub}</p>
+          </div>
+          <div class="dash-card-actions">
+            <button type="button" class="btn btn-blue" onclick="BrightSteps.navigate('feeding')">Open SFP Feeding</button>
+          </div>
         </div>
 
-        <div class="card">
-          <h3>Children Needing Attention</h3>
-          <ul style="line-height:1.9; padding-left:1.2rem; margin:0.5rem 0 0.75rem;">
-            ${attentionList}
-          </ul>
-          <button class="btn btn-blue mt-2" onclick="BrightSteps.navigate('children')">View All Children</button>
+        <div class="card dash-card">
+          <div class="dash-card-body">
+            <div class="dash-card-icon" aria-hidden="true">📊</div>
+            <h3>Enrollment snapshot</h3>
+            <ul class="dash-stat-list">
+              <li><span>Enrolled</span><strong>${total}</strong></li>
+              <li><span>On track</span><strong>${onTrack.length} <span class="text-muted">(${onTrackPct}%)</span></strong></li>
+              <li><span>Needs support</span><strong class="${needsSupport.length ? 'is-warn' : ''}">${needsSupport.length}</strong></li>
+            </ul>
+          </div>
+          <div class="dash-card-actions">
+            <button type="button" class="btn btn-blue" onclick="BrightSteps.navigate('development')">Development tracking</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid dash-secondary">
+        <div class="card dash-card">
+          <div class="dash-card-body">
+            <h3>Children needing attention</h3>
+            <ul class="dash-attention">${attentionList}</ul>
+          </div>
+          <div class="dash-card-actions">
+            <button type="button" class="btn btn-blue" onclick="BrightSteps.navigate('children')">View all children</button>
+          </div>
         </div>
 
-        <div class="card">
-          <h3>Quick Overview</h3>
-          <p>
-            <strong>Enrolled:</strong> ${total}<br>
-            <strong>On Track:</strong> ${onTrack.length} (${onTrackPct}%)<br>
-            <strong>Needs Support:</strong> ${needsSupport.length}
-          </p>
-          <button class="btn mt-2" onclick="BrightSteps.navigate('development')">Development Tracking</button>
-        </div>
-
-        <div class="card">
-          <h3>Upcoming Events</h3>
-          <ul style="line-height:2.1; padding-left:1.2rem;margin:0.5rem 0;">
-            ${upcomingHtml}
-          </ul>
-          <button class="btn mt-2" onclick="BrightSteps.navigate('calendar')">Open Calendar</button>
+        <div class="card dash-card">
+          <div class="dash-card-body">
+            <h3>Upcoming events</h3>
+            <ul class="dash-events">${upcomingHtml}</ul>
+          </div>
+          <div class="dash-card-actions">
+            <button type="button" class="btn btn-blue" onclick="BrightSteps.navigate('calendar')">Open calendar</button>
+          </div>
         </div>
       </div>
     `;
