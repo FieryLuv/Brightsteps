@@ -1,33 +1,60 @@
 /**
  * Teacher shell: header + sidebar + main content area.
- * Matches the structure from the original mockup.
+ * Mobile/tablet: collapsible drawer nav.
  */
 
 const TeacherLayout = {
   render(user) {
     const app = document.getElementById('app');
     app.innerHTML = `
-      <header>
-        <div class="logo">🌱 BrightSteps</div>
+      <header class="app-header">
+        <div class="header-left">
+          <button type="button" class="nav-toggle no-print" aria-label="Open menu"
+            onclick="TeacherLayout.toggleNav()">☰</button>
+          <div class="logo">🌱 BrightSteps</div>
+        </div>
         <div class="user-info">
-          ${user.name} • ${user.center}
-          <button class="btn" style="margin-left:1rem; padding:0.3rem 0.7rem; font-size:0.8rem;" onclick="BrightSteps.logout()">Logout</button>
+          <span class="user-info-text">${user.name} • ${user.center}</span>
+          <button class="btn btn-header-logout" onclick="BrightSteps.logout()">Logout</button>
         </div>
       </header>
       <div class="container">
-        <aside class="sidebar">
-          <div class="nav-item active" onclick="BrightSteps.navigate('dashboard')">🏠 Dashboard</div>
-          <div class="nav-item" onclick="BrightSteps.navigate('children')">👦 Children</div>
-          <div class="nav-item" onclick="BrightSteps.navigate('development')">📈 Development Tracking</div>
-          <div class="nav-item" onclick="BrightSteps.navigate('health')">❤️ Health Records</div>
-          <div class="nav-item" onclick="BrightSteps.navigate('feeding')">🍎 SFP Feeding</div>
-          <div class="nav-item" onclick="BrightSteps.navigate('attendance')">📅 Attendance</div>
-          <div class="nav-item" onclick="BrightSteps.navigate('contributions')">💵 Contributions</div>
-          <div class="nav-item" onclick="BrightSteps.navigate('reports')">📊 Reports</div>
-          <div class="nav-item" onclick="BrightSteps.navigate('calendar')">🗓️ Calendar</div>
+        <div class="sidebar-backdrop no-print" onclick="TeacherLayout.closeNav()"></div>
+        <aside class="sidebar" id="teacher-sidebar">
+          <div class="sidebar-mobile-title no-print">Menu</div>
+          <div class="nav-item active" data-nav="dashboard" onclick="TeacherLayout.nav('dashboard')">🏠 Dashboard</div>
+          <div class="nav-item" data-nav="children" onclick="TeacherLayout.nav('children')">👦 Children</div>
+          <div class="nav-item" data-nav="development" onclick="TeacherLayout.nav('development')">📈 Development</div>
+          <div class="nav-item" data-nav="health" onclick="TeacherLayout.nav('health')">❤️ Health Records</div>
+          <div class="nav-item" data-nav="feeding" onclick="TeacherLayout.nav('feeding')">🍎 SFP Feeding</div>
+          <div class="nav-item" data-nav="attendance" onclick="TeacherLayout.nav('attendance')">📅 Attendance</div>
+          <div class="nav-item" data-nav="contributions" onclick="TeacherLayout.nav('contributions')">💵 Contributions</div>
+          <div class="nav-item" data-nav="reports" onclick="TeacherLayout.nav('reports')">📊 Reports</div>
+          <div class="nav-item" data-nav="calendar" onclick="TeacherLayout.nav('calendar')">🗓️ Calendar</div>
         </aside>
         <main class="main-content" id="main-content"></main>
       </div>
     `;
+  },
+
+  nav(route) {
+    this.closeNav();
+    if (typeof BrightSteps !== 'undefined') BrightSteps.navigate(route);
+  },
+
+  toggleNav() {
+    document.body.classList.toggle('nav-open');
+  },
+
+  closeNav() {
+    document.body.classList.remove('nav-open');
+  },
+
+  setActive(route) {
+    document.querySelectorAll('.sidebar .nav-item').forEach(el => {
+      el.classList.toggle('active', el.getAttribute('data-nav') === route);
+    });
   }
 };
+
+if (typeof window !== 'undefined') window.TeacherLayout = TeacherLayout;

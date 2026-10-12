@@ -231,14 +231,19 @@ const TeacherApplications = {
               <p style="margin:0.35rem 0;"><strong>Parent / Guardian name:</strong> ${guardian}</p>
               <p style="margin:0.35rem 0;"><strong>Child ID:</strong> ${code}</p>
               <p style="margin:0.35rem 0;"><strong>Child:</strong> ${a.childName}</p>
+              <p style="margin:0.35rem 0;"><strong>Password:</strong> <span class="text-muted">none by default</span></p>
             </div>
             <p style="margin-top:1rem;font-size:0.9rem;line-height:1.55;">
+              Login uses the guardian name + Child ID from this slip. Titles (Mr./Mrs.) and capital letters do not matter.
+              After first login, the parent can set an optional password under <strong>Settings (⋮)</strong>.
+            </p>
+            <p style="margin-top:0.75rem;font-size:0.9rem;line-height:1.55;">
               <strong>Suggested delivery:</strong> SMS to <strong>${phone}</strong>
               (most reliable for local parents). Optional: printed slip at the center, or email if provided.
             </p>
             <p class="text-muted" style="font-size:0.85rem;">
               Message template:<br>
-              <em>“NCDC Medina: ${a.childName} is enrolled. Parent portal login — Name: ${guardian}, Child ID: ${code}. Open BrightSteps → Parent / Guardian.”</em>
+              <em>“NCDC Medina: ${a.childName} is enrolled. Parent portal login — Name: ${guardian}, Child ID: ${code}. Open BrightSteps → Parent / Guardian. You may set a password later in Settings.”</em>
             </p>
           </div>
           <div class="bs-modal-footer">

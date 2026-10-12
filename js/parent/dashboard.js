@@ -7,7 +7,9 @@
 
 const ParentDashboard = {
   viewYear: new Date().getFullYear(),
-  viewMonth: new Date().getMonth(), // 0-11
+  viewMonth: new Date().getMonth(), // 0-11 calendar
+  attYear: new Date().getFullYear(),
+  attMonth: new Date().getMonth(), // 0-11 attendance filter
   _user: null,
   _container: null,
 
@@ -31,7 +33,7 @@ const ParentDashboard = {
 
     container.innerHTML =
       this._welcome(user, childName, section, ageLabel, childCode) +
-      this._profileBlock(childName, ageLabel, section, childCode) +
+      this._profileBlock(child, childName, ageLabel, section, childCode) +
       this._progressCard(child) +
       this._healthCard(child) +
       this._sfpCard(child) +
@@ -54,15 +56,134 @@ const ParentDashboard = {
     );
   },
 
-  _profileBlock(childName, ageLabel, section, childCode) {
+  _profileBlock(child, childName, ageLabel, section, childCode) {
+    const avatar = (typeof FileAttach !== 'undefined' && child)
+      ? FileAttach.avatarHtml(child, 110)
+      : '<div style="width:110px;height:110px;border-radius:50%;background:var(--primary);margin:0 auto;display:flex;align-items:center;justify-content:center;color:white;font-size:2.8rem;">👧</div>';
+    const docsNote = child && child.documents && child.documents.files && child.documents.files.length
+      ? child.documents.files.length + ' file(s) on file'
+      : 'No digital documents yet';
     return (
       '<div style="text-align:center;margin-bottom:2rem;">' +
-      '<div style="width:110px;height:110px;border-radius:50%;background:var(--primary);margin:0 auto 1rem;display:flex;align-items:center;justify-content:center;color:white;font-size:2.8rem;box-shadow:0 6px 20px rgba(0,0,0,0.12);">👧</div>' +
+      '<div style="margin:0 auto 1rem;display:inline-block;box-shadow:0 6px 20px rgba(0,0,0,0.12);border-radius:50%;">' +
+      avatar + '</div>' +
       '<h2 style="margin:0;">' + childName + '</h2>' +
-      '<p class="text-muted">' +
+      '<p class="text-muted" style="margin-bottom:0.35rem;">' +
       [childCode, ageLabel, section].filter(Boolean).join(' • ') +
-      '</p></div>'
+      '</p>' +
+      '<p class="text-muted" style="font-size:0.85rem;margin:0;">' + docsNote +
+      ' · use header ⋮ for photo &amp; documents</p>' +
+      '</div>'
     );
+  },
+
+  openAttachmentsEditor(childId) {
+    if (typeof ChildRegistry !== 'undefined') ChildRegistry.ensureMerged();
+    const child = (typeof SampleChildren !== 'undefined')
+      ? SampleChildren.find(c => String(c.id) === String(childId))
+      : null;
+    if (!child) {
+      alert('Child record not found. Try logging in again.');
+      return;
+    }
+
+    const existing = document.getElementById('parent-attach-overlay');
+    if (existing) existing.remove();
+
+    const photoHtml = typeof FileAttach !== 'undefined'
+      ? FileAttach.photoFieldHtml('parent', child.photo || null)
+      : '';
+    const docsHtml = typeof FileAttach !== 'undefined'
+      ? FileAttach.documentsFieldHtml('parent', (child.documents && child.documents.files) || [])
+      : '';
+
+    const html =
+      '<div id="parent-attach-overlay" class="bs-overlay no-print">' +
+      '<div class="bs-modal-panel" style="max-width:520px;">' +
+      '<div class="bs-modal-header">' +
+      '<h2 style="margin:0;font-size:1.15rem;color:white;">Photo &amp; documents</h2>' +
+      '<button type="button" class="bs-modal-close" onclick="ParentDashboard.closeAttachmentsEditor()">×</button>' +
+      '</div>' +
+      '<div class="bs-modal-body">' +
+      '<p class="text-muted" style="margin-top:0;font-size:0.9rem;">' +
+      'For <strong>' + (child.name || 'your child') + '</strong>. Only a profile picture and optional file uploads. ' +
+      'Paper copies can still be submitted in person at NCDC Medina.</p>' +
+      photoHtml +
+      docsHtml +
+      '<p id="parent-attach-error" style="color:#d32f2f;display:none;margin:0.75rem 0 0;"></p>' +
+      '</div>' +
+      '<div class="bs-modal-footer" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;">' +
+      '<button type="button" class="btn" style="background:#e8e8e8;color:#333;" onclick="ParentDashboard.closeAttachmentsEditor()">Cancel</button>' +
+      '<button type="button" class="btn btn-blue" onclick="ParentDashboard.saveAttachments(' +
+      JSON.stringify(String(childId)) + ')">Save</button>' +
+      '</div></div></div>';
+
+    document.body.insertAdjacentHTML('beforeend', html);
+  },
+
+  closeAttachmentsEditor() {
+    const el = document.getElementById('parent-attach-overlay');
+    if (el) el.remove();
+  },
+
+  saveAttachments(childId) {
+    const errEl = document.getElementById('parent-attach-error');
+    const showErr = (msg) => {
+      if (errEl) {
+        errEl.style.display = 'block';
+        errEl.textContent = msg;
+      } else {
+        alert(msg);
+      }
+    };
+
+    if (typeof ChildRegistry === 'undefined') {
+      showErr('Save is not available right now.');
+      return;
+    }
+
+    const photoCleared = typeof FileAttach !== 'undefined' && FileAttach.wasPhotoCleared('parent');
+    const photo = typeof FileAttach !== 'undefined' ? FileAttach.getPhoto('parent') : null;
+    const files = typeof FileAttach !== 'undefined' ? FileAttach.getDocs('parent') : [];
+
+    const payload = {
+      files: files,
+      clearPhoto: !!photoCleared
+    };
+    if (!photoCleared) payload.photo = photo;
+
+    let result;
+    try {
+      result = ChildRegistry.updateParentAttachments(childId, payload);
+    } catch (e) {
+      console.error(e);
+      showErr((e && e.message) || 'Could not save.');
+      return;
+    }
+
+    if (!result || !result.ok) {
+      showErr((result && result.error) || 'Could not save.');
+      return;
+    }
+
+    // Refresh parent session child list from SampleChildren
+    if (this._user && this._user.children && typeof SampleChildren !== 'undefined') {
+      this._user.children = this._user.children.map(c => {
+        const fresh = SampleChildren.find(s => String(s.id) === String(c.id));
+        return fresh || c;
+      });
+    }
+
+    this.closeAttachmentsEditor();
+    if (this._container && this._user) this.render(this._container, this._user);
+
+    const toast = document.createElement('div');
+    toast.className = 'ecc-toast';
+    toast.textContent = result.strippedAttachments
+      ? 'Saved (some large files skipped due to storage limits).'
+      : 'Photo & documents updated.';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2800);
   },
 
   /** Selected evaluation period for progress report (parent). */
@@ -108,14 +229,41 @@ const ParentDashboard = {
           '</div>'
         : '';
 
-      const pills = (approved.domainScores || []).map(d => {
-        const main = d.scaled != null && d.scaled !== '' ? 'SS ' + d.scaled : (d.label || '—');
-        const color = d.label === 'Advanced' ? 'var(--primary)'
-          : d.label === 'Needs support' ? '#d32f2f'
-          : 'var(--success)';
-        return '<div style="text-align:center;"><div style="font-size:1.5rem;font-weight:700;color:' + color + ';">' +
-          main + '</div><div style="font-size:0.85rem;">' + (d.name || d.code) + '</div></div>';
-      }).join('');
+      // Domain donuts: prefer checklist % from that period's assessment; fall back to report fields
+      const donutDomains = (typeof UI !== 'undefined' && UI.DOMAIN_SNAP)
+        ? (function() {
+            let percents = {};
+            if (typeof AssessmentStore !== 'undefined') {
+              const a = AssessmentStore.get(child.id, approved.period)
+                || (UI.latestAssessmentForChild && UI.latestAssessmentForChild(child.id));
+              if (a) percents = UI.domainPercentsFromAssessment(a) || {};
+            }
+            const byCode = {};
+            (approved.domainScores || []).forEach(function(d) {
+              if (d && d.code) byCode[d.code] = d;
+            });
+            return UI.DOMAIN_SNAP.map(function(meta) {
+              const rep = byCode[meta.code] || {};
+              let pct = percents[meta.code];
+              if (pct == null && rep.percent != null) pct = Math.round(Number(rep.percent));
+              if (pct == null && rep.raw != null && rep.total > 0) {
+                pct = Math.round((Number(rep.raw) / Number(rep.total)) * 100);
+              }
+              return {
+                code: meta.code,
+                name: rep.name || meta.name,
+                color: meta.color,
+                percent: pct != null && !isNaN(pct) ? pct : null,
+                scaled: rep.scaled,
+                label: rep.label
+              };
+            });
+          })()
+        : [];
+      const donutsHtml = (typeof UI !== 'undefined' && UI.domainDonutGrid)
+        ? UI.domainDonutGrid(donutDomains)
+        : '';
+      const hasDonutData = donutDomains.some(function(d) { return d.percent != null; });
 
       const tips = (approved.tips || []).map(t => '<li>' + t + '</li>').join('');
       const comments = (approved.teacherComments || []).map(c =>
@@ -142,8 +290,14 @@ const ParentDashboard = {
           ? '<p style="text-align:center;margin:0.5rem 0 1rem;"><strong>' + approved.overallLabel + '</strong>' +
             (approved.standardScore != null ? ' · Standard Score: ' + approved.standardScore : '') + '</p>'
           : '') +
-        '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:1rem;margin:1rem 0;">' +
-        (pills || '<p class="text-muted" style="text-align:center;">Domain scores will appear after the teacher approves a report.</p>') +
+        '<div style="margin:1.25rem 0 0.5rem;">' +
+        '<h4 style="text-align:center;margin:0 0 0.35rem;color:var(--primary-dark);">Domain snapshot</h4>' +
+        '<p class="text-muted" style="text-align:center;font-size:0.85rem;margin:0 0 1rem;">' +
+        (hasDonutData
+          ? 'Share of skills marked Present in each area for this evaluation.'
+          : 'Domain rings appear when checklist scores are available for this period.') +
+        '</p>' +
+        (donutsHtml || '<p class="text-muted" style="text-align:center;">Domain scores will appear after the teacher approves a report.</p>') +
         '</div>' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:1rem;">' +
         '<div style="background:#f8f9fa;padding:1.1rem;border-radius:12px;">' +
@@ -413,10 +567,28 @@ const ParentDashboard = {
     }
 
     const records = AttendanceStore.listForChild(child.id);
+    const monthNames = ['January','February','March','April','May','June',
+      'July','August','September','October','November','December'];
+    const monthPrefix = this.attYear + '-' + String(this.attMonth + 1).padStart(2, '0');
+    const monthLabel = monthNames[this.attMonth] + ' ' + this.attYear;
+
+    // Month navigator (always shown so parents can browse even before first save)
+    const nav =
+      '<div class="parent-att-nav no-print" style="display:flex;align-items:center;justify-content:center;gap:0.75rem;margin:0.75rem 0 1rem;flex-wrap:wrap;">' +
+      '<button type="button" class="btn" style="background:#e8e8e8;color:#333;padding:6px 12px;" ' +
+      'onclick="ParentDashboard.changeAttMonth(-1)" aria-label="Previous month">‹</button>' +
+      '<strong style="min-width:10rem;text-align:center;">' + monthLabel + '</strong>' +
+      '<button type="button" class="btn" style="background:#e8e8e8;color:#333;padding:6px 12px;" ' +
+      'onclick="ParentDashboard.changeAttMonth(1)" aria-label="Next month">›</button>' +
+      '<button type="button" class="btn btn-blue" style="padding:6px 12px;font-size:0.85rem;" ' +
+      'onclick="ParentDashboard.attGoThisMonth()">This month</button>' +
+      '</div>';
+
     if (!records.length) {
       return (
         '<div class="card mb-3" style="text-align:center;">' +
-        '<h3>📅 Attendance</h3>' +
+        '<h3>📅 Attendance Record</h3>' +
+        nav +
         '<p class="text-muted">No attendance recorded yet for your child. When the teacher saves the daily attendance sheet, it will appear here.</p></div>'
       );
     }
@@ -426,58 +598,77 @@ const ParentDashboard = {
     const total = present + absent;
     const rate = total ? Math.round((present / total) * 100) : 0;
 
-    // Current month filter
-    const monthPrefix = new Date().toISOString().slice(0, 7);
-    const monthRecs = records.filter(r => (r.date || '').startsWith(monthPrefix));
+    const monthRecs = records
+      .filter(r => (r.date || '').startsWith(monthPrefix))
+      .slice()
+      .sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     const mPresent = monthRecs.filter(r => r.status === 'P').length;
     const mAbsent = monthRecs.filter(r => r.status === 'A').length;
     const mTotal = mPresent + mAbsent;
     const mRate = mTotal ? Math.round((mPresent / mTotal) * 100) : null;
 
-    // Recent consecutive absences
-    const sorted = records.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    // Consecutive absences from most recent overall
+    const sortedAll = records.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
     let streak = 0;
-    for (const r of sorted) {
+    for (const r of sortedAll) {
       if (r.status === 'A') streak++;
       else break;
     }
 
-    const recentRows = sorted.slice(0, 10).map(r => {
-      const color = r.status === 'P' ? 'var(--success)' : '#d32f2f';
-      const label = r.status === 'P' ? 'Present' : 'Absent';
-      return '<tr><td>' + (r.date || '—') + '</td>' +
-        '<td style="text-align:center;font-weight:700;color:' + color + ';">' + label + '</td>' +
-        '<td style="font-size:0.85rem;">' + (r.remark || '—') + '</td></tr>';
-    }).join('');
-
-    const monthName = new Date().toLocaleString('en', { month: 'long', year: 'numeric' });
+    const dayRows = monthRecs.length
+      ? monthRecs.map(r => {
+          const color = r.status === 'P' ? 'var(--success)' : '#d32f2f';
+          const label = r.status === 'P' ? 'Present' : 'Absent';
+          return '<tr><td>' + (r.date || '—') + '</td>' +
+            '<td style="text-align:center;font-weight:700;color:' + color + ';">' + label + '</td>' +
+            '<td style="font-size:0.85rem;">' + (r.remark || '—') + '</td></tr>';
+        }).join('')
+      : '<tr><td colspan="3" style="text-align:center;color:var(--muted);">No attendance recorded in ' +
+        monthLabel + '.</td></tr>';
 
     return (
       '<div class="card mb-3">' +
-      '<h3 style="text-align:center;">📅 Attendance Record</h3>' +
-      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:0.85rem;margin:1rem 0;">' +
+      '<h3 style="text-align:center;margin-bottom:0.25rem;">📅 Attendance Record</h3>' +
+      nav +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:0.85rem;margin:0 0 1rem;">' +
       '<div style="text-align:center;background:#f8f9fa;padding:1rem;border-radius:12px;">' +
-      '<div style="font-size:1.6rem;font-weight:700;color:var(--success);">' + present + '</div>' +
-      '<div class="text-muted">Days present</div></div>' +
+      '<div style="font-size:1.6rem;font-weight:700;color:var(--success);">' + mPresent + '</div>' +
+      '<div class="text-muted">Present</div></div>' +
       '<div style="text-align:center;background:#f8f9fa;padding:1rem;border-radius:12px;">' +
-      '<div style="font-size:1.6rem;font-weight:700;color:#d32f2f;">' + absent + '</div>' +
-      '<div class="text-muted">Days absent</div></div>' +
+      '<div style="font-size:1.6rem;font-weight:700;color:#d32f2f;">' + mAbsent + '</div>' +
+      '<div class="text-muted">Absent</div></div>' +
       '<div style="text-align:center;background:#f8f9fa;padding:1rem;border-radius:12px;">' +
-      '<div style="font-size:1.6rem;font-weight:700;color:var(--primary);">' + rate + '%</div>' +
-      '<div class="text-muted">Overall rate</div></div>' +
-      '<div style="text-align:center;background:#f8f9fa;padding:1rem;border-radius:12px;">' +
-      '<div style="font-size:1.6rem;font-weight:700;color:var(--primary-dark);">' +
+      '<div style="font-size:1.6rem;font-weight:700;color:var(--primary);">' +
       (mRate != null ? mRate + '%' : '—') + '</div>' +
-      '<div class="text-muted">' + monthName + '</div></div></div>' +
+      '<div class="text-muted">Month rate</div></div>' +
+      '<div style="text-align:center;background:#f8f9fa;padding:1rem;border-radius:12px;">' +
+      '<div style="font-size:1.6rem;font-weight:700;color:var(--primary-dark);">' + rate + '%</div>' +
+      '<div class="text-muted">Overall rate</div></div></div>' +
       (streak >= 3
         ? '<p style="text-align:center;color:#d32f2f;font-weight:600;">Note: ' + streak +
           ' consecutive absences recorded recently. Please coordinate with the teacher.</p>'
         : '') +
-      '<h4 style="margin:0.75rem 0 0.5rem;">Recent days</h4>' +
+      '<h4 style="margin:0.5rem 0 0.5rem;">Days in ' + monthLabel + '</h4>' +
       '<div class="eccd-table-wrap"><table class="eccd-table">' +
       '<thead><tr><th>Date</th><th style="text-align:center;">Status</th><th>Remarks</th></tr></thead>' +
-      '<tbody>' + recentRows + '</tbody></table></div></div>'
+      '<tbody>' + dayRows + '</tbody></table></div>' +
+      '<p class="text-muted" style="font-size:0.8rem;margin:0.75rem 0 0;text-align:center;">' +
+      'Overall: ' + present + ' present · ' + absent + ' absent across all recorded days</p></div>'
     );
+  },
+
+  changeAttMonth(delta) {
+    this.attMonth += delta;
+    if (this.attMonth > 11) { this.attMonth = 0; this.attYear++; }
+    if (this.attMonth < 0) { this.attMonth = 11; this.attYear--; }
+    if (this._container && this._user) this.render(this._container, this._user);
+  },
+
+  attGoThisMonth() {
+    const now = new Date();
+    this.attYear = now.getFullYear();
+    this.attMonth = now.getMonth();
+    if (this._container && this._user) this.render(this._container, this._user);
   },
 
   /**

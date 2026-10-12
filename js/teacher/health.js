@@ -5,12 +5,43 @@
 
 const TeacherHealth = {
   selectedSection: 'explorers',
+  pendingChildId: null,
+  pendingOpenProfile: false,
 
   sections: [
     { key: 'explorers', label: 'Little Explorers', ages: '0–3 yrs' },
     { key: 'stars', label: 'Little Stars', ages: '3–4 yrs' },
     { key: 'sunshine', label: 'Sunshine Group', ages: '4–5 yrs' }
   ],
+
+  /** From Children: land on this child's class and open health profile */
+  openForChild(childId, opts) {
+    opts = opts || {};
+    this.pendingChildId = childId;
+    this.pendingOpenProfile = opts.openProfile !== false;
+    if (this._container) {
+      this._applyPendingChild();
+      this._draw();
+    }
+  },
+
+  _applyPendingChild() {
+    if (this.pendingChildId == null) return;
+    const id = this.pendingChildId;
+    const openProfile = this.pendingOpenProfile;
+    this.pendingChildId = null;
+    this.pendingOpenProfile = false;
+
+    if (typeof ChildRegistry !== 'undefined') ChildRegistry.ensureMerged();
+    const child = (typeof SampleChildren !== 'undefined')
+      ? SampleChildren.find(c => String(c.id) === String(id))
+      : null;
+    if (!child) return;
+    if (child.sectionKey) this.selectedSection = child.sectionKey;
+    if (openProfile) {
+      setTimeout(() => this.openProfile(child.id), 120);
+    }
+  },
 
   _sectionList() {
     if (typeof ClassStore !== 'undefined' && ClassStore.options) {
@@ -27,6 +58,7 @@ const TeacherHealth = {
     this._container = container;
     if (typeof ChildRegistry !== 'undefined') ChildRegistry.ensureMerged();
     if (typeof SfpStore !== 'undefined') SfpStore.ensureSeed();
+    this._applyPendingChild();
     this._draw();
   },
 
@@ -279,7 +311,7 @@ const TeacherHealth = {
             </div>
 
             <div class="card" style="margin-bottom:1rem;border-left:4px solid #2e7d32;">
-              <h3 style="margin-top:0;">🥗 SFP Beneficiary Profile <span class="text-muted" style="font-weight:500;font-size:0.85rem;">(DSWD Supplementary Feeding)</span></h3>
+              <h3 style="margin-top:0;">🥗 SFP Beneficiary Profile <span class="text-muted" style="font-weight:500;font-size:0.85rem;">(Supplementary Feeding Program)</span></h3>
               <p class="text-muted" style="font-size:0.85rem;margin-top:0;">
                 Matches the official Beneficiary Profile intake. Used for MSWDO consolidation reports.
                 Prefills child identity from enrollment where possible.
@@ -291,8 +323,8 @@ const TeacherHealth = {
               <div class="profile-grid">
                 <div>
                   <label class="ecc-field-label">Diagnosed disability?</label>
-                  <div style="padding-top:0.35rem;">
-                    <label style="margin-right:0.75rem;"><input type="radio" name="sfp-disability" value="Yes" ${chk(sfp.disability)} /> Yes</label>
+                  <div class="yn-group">
+                    <label><input type="radio" name="sfp-disability" value="Yes" ${chk(sfp.disability)} /> Yes</label>
                     <label><input type="radio" name="sfp-disability" value="No" ${chk(sfp.disability === false || (sfp.childId && !sfp.disability))} /> No</label>
                   </div>
                 </div>
@@ -302,36 +334,36 @@ const TeacherHealth = {
                 </div>
                 <div>
                   <label class="ecc-field-label">Child of solo parent?</label>
-                  <div style="padding-top:0.35rem;">
-                    <label style="margin-right:0.75rem;"><input type="radio" name="sfp-solo" value="Yes" ${chk(sfp.soloParent)} /> Yes</label>
+                  <div class="yn-group">
+                    <label><input type="radio" name="sfp-solo" value="Yes" ${chk(sfp.soloParent)} /> Yes</label>
                     <label><input type="radio" name="sfp-solo" value="No" ${chk(sfp.soloParent === false)} /> No</label>
                   </div>
                 </div>
                 <div>
                   <label class="ecc-field-label">Monitored under EO 70?</label>
-                  <div style="padding-top:0.35rem;">
-                    <label style="margin-right:0.75rem;"><input type="radio" name="sfp-eo70" value="Yes" ${chk(sfp.eo70)} /> Yes</label>
+                  <div class="yn-group">
+                    <label><input type="radio" name="sfp-eo70" value="Yes" ${chk(sfp.eo70)} /> Yes</label>
                     <label><input type="radio" name="sfp-eo70" value="No" ${chk(sfp.eo70 === false)} /> No</label>
                   </div>
                 </div>
                 <div>
                   <label class="ecc-field-label">Dewormed?</label>
-                  <div style="padding-top:0.35rem;">
-                    <label style="margin-right:0.75rem;"><input type="radio" name="sfp-deworm" value="Yes" ${chk(sfp.dewormed)} /> Yes</label>
+                  <div class="yn-group">
+                    <label><input type="radio" name="sfp-deworm" value="Yes" ${chk(sfp.dewormed)} /> Yes</label>
                     <label><input type="radio" name="sfp-deworm" value="No" ${chk(sfp.dewormed === false)} /> No</label>
                   </div>
                 </div>
                 <div>
                   <label class="ecc-field-label">Received Vitamin A?</label>
-                  <div style="padding-top:0.35rem;">
-                    <label style="margin-right:0.75rem;"><input type="radio" name="sfp-vita" value="Yes" ${chk(sfp.vitaminA)} /> Yes</label>
+                  <div class="yn-group">
+                    <label><input type="radio" name="sfp-vita" value="Yes" ${chk(sfp.vitaminA)} /> Yes</label>
                     <label><input type="radio" name="sfp-vita" value="No" ${chk(sfp.vitaminA === false)} /> No</label>
                   </div>
                 </div>
                 <div>
                   <label class="ecc-field-label">4Ps / MCCT beneficiary?</label>
-                  <div style="padding-top:0.35rem;">
-                    <label style="margin-right:0.75rem;"><input type="radio" name="sfp-4ps" value="Yes" ${chk(sfp.fourPs)} /> Yes</label>
+                  <div class="yn-group">
+                    <label><input type="radio" name="sfp-4ps" value="Yes" ${chk(sfp.fourPs)} /> Yes</label>
                     <label><input type="radio" name="sfp-4ps" value="No" ${chk(sfp.fourPs === false)} /> No</label>
                   </div>
                 </div>
@@ -341,8 +373,8 @@ const TeacherHealth = {
                 </div>
                 <div>
                   <label class="ecc-field-label">Indigenous People?</label>
-                  <div style="padding-top:0.35rem;">
-                    <label style="margin-right:0.75rem;"><input type="radio" name="sfp-ip" value="Yes" ${chk(sfp.indigenous)} /> Yes</label>
+                  <div class="yn-group">
+                    <label><input type="radio" name="sfp-ip" value="Yes" ${chk(sfp.indigenous)} /> Yes</label>
                     <label><input type="radio" name="sfp-ip" value="No" ${chk(sfp.indigenous === false)} /> No</label>
                   </div>
                 </div>

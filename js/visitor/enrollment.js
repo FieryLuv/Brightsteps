@@ -338,6 +338,7 @@ const VisitorEnrollment = {
                 <input type="text" id="v-doc-other" class="ecc-field-input" style="width:160px;" />
               </label>
             </div>
+            ${(typeof FileAttach !== 'undefined' ? FileAttach.documentsFieldHtml('v', []) : '')}
           </div>
           <div class="profile-grid">
             <div>
@@ -591,7 +592,8 @@ const VisitorEnrollment = {
       documents: {
         eccdCard: !!(document.getElementById('v-doc-eccd') || {}).checked,
         motherChildBook: !!(document.getElementById('v-doc-mcb') || {}).checked,
-        other: (document.getElementById('v-doc-other') || {}).value || ''
+        other: (document.getElementById('v-doc-other') || {}).value || '',
+        files: (typeof FileAttach !== 'undefined' ? FileAttach.getDocs('v') : [])
       },
       heightCm: (document.getElementById('v-height') || {}).value,
       weightKg: (document.getElementById('v-weight') || {}).value,

@@ -404,6 +404,9 @@ const TeacherChildren = {
 
             <div class="card" style="margin-bottom:1rem;">
               <h3 style="margin-top:0;">1. Personal information <span class="text-muted" style="font-weight:500;font-size:0.85rem;">(ECCD Child Profile)</span></h3>
+              ${(typeof FileAttach !== 'undefined'
+                ? FileAttach.photoFieldHtml('enroll', p.photo || null)
+                : '')}
               <div class="profile-grid">
                 <div>
                   <label class="ecc-field-label">Last name</label>
@@ -717,6 +720,9 @@ const TeacherChildren = {
                       <input type="text" id="enroll-doc-other" class="ecc-field-input" style="width:180px;" value="${this._escAttr((p.documents && p.documents.other) || '')}" />
                     </label>
                   </div>
+                  ${(typeof FileAttach !== 'undefined'
+                    ? FileAttach.documentsFieldHtml('enroll', (p.documents && p.documents.files) || [])
+                    : '')}
                 </div>
               </div>
             </div>
@@ -880,6 +886,83 @@ const TeacherChildren = {
     }
   },
 
+  /** Checked values for a class selector (e.g. .enroll-transport). */
+  _readChecked(sel) {
+    return Array.from(document.querySelectorAll(sel + ':checked')).map(el => el.value);
+  },
+
+  _readRadio(name) {
+    const el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : '';
+  },
+
+  /**
+   * Mother (prefix m) / Father (prefix f) profile fields on enroll form.
+   */
+  _readParentProfile(prefix) {
+    const g = (id) => {
+      const el = document.getElementById(prefix + '-' + id);
+      return el && el.value != null ? String(el.value).trim() : '';
+    };
+    let occupation = this._readRadio(prefix + '-occup');
+    const occupationOther = g('occup-other');
+    if (!occupation && occupationOther) occupation = 'Others';
+    const profile = {
+      lastName: g('last'),
+      firstName: g('first'),
+      middleInitial: g('middle'),
+      birthDate: g('birth'),
+      age: g('age'),
+      civilStatus: this._readRadio(prefix + '-civil'),
+      education: this._readRadio(prefix + '-edu'),
+      occupation,
+      occupationOther,
+      motherTongue: g('tongue'),
+      otherDialects: g('dialects'),
+      district: g('district'),
+      purok: g('purok')
+    };
+    if (prefix === 'm') {
+      profile.pregnant = this._readRadio('m-pregnant') || '';
+    }
+    return profile;
+  },
+
+  _readPhysical() {
+    const left = document.querySelector('input[name="enroll-left-handed"]:checked');
+    return {
+      deformities: this._readChecked('.enroll-deformity'),
+      problems: this._readChecked('.enroll-problem'),
+      leftHanded: left ? left.value : 'No'
+    };
+  },
+
+  _readSiblingsDetail() {
+    // Form uses .sib-age / .sib-sex / .sib-edu (not enroll-sib-*)
+    const ages = document.querySelectorAll('.sib-age');
+    const sexes = document.querySelectorAll('.sib-sex');
+    const edus = document.querySelectorAll('.sib-edu');
+    const rows = [];
+    const n = Math.max(ages.length, sexes.length, edus.length);
+    for (let i = 0; i < n; i++) {
+      const age = ages[i] && ages[i].value != null ? String(ages[i].value).trim() : '';
+      const sex = sexes[i] && sexes[i].value != null ? String(sexes[i].value).trim() : '';
+      const education = edus[i] && edus[i].value != null ? String(edus[i].value).trim() : '';
+      if (age || sex || education) {
+        rows.push({ age, sex, education });
+      }
+    }
+    return rows;
+  },
+
+  _readPriorEce() {
+    return {
+      nursery: this._readChecked('.enroll-ece-nursery'),
+      kindergarten: this._readChecked('.enroll-ece-kindergarten'),
+      preparatory: this._readChecked('.enroll-ece-preparatory')
+    };
+  },
+
   /**
    * Simulate approving an online application → autofill the form (future flow).
    */
@@ -916,7 +999,9 @@ const TeacherChildren = {
       if (errEl) {
         errEl.style.display = 'block';
         errEl.textContent = msg;
+        try { errEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
       }
+      console.warn('[BrightSteps] enroll save:', msg);
     };
 
     const vaxVal = (key) => {
@@ -961,8 +1046,10 @@ const TeacherChildren = {
       documents: {
         eccdCard: !!(document.getElementById('enroll-doc-eccd') || {}).checked,
         motherChildBook: !!(document.getElementById('enroll-doc-mcb') || {}).checked,
-        other: (document.getElementById('enroll-doc-other') || {}).value || ''
+        other: (document.getElementById('enroll-doc-other') || {}).value || '',
+        files: (typeof FileAttach !== 'undefined' ? FileAttach.getDocs('enroll') : [])
       },
+      photo: (typeof FileAttach !== 'undefined' ? FileAttach.getPhoto('enroll') : null),
       vaccines: {
         BCG: vaxVal('BCG'),
         DPT: vaxVal('DPT'),
@@ -1023,12 +1110,28 @@ const TeacherChildren = {
     const editId = (document.getElementById('enroll-edit-id') || {}).value;
     const isEdit = !!(editId && String(editId).trim());
 
-    const result = isEdit
-      ? ChildRegistry.updateFromForm(editId, data, { source, applicationId: data.applicationId })
-      : ChildRegistry.enroll(data, { source, applicationId: data.applicationId });
+    // Explicit photo remove → do not restore previous
+    const photoCleared = typeof FileAttach !== 'undefined' && FileAttach.wasPhotoCleared('enroll');
+    if (photoCleared) data.photo = null;
 
-    if (!result.ok) {
-      showErr(result.error || (isEdit ? 'Could not save changes.' : 'Could not save enrollment.'));
+    let result;
+    try {
+      result = isEdit
+        ? ChildRegistry.updateFromForm(editId, data, {
+            source,
+            applicationId: data.applicationId,
+            keepPhoto: !photoCleared,
+            keepDocs: true
+          })
+        : ChildRegistry.enroll(data, { source, applicationId: data.applicationId });
+    } catch (err) {
+      console.error('saveEnrollment', err);
+      showErr((err && err.message) ? err.message : 'Unexpected error while saving.');
+      return;
+    }
+
+    if (!result || !result.ok) {
+      showErr((result && result.error) || (isEdit ? 'Could not save changes.' : 'Could not save enrollment.'));
       return;
     }
 
@@ -1072,8 +1175,11 @@ const TeacherChildren = {
     toast.textContent = isEdit
       ? ('Updated ' + child.name + ' (' + child.childCode + ')')
       : ('Enrolled ' + child.name + ' (' + child.childCode + ')');
+    if (result.strippedAttachments) {
+      toast.textContent += ' · Large files were skipped (browser storage limit).';
+    }
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2800);
+    setTimeout(() => toast.remove(), 3200);
 
     // Complete online application → enrolled + show parent login credentials
     if (!isEdit && data.applicationId && typeof ApplicationStore !== 'undefined') {
@@ -1110,14 +1216,18 @@ const TeacherChildren = {
             title="Select for transfer or delete" />
         </label>
         <div onclick="TeacherChildren.openProfile(${c.id})" style="cursor:pointer;padding-left:1.4rem;">
-          <div class="flex justify-between items-center" style="margin-bottom:0.4rem;">
-            <strong style="font-size:1.05rem; color:var(--text);">${c.name}</strong>
-            <span style="font-size:0.8rem; color:var(--muted);">${c.sex === 'Female' ? '👧' : '👦'}</span>
+          <div class="child-card-avatar-row">
+            ${(typeof FileAttach !== 'undefined' ? FileAttach.avatarHtml(c, 44) : (c.sex === 'Female' ? '👧' : '👦'))}
+            <div style="min-width:0;flex:1;">
+              <div class="flex justify-between items-center" style="margin-bottom:0.15rem;">
+                <strong style="font-size:1.05rem; color:var(--text);">${c.name}</strong>
+              </div>
+              <div style="color:var(--muted); font-size:0.92rem; margin-bottom:0.35rem;">
+                ${c.ageLabel} • ${c.section}
+              </div>
+              <span style="color:${statusColor}; font-weight:600; font-size:0.9rem;">${statusText}</span>
+            </div>
           </div>
-          <div style="color:var(--muted); font-size:0.92rem; margin-bottom:0.55rem;">
-            ${c.ageLabel} • ${c.section}
-          </div>
-          <span style="color:${statusColor}; font-weight:600; font-size:0.9rem;">${statusText}</span>
         </div>
         <div style="display:flex;gap:0.35rem;margin-top:0.75rem;padding-top:0.5rem;border-top:1px solid var(--border);flex-wrap:wrap;"
           onclick="event.stopPropagation();">
@@ -1274,10 +1384,13 @@ const TeacherChildren = {
       <div id="bs-modal-overlay" style="position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;padding:1rem;">
         <div style="background:white;width:95%;max-width:960px;border-radius:16px;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;">
 
-          <div style="padding:1.25rem 1.5rem;background:var(--primary);color:white;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;">
-            <div>
-              <h2 style="margin:0;font-size:1.35rem;color:white;">${child.name}</h2>
-              <div style="opacity:0.9;font-size:0.9rem;margin-top:2px;">${child.ageLabel} • ${child.section}</div>
+          <div style="padding:1.25rem 1.5rem;background:var(--primary);color:white;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;gap:0.75rem;">
+            <div style="display:flex;align-items:center;gap:0.85rem;min-width:0;">
+              ${(typeof FileAttach !== 'undefined' ? FileAttach.avatarHtml(child, 56) : '')}
+              <div style="min-width:0;">
+                <h2 style="margin:0;font-size:1.35rem;color:white;">${child.name}</h2>
+                <div style="opacity:0.9;font-size:0.9rem;margin-top:2px;">${child.ageLabel} • ${child.section}</div>
+              </div>
             </div>
             <button onclick="TeacherChildren.closeModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;line-height:1;">×</button>
           </div>
@@ -1372,9 +1485,9 @@ const TeacherChildren = {
       <div class="card" style="margin-top:1.25rem;">
         <h3>Quick Actions</h3>
         <div class="flex flex-wrap gap-1 mt-2">
-          <button class="btn btn-blue" onclick="TeacherChildren.closeModal(); BrightSteps.navigate('development')">📈 Open Development Tracking</button>
-          <button class="btn" onclick="TeacherChildren.closeModal(); BrightSteps.navigate('attendance')">📅 Attendance</button>
-          <button class="btn" onclick="TeacherChildren.closeModal(); BrightSteps.navigate('health')">❤️ Health Records</button>
+          <button class="btn btn-blue" onclick="TeacherChildren.goModule('development', ${child.id}, true)">📈 Open Development Tracking</button>
+          <button class="btn" onclick="TeacherChildren.goModule('attendance', ${child.id})">📅 Attendance</button>
+          <button class="btn" onclick="TeacherChildren.goModule('health', ${child.id}, true)">❤️ Health Records</button>
         </div>
       </div>
     `;
@@ -1405,9 +1518,13 @@ const TeacherChildren = {
           <div><span class="text-muted">Born at</span><div>${child.bornAt || '—'}</div></div>
           <div><span class="text-muted">Mother tongue</span><div>${child.motherTongue || '—'}${child.motherTongueOther ? ' (' + child.motherTongueOther + ')' : ''}</div></div>
           <div><span class="text-muted">Other dialects</span><div>${child.otherDialects || '—'}</div></div>
-          <div><span class="text-muted">Documents</span><div>
+          <div><span class="text-muted">Documents on file</span><div>
             ${docs.eccdCard ? 'ECCD Card · ' : ''}${docs.motherChildBook ? 'Mother & Child book · ' : ''}${docs.other || '—'}
           </div></div>
+        </div>
+        <div style="margin-top:0.85rem;">
+          <span class="text-muted" style="font-size:0.88rem;">Digital attachments (optional)</span>
+          ${(typeof FileAttach !== 'undefined' ? FileAttach.docsListHtml(docs) : '')}
         </div>
       </div>
       <div class="card" style="margin-bottom:1rem;">
@@ -1549,7 +1666,7 @@ const TeacherChildren = {
         <p class="text-muted" style="margin-top:0.75rem;font-size:0.9rem;">
           Domain rings use the child’s latest saved ECCD evaluation (Present items ÷ domain total).
         </p>
-        <button class="btn btn-blue mt-2" onclick="TeacherChildren.closeModal(); BrightSteps.navigate('development')">
+        <button class="btn btn-blue mt-2" onclick="TeacherChildren.goModule('development', ${child.id}, true)">
           Open Development Tracking
         </button>
       </div>
@@ -1584,7 +1701,7 @@ const TeacherChildren = {
           </div>
         </div>
         <p class="text-muted" style="font-size:0.9rem;">Full monthly sheet and history will be available in the Attendance module.</p>
-        <button class="btn btn-blue mt-2" onclick="TeacherChildren.closeModal(); BrightSteps.navigate('attendance')">Open Attendance</button>
+        <button class="btn btn-blue mt-2" onclick="TeacherChildren.goModule('attendance', ${child.id})">Open Attendance</button>
       </div>
     `;
   },
@@ -1608,9 +1725,27 @@ const TeacherChildren = {
           </div>
         </div>
         <p class="text-muted" style="font-size:0.9rem;">Detailed growth charts, nutrition and medical records will be managed in Health Records.</p>
-        <button class="btn btn-blue mt-2" onclick="TeacherChildren.closeModal(); BrightSteps.navigate('health')">Open Health Records</button>
+        <button class="btn btn-blue mt-2" onclick="TeacherChildren.goModule('health', ${child.id}, true)">Open Health Records</button>
       </div>
     `;
+  },
+
+  /**
+   * Navigate to Development / Attendance / Health while keeping the selected child.
+   * openDetail: open checklist (dev) or health profile (health).
+   */
+  goModule(module, childId, openDetail) {
+    this.closeModal();
+    if (module === 'development' && typeof TeacherDevelopment !== 'undefined') {
+      TeacherDevelopment.pendingChildId = childId;
+      TeacherDevelopment.pendingOpenChecklist = !!openDetail;
+    } else if (module === 'health' && typeof TeacherHealth !== 'undefined') {
+      TeacherHealth.pendingChildId = childId;
+      TeacherHealth.pendingOpenProfile = !!openDetail;
+    } else if (module === 'attendance' && typeof TeacherAttendance !== 'undefined') {
+      TeacherAttendance.pendingChildId = childId;
+    }
+    if (typeof BrightSteps !== 'undefined') BrightSteps.navigate(module);
   },
 
   closeModal() {

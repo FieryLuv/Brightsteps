@@ -219,24 +219,42 @@ const SfpStore = {
     const cycleId = entry.cycleId || state.activeCycleId;
     const actualDate = entry.actualDate || '';
     if (!actualDate) return { ok: false, error: 'Delivery date is required.' };
+    const incoming = Array.isArray(entry.receipts) ? entry.receipts : [];
     const record = {
-      id: entry.id || `alt-${cycleId}-${actualDate}-${Date.now()}`,
+      id: entry.id || `alt-${cycleId}-${actualDate}`,
       cycleId,
       mode: 'nutricombo',
       deliveryNumber: entry.deliveryNumber != null ? Number(entry.deliveryNumber) : null,
       actualDate,
       particulars: entry.particulars || 'NUTRI-COMBO (High Protein Cookie 60g & Nutri Juice 200mL)',
-      receipts: Array.isArray(entry.receipts) ? entry.receipts : [],
+      receipts: incoming,
       savedAt: new Date().toISOString()
     };
-    const idx = state.altDeliveries.findIndex(d => d.id === record.id);
-    if (idx >= 0) state.altDeliveries[idx] = record;
-    else {
-      // replace same date delivery if exists
-      const same = state.altDeliveries.findIndex(
-        d => d.cycleId === cycleId && d.actualDate === actualDate
-      );
-      if (same >= 0) state.altDeliveries[same] = record;
+
+    // Same cycle + date: MERGE receipts by childId so logging one class
+    // does not wipe children from other classes saved the same day.
+    const same = state.altDeliveries.findIndex(
+      d => d.cycleId === cycleId && d.actualDate === actualDate
+    );
+    if (same >= 0) {
+      const prev = state.altDeliveries[same];
+      const map = {};
+      (prev.receipts || []).forEach(r => {
+        if (r && r.childId != null) map[String(r.childId)] = r;
+      });
+      incoming.forEach(r => {
+        if (r && r.childId != null) map[String(r.childId)] = r;
+      });
+      record.id = prev.id || record.id;
+      if (record.deliveryNumber == null && prev.deliveryNumber != null) {
+        record.deliveryNumber = prev.deliveryNumber;
+      }
+      if (!entry.particulars && prev.particulars) record.particulars = prev.particulars;
+      record.receipts = Object.values(map);
+      state.altDeliveries[same] = record;
+    } else {
+      const idx = state.altDeliveries.findIndex(d => d.id === record.id);
+      if (idx >= 0) state.altDeliveries[idx] = record;
       else state.altDeliveries.push(record);
     }
     this._write(state);

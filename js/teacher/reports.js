@@ -32,7 +32,7 @@ const TeacherReports = {
     const body = this.tab === 'sfp' ? this._sfpReportsHtml() : this._eccdReportsHtml();
 
     this._container.innerHTML = `
-      ${UI.pageHeader('📊 Reports', 'ECCD parent progress reports and DSWD SFP forms for MSWDO / liquidation.')}
+      ${UI.pageHeader('📊 Reports', 'ECCD parent progress reports and SFP forms for MSWDO / liquidation.')}
       <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">${tabs}</div>
       ${body}
     `;
@@ -151,11 +151,13 @@ const TeacherReports = {
             </div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
-            <button class="btn btn-blue" onclick="TeacherReports.printPackA()">🖨 Print Cert + Matrix -A</button>
-            <button class="btn" style="background:#e3f2fd;color:#1565c0;" onclick="TeacherReports.printCertA()">Cert only</button>
-            <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherReports.printMatrixA()">Matrix only</button>
+            <button class="btn btn-blue" onclick="TeacherReports.openSfpPrintPicker('packA')">🖨 Print Cert + Matrix -A</button>
+            <button class="btn" style="background:#e3f2fd;color:#1565c0;" onclick="TeacherReports.openSfpPrintPicker('certA')">Cert only</button>
+            <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherReports.openSfpPrintPicker('matrixA')">Matrix only</button>
           </div>
-          <p class="text-muted" style="font-size:0.8rem;margin:0.5rem 0 0;">Matrix rows come from SFP Feeding → Hot meal logs (day #, menu, commodities, notes).</p>
+          <p class="text-muted" style="font-size:0.8rem;margin:0.5rem 0 0;">
+            Choose one class or all classes before printing. Matrix rows come from SFP Feeding → Hot meal logs.
+          </p>
         </div>
         <div class="card" style="margin:0;">
           <h3 style="margin-top:0;">Certification -C <span class="text-muted" style="font-weight:500;font-size:0.85rem;">NUTRICombo</span></h3>
@@ -184,11 +186,13 @@ const TeacherReports = {
             </div>
           </div>
           <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:0.75rem;">
-            <button class="btn btn-blue" onclick="TeacherReports.printPackC()">🖨 Print Cert + Matrix -C</button>
-            <button class="btn" style="background:#e3f2fd;color:#1565c0;" onclick="TeacherReports.printCertC()">Cert only</button>
-            <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherReports.printMatrixC()">Matrix only</button>
+            <button class="btn btn-blue" onclick="TeacherReports.openSfpPrintPicker('packC')">🖨 Print Cert + Matrix -C</button>
+            <button class="btn" style="background:#e3f2fd;color:#1565c0;" onclick="TeacherReports.openSfpPrintPicker('certC')">Cert only</button>
+            <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherReports.openSfpPrintPicker('matrixC')">Matrix only</button>
           </div>
-          <p class="text-muted" style="font-size:0.8rem;margin:0.5rem 0 0;">Matrix rows come from SFP Feeding → NUTRICombo deliveries (child, parent, qty, signature).</p>
+          <p class="text-muted" style="font-size:0.8rem;margin:0.5rem 0 0;">
+            Choose one class or all classes before printing. Matrix rows come from NUTRICombo deliveries.
+          </p>
         </div>
       </div>
 
@@ -252,22 +256,70 @@ const TeacherReports = {
     };
   },
 
-  _certABodyHtml() {
+  _sectionOptions() {
+    if (typeof ClassStore !== 'undefined' && ClassStore.listActive) {
+      return ClassStore.listActive().map(c => ({
+        key: c.key,
+        label: c.name || c.label || c.key
+      }));
+    }
+    return [
+      { key: 'explorers', label: 'Little Explorers' },
+      { key: 'stars', label: 'Little Stars' },
+      { key: 'sunshine', label: 'Sunshine Group' }
+    ];
+  },
+
+  _sectionLabel(key) {
+    const s = this._sectionOptions().find(x => x.key === key);
+    return s ? s.label : (key || 'All classes');
+  },
+
+  /** Beneficiaries limited to one section (by child's sectionKey), or all if sectionKey is null. */
+  _beneficiariesForSection(sectionKey) {
+    const bens = typeof SfpStore !== 'undefined' ? SfpStore.listBeneficiaries() : [];
+    if (!sectionKey) return bens;
+    const list = typeof SampleChildren !== 'undefined' ? SampleChildren : [];
+    return bens.filter(b => {
+      const c = list.find(x => String(x.id) === String(b.childId));
+      return c && c.sectionKey === sectionKey;
+    });
+  },
+
+  _childSectionKey(childId) {
+    const c = (typeof SampleChildren !== 'undefined' ? SampleChildren : [])
+      .find(x => String(x.id) === String(childId));
+    return c ? c.sectionKey : null;
+  },
+
+  /**
+   * @param {{ sectionKey?: string|null }} opts
+   * sectionKey = one class; null/undefined = all beneficiaries (center-wide).
+   */
+  _certABodyHtml(opts) {
+    opts = opts || {};
+    const sectionKey = opts.sectionKey != null && opts.sectionKey !== '' ? opts.sectionKey : null;
     const meta = this._cycleMeta();
-    const stats = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
+    const bens = this._beneficiariesForSection(sectionKey);
     const hotDays = typeof SfpStore !== 'undefined' ? SfpStore.countHotFeedingDays() : 0;
     const nEl = document.getElementById('cert-a-n');
     const dEl = document.getElementById('cert-a-days');
     const start = (document.getElementById('cert-a-start') || {}).value || '________';
     const end = (document.getElementById('cert-a-end') || {}).value || '________';
-    const n = (nEl && nEl.value) ? nEl.value : (stats ? stats.beneficiaries.total : '____');
+    // Override applies only for single all-center print without section split
+    const useOverride = !sectionKey && nEl && nEl.value;
+    const n = useOverride ? nEl.value : (bens.length || '____');
     const days = (dEl && dEl.value) ? dEl.value : (hotDays || '____');
     const periodLine = (start && start !== '________') || (end && end !== '________')
       ? `${start} to ${end}`
       : '________________________';
+    const classLine = sectionKey
+      ? `<p class="cert-body" style="margin-top:0;margin-bottom:10px;"><strong>Class / Section:</strong> ${this._sectionLabel(sectionKey)}</p>`
+      : `<p class="cert-body" style="margin-top:0;margin-bottom:10px;"><strong>Class / Section:</strong> All classes</p>`;
     return `
       ${this._dswdCertHeader('-A')}
       <h2 class="cert-title">CERTIFICATION</h2>
+      ${classLine}
       <p class="cert-body">
         This is to certify that the total <u>&nbsp;&nbsp;<strong>${n}</strong>&nbsp;&nbsp;</u>
         (<em># OF CHILDREN</em>) Day Care Children have received and
@@ -290,18 +342,25 @@ const TeacherReports = {
       ${this._dswdCertFooter()}`;
   },
 
-  _certCBodyHtml() {
+  _certCBodyHtml(opts) {
+    opts = opts || {};
+    const sectionKey = opts.sectionKey != null && opts.sectionKey !== '' ? opts.sectionKey : null;
     const meta = this._cycleMeta();
-    const stats = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
+    const bens = this._beneficiariesForSection(sectionKey);
     const altDays = typeof SfpStore !== 'undefined' ? SfpStore.countAltFeedingDays() : 0;
     const nEl = document.getElementById('cert-c-n');
     const dEl = document.getElementById('cert-c-days');
     const date = (document.getElementById('cert-c-date') || {}).value || '________';
-    const n = (nEl && nEl.value) ? nEl.value : (stats ? stats.beneficiaries.total : '____');
+    const useOverride = !sectionKey && nEl && nEl.value;
+    const n = useOverride ? nEl.value : (bens.length || '____');
     const days = (dEl && dEl.value) ? dEl.value : (altDays || '____');
+    const classLine = sectionKey
+      ? `<p class="cert-body" style="margin-top:0;margin-bottom:10px;"><strong>Class / Section:</strong> ${this._sectionLabel(sectionKey)}</p>`
+      : `<p class="cert-body" style="margin-top:0;margin-bottom:10px;"><strong>Class / Section:</strong> All classes</p>`;
     return `
       ${this._dswdCertHeader('-C')}
       <h2 class="cert-title">CERTIFICATION</h2>
+      ${classLine}
       <p class="cert-body">
         This is to certify that the total <u>&nbsp;&nbsp;<strong>${n}</strong>&nbsp;&nbsp;</u>
         (<em># OF CHILDREN</em>) Day Care Children have received and
@@ -324,11 +383,14 @@ const TeacherReports = {
       ${this._dswdCertFooter()}`;
   },
 
-  _matrixAHtml() {
+  _matrixAHtml(opts) {
+    opts = opts || {};
+    const sectionKey = opts.sectionKey != null && opts.sectionKey !== '' ? opts.sectionKey : null;
     const meta = this._cycleMeta();
-    const stats = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
-    const n = (document.getElementById('cert-a-n') || {}).value
-      || (stats ? stats.beneficiaries.total : '');
+    const bens = this._beneficiariesForSection(sectionKey);
+    const nEl = document.getElementById('cert-a-n');
+    const useOverride = !sectionKey && nEl && nEl.value;
+    const n = useOverride ? nEl.value : (bens.length || '');
     const days = typeof SfpStore !== 'undefined' ? SfpStore.listHotMealDays() : [];
     const start = (document.getElementById('cert-a-start') || {}).value || '';
     const end = (document.getElementById('cert-a-end') || {}).value || '';
@@ -336,27 +398,42 @@ const TeacherReports = {
     if (start) filtered = filtered.filter(d => !d.actualDate || d.actualDate >= start);
     if (end) filtered = filtered.filter(d => !d.actualDate || d.actualDate <= end);
 
+    // When a section is selected, note fed counts from childStatuses for that section
+    const sectionIds = sectionKey
+      ? new Set(bens.map(b => String(b.childId)))
+      : null;
+
     const rows = filtered.length
       ? filtered.map(d => {
           const items = (d.commoditiesNote || '').trim()
             || (d.menuLabel ? d.menuLabel : '—');
           const itemsHtml = String(items).split(/[,;]+/).map(s => s.trim()).filter(Boolean)
             .map(s => `<div>${s}</div>`).join('') || '—';
+          let sectionNote = '';
+          if (sectionIds && Array.isArray(d.childStatuses) && d.childStatuses.length) {
+            const fed = d.childStatuses.filter(cs =>
+              sectionIds.has(String(cs.childId)) && cs.status === 'fed'
+            ).length;
+            const total = d.childStatuses.filter(cs => sectionIds.has(String(cs.childId))).length;
+            if (total) sectionNote = `<div style="font-size:9px;color:#555;margin-top:2px;">Fed ${fed}/${total} in section</div>`;
+          }
           return `<tr>
             <td style="text-align:center;font-weight:700;">${d.dayNumber}</td>
             <td style="text-align:center;">${d.actualDate || ''}</td>
             <td style="font-size:11px;">${itemsHtml}</td>
-            <td style="font-size:11px;">${d.menuLabel || '—'}</td>
+            <td style="font-size:11px;">${d.menuLabel || '—'}${sectionNote}</td>
             <td style="font-size:10px;">${d.committeeNote || ''}</td>
           </tr>`;
         }).join('')
       : `<tr><td colspan="5" style="text-align:center;padding:16px;">No hot meal logs for this period.
            Encode days under <em>SFP Feeding → Hot meal log</em>.</td></tr>`;
 
+    const classLine = sectionKey ? this._sectionLabel(sectionKey) : 'All classes';
+
     return `
       ${this._dswdCertHeader('-A')}
       <h2 class="cert-title" style="font-size:14px;text-decoration:none;">
-        DEPARTMENT OF SOCIAL WELFARE AND DEVELOPMENT<br>
+        National Child Development Center — Medina<br>
         <span style="font-size:12px;font-weight:600;">Supplementary Feeding Program ${meta.cycleLabel} Cycle Implementation</span>
       </h2>
       <h3 style="text-align:center;margin:6px 0 10px;font-size:13px;">FOOD ALLOCATION MATRIX — HOT MEALS</h3>
@@ -366,8 +443,9 @@ const TeacherReports = {
         <tr><td><strong>Location/Barangay:</strong> ${meta.barangay || '______________'}</td>
             <td><strong>Number of Children beneficiaries:</strong> ${n || '____'}</td></tr>
         <tr><td colspan="2"><strong>Name of Child Development Center:</strong> ${meta.facility}</td></tr>
-        <tr><td><strong>Name of Child Development Worker:</strong> ${meta.worker || '______________'}</td>
+        <tr><td><strong>Class / Section:</strong> ${classLine}</td>
             <td><strong>Date started the feeding:</strong> ${meta.startDate || '______________'}</td></tr>
+        <tr><td colspan="2"><strong>Name of Child Development Worker:</strong> ${meta.worker || '______________'}</td></tr>
       </table>
       <table class="sfp-matrix-table">
         <thead>
@@ -388,7 +466,9 @@ const TeacherReports = {
       ${this._dswdCertFooter()}`;
   },
 
-  _matrixCHtml() {
+  _matrixCHtml(opts) {
+    opts = opts || {};
+    const sectionKey = opts.sectionKey != null && opts.sectionKey !== '' ? opts.sectionKey : null;
     const meta = this._cycleMeta();
     const deliveries = typeof SfpStore !== 'undefined' ? SfpStore.listAltDeliveries() : [];
     const selId = (document.getElementById('cert-c-delivery') || {}).value || '';
@@ -396,34 +476,80 @@ const TeacherReports = {
     if (selId) delivery = deliveries.find(d => d.id === selId) || null;
     if (!delivery && deliveries.length) delivery = deliveries[deliveries.length - 1];
 
-    const stats = typeof SfpStore !== 'undefined' ? SfpStore.statsForConsolidation() : null;
-    const nOverride = (document.getElementById('cert-c-n') || {}).value;
-    const nBen = nOverride || (delivery && delivery.receipts ? delivery.receipts.length : (stats ? stats.beneficiaries.total : ''));
+    const children = typeof SampleChildren !== 'undefined' ? SampleChildren : [];
+    const childById = {};
+    children.forEach(c => { childById[String(c.id)] = c; });
+
+    const nEl = document.getElementById('cert-c-n');
+    const useOverride = !sectionKey && nEl && nEl.value;
+
+    // Prefer receipts on the selected delivery; if empty, merge all deliveries for the cycle
+    let receipts = (delivery && delivery.receipts) ? delivery.receipts.slice() : [];
+    if (!receipts.length && deliveries.length) {
+      const map = {};
+      deliveries.forEach(d => {
+        (d.receipts || []).forEach(r => {
+          if (r && r.childId != null) map[String(r.childId)] = Object.assign({ _fromDate: d.actualDate }, r);
+        });
+      });
+      receipts = Object.values(map);
+      if (!delivery && deliveries.length) delivery = deliveries[deliveries.length - 1];
+    }
+
+    // Filter by child's class (not only SFP beneficiary list — receipts may include section kids)
+    if (sectionKey) {
+      receipts = receipts.filter(r => {
+        const c = r.childId != null ? childById[String(r.childId)] : null;
+        if (c) return c.sectionKey === sectionKey;
+        const byName = children.find(x => x.name === r.childName);
+        return byName && byName.sectionKey === sectionKey;
+      });
+    }
+
+    // Sort: section then name (stable for "all")
+    receipts.sort((a, b) => {
+      const ca = a.childId != null ? childById[String(a.childId)] : null;
+      const cb = b.childId != null ? childById[String(b.childId)] : null;
+      const sa = (ca && ca.sectionKey) || '';
+      const sb = (cb && cb.sectionKey) || '';
+      if (sa !== sb) return sa.localeCompare(sb);
+      return String(a.childName || '').localeCompare(String(b.childName || ''));
+    });
+
+    const nBen = useOverride
+      ? nEl.value
+      : (receipts.length || this._beneficiariesForSection(sectionKey).length || '');
 
     let rows = '';
-    if (delivery && delivery.receipts && delivery.receipts.length) {
-      rows = delivery.receipts.map(r => {
+    if (receipts.length) {
+      rows = receipts.map(r => {
         const sig = r.parentSigned ? '(Signed)' : '';
+        const c = r.childId != null ? childById[String(r.childId)] : null;
+        const secNote = (!sectionKey && c && c.section)
+          ? `<div style="font-size:9px;color:#666;">${c.section}</div>`
+          : '';
         return `<tr>
-          <td style="font-size:10px;">${delivery.particulars || 'NUTRI-COMBO'}</td>
+          <td style="font-size:10px;">${(delivery && delivery.particulars) || 'NUTRI-COMBO'}</td>
           <td style="text-align:center;">${r.quantity != null ? r.quantity : ''}</td>
-          <td>${r.childName || r.childId || ''}</td>
+          <td>${r.childName || r.childId || ''}${secNote}</td>
           <td>${r.parentName || ''}</td>
           <td style="text-align:center;font-size:10px;">${sig}</td>
         </tr>`;
       }).join('');
     } else {
-      rows = `<tr><td colspan="5" style="text-align:center;padding:16px;">No NUTRICombo delivery selected or logged.
-        Encode under <em>SFP Feeding → NUTRICombo</em>.</td></tr>`;
+      rows = `<tr><td colspan="5" style="text-align:center;padding:16px;">No NUTRICombo receipts
+        ${sectionKey ? 'for this class' : ''} found.
+        Save under <em>SFP Feeding → NUTRICombo</em> for each class (same date merges into one delivery).</td></tr>`;
     }
 
     const delNum = delivery && delivery.deliveryNumber != null ? delivery.deliveryNumber : '____';
     const delDate = delivery && delivery.actualDate ? delivery.actualDate : '______________';
+    const classLine = sectionKey ? this._sectionLabel(sectionKey) : 'All classes';
 
     return `
       ${this._dswdCertHeader('-C')}
       <h2 class="cert-title" style="font-size:14px;text-decoration:none;">
-        DEPARTMENT OF SOCIAL WELFARE AND DEVELOPMENT<br>
+        National Child Development Center — Medina<br>
         <span style="font-size:12px;font-weight:600;">Supplementary Feeding Program ${meta.cycleLabel} Cycle Implementation</span>
       </h2>
       <h3 style="text-align:center;margin:6px 0 4px;font-size:13px;">FOOD ALLOCATION MATRIX — ${delNum} DELIVERY</h3>
@@ -436,9 +562,10 @@ const TeacherReports = {
         <tr><td><strong>Location/Barangay:</strong> ${meta.barangay || '______________'}</td>
             <td><strong>Number of Children beneficiaries:</strong> ${nBen || '____'}</td></tr>
         <tr><td colspan="2"><strong>Name of Child Development Center:</strong> ${meta.facility}</td></tr>
-        <tr><td><strong>Name of Child Development Worker:</strong> ${meta.worker || '______________'}</td>
+        <tr><td><strong>Class / Section:</strong> ${classLine}</td>
             <td><strong>Date of actual feeding:</strong> ${delDate}</td></tr>
-        <tr><td colspan="2"><strong>Date started the feeding (${meta.cycleLabel} cycle):</strong> ${meta.startDate || '______________'}</td></tr>
+        <tr><td><strong>Name of Child Development Worker:</strong> ${meta.worker || '______________'}</td>
+            <td><strong>Date started (${meta.cycleLabel} cycle):</strong> ${meta.startDate || '______________'}</td></tr>
       </table>
       <table class="sfp-matrix-table">
         <thead>
@@ -459,48 +586,148 @@ const TeacherReports = {
       ${this._dswdCertFooter()}`;
   },
 
-  printMatrixA() {
-    this._printWindow('SFP Food Allocation Matrix -A', this._matrixAHtml());
-  },
+  /**
+   * Print picker for Cert / Matrix -A and -C.
+   * kind: certA | matrixA | packA | certC | matrixC | packC
+   */
+  openSfpPrintPicker(kind) {
+    const existing = document.getElementById('sfp-section-print-picker');
+    if (existing) existing.remove();
 
-  printMatrixC() {
-    this._printWindow('SFP Food Allocation Matrix -C', this._matrixCHtml());
-  },
+    const labels = {
+      certA: 'Print Certification -A (hot meals)',
+      matrixA: 'Print Food Allocation Matrix -A',
+      packA: 'Print Cert + Matrix -A',
+      certC: 'Print Certification -C (NUTRICombo)',
+      matrixC: 'Print Food Allocation Matrix -C',
+      packC: 'Print Cert + Matrix -C'
+    };
+    const title = labels[kind] || 'Print SFP form';
+    const sectionOpts = this._sectionOptions().map(s =>
+      `<option value="${s.key}">${s.label}</option>`
+    ).join('');
 
-  printPackA() {
-    const body = `
-      <div class="sfp-print-section">${this._certABodyHtml()}</div>
-      <div class="sfp-page-break"></div>
-      <div class="sfp-print-section">${this._matrixAHtml()}</div>`;
-    this._printWindow('SFP Cert + Matrix -A', body);
-  },
-
-  printPackC() {
-    const body = `
-      <div class="sfp-print-section">${this._certCBodyHtml()}</div>
-      <div class="sfp-page-break"></div>
-      <div class="sfp-print-section">${this._matrixCHtml()}</div>`;
-    this._printWindow('SFP Cert + Matrix -C', body);
-  },
-
-    /** DSWD FO X letterhead matching paper certificates (text/CSS banner). */
-  _dswdCertHeader(formCode) {
-    return `
-      <div class="dswd-letterhead">
-        <div class="dswd-lh-top">
-          <div class="dswd-lh-brand">
-            <div class="dswd-logo-mark">
-              <div class="dswd-logo-text">DSWD</div>
-              <div class="dswd-logo-sub">Department of Social Welfare<br>and Development</div>
+    const html =
+      `<div id="sfp-section-print-picker" class="bs-overlay no-print">
+        <div class="bs-modal-panel" style="max-width:440px;">
+          <div class="bs-modal-header">
+            <h2 style="margin:0;font-size:1.1rem;color:white;">${title}</h2>
+            <button type="button" class="bs-modal-close" onclick="document.getElementById('sfp-section-print-picker').remove()">×</button>
+          </div>
+          <div class="bs-modal-body">
+            <p style="margin-top:0;font-size:0.9rem;">
+              <strong>One section</strong> — only that class’s children.<br>
+              <strong>All sections</strong> — one combined list of every child (not separate pages per class).
+            </p>
+            <label class="ecc-field-label">Sections to print</label>
+            <select id="sfp-print-scope" class="ecc-field-input">
+              <option value="one">One section only</option>
+              <option value="all">All sections (one combined list)</option>
+            </select>
+            <div id="sfp-print-section-wrap" style="margin-top:0.75rem;">
+              <label class="ecc-field-label">Section</label>
+              <select id="sfp-print-section" class="ecc-field-input">${sectionOpts}</select>
             </div>
           </div>
-          <div class="dswd-lh-center">
-            <div class="dswd-rep">Republic of the Philippines</div>
-            <div class="dswd-dept">Department of Social Welfare and Development</div>
-            <div class="dswd-fo">Field Office X</div>
-            <div class="dswd-fo-sub">Northern Mindanao</div>
+          <div class="bs-modal-footer" style="display:flex;gap:0.5rem;justify-content:flex-end;flex-wrap:wrap;">
+            <button type="button" class="btn" style="background:#e8e8e8;" onclick="document.getElementById('sfp-section-print-picker').remove()">Cancel</button>
+            <button type="button" class="btn btn-blue" onclick="TeacherReports.confirmSfpPrint('${kind}')">🖨 Print</button>
           </div>
-          <div class="dswd-form-code">${formCode || ''}</div>
+        </div>
+      </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    const scopeEl = document.getElementById('sfp-print-scope');
+    const wrap = document.getElementById('sfp-print-section-wrap');
+    if (scopeEl && wrap) {
+      scopeEl.addEventListener('change', () => {
+        wrap.style.display = scopeEl.value === 'all' ? 'none' : 'block';
+      });
+    }
+  },
+
+  confirmSfpPrint(kind) {
+    const scopeEl = document.getElementById('sfp-print-scope');
+    const secEl = document.getElementById('sfp-print-section');
+    const mode = scopeEl ? scopeEl.value : 'one';
+    const sectionKey = secEl ? secEl.value : null;
+    const picker = document.getElementById('sfp-section-print-picker');
+    if (picker) picker.remove();
+
+    if (mode === 'one' && !sectionKey) {
+      alert('No section selected.');
+      return;
+    }
+
+    // "all" → one combined matrix/cert (sectionKey null), not one page per class
+    this._runSfpPrint(kind, { mode, sectionKey: mode === 'all' ? null : sectionKey });
+  },
+
+  /**
+   * @param {string} kind
+   * @param {{ mode: 'one'|'all', sectionKey?: string|null }} scope
+   * - one: single class filter
+   * - all: one combined document (all children), not one page per class
+   */
+  _runSfpPrint(kind, scope) {
+    const isAll = scope && scope.mode === 'all';
+    const opts = {
+      sectionKey: isAll ? null : (scope && scope.sectionKey) || null
+    };
+    const parts = [];
+
+    if (kind === 'certA') {
+      parts.push(`<div class="sfp-print-section">${this._certABodyHtml(opts)}</div>`);
+    } else if (kind === 'matrixA') {
+      parts.push(`<div class="sfp-print-section">${this._matrixAHtml(opts)}</div>`);
+    } else if (kind === 'packA') {
+      parts.push(`<div class="sfp-print-section">${this._certABodyHtml(opts)}</div>`);
+      parts.push('<div class="sfp-page-break"></div>');
+      parts.push(`<div class="sfp-print-section">${this._matrixAHtml(opts)}</div>`);
+    } else if (kind === 'certC') {
+      parts.push(`<div class="sfp-print-section">${this._certCBodyHtml(opts)}</div>`);
+    } else if (kind === 'matrixC') {
+      parts.push(`<div class="sfp-print-section">${this._matrixCHtml(opts)}</div>`);
+    } else if (kind === 'packC') {
+      parts.push(`<div class="sfp-print-section">${this._certCBodyHtml(opts)}</div>`);
+      parts.push('<div class="sfp-page-break"></div>');
+      parts.push(`<div class="sfp-print-section">${this._matrixCHtml(opts)}</div>`);
+    }
+
+    const titles = {
+      certA: 'SFP Certification -A',
+      matrixA: 'SFP Food Allocation Matrix -A',
+      packA: 'SFP Cert + Matrix -A',
+      certC: 'SFP Certification -C',
+      matrixC: 'SFP Food Allocation Matrix -C',
+      packC: 'SFP Cert + Matrix -C'
+    };
+    const suffix = isAll
+      ? ' (all classes)'
+      : (opts.sectionKey ? ` (${this._sectionLabel(opts.sectionKey)})` : '');
+    this._printWindow((titles[kind] || 'SFP form') + suffix, parts.join(''));
+  },
+
+  // Back-compat wrappers (open picker)
+  printMatrixA() { this.openSfpPrintPicker('matrixA'); },
+  printMatrixC() { this.openSfpPrintPicker('matrixC'); },
+  printPackA() { this.openSfpPrintPicker('packA'); },
+  printPackC() { this.openSfpPrintPicker('packC'); },
+  printCertA() { this.openSfpPrintPicker('certA'); },
+  printCertC() { this.openSfpPrintPicker('certC'); },
+
+    /** Certificate letterhead — NCDC Medina only (no DSWD branding). */
+  _dswdCertHeader(formCode) {
+    return `
+      <div class="dswd-letterhead ncdc-cert-letterhead">
+        <div class="dswd-lh-top" style="justify-content:center;text-align:center;">
+          <div class="dswd-lh-center" style="flex:1;">
+            <div class="dswd-rep">Republic of the Philippines</div>
+            <div class="dswd-dept">Municipality of Medina · Misamis Oriental</div>
+            <div class="dswd-fo">National Child Development Center — Medina</div>
+            <div class="dswd-fo-sub">Supplementary Feeding Program</div>
+          </div>
+          ${formCode ? `<div class="dswd-form-code">${formCode}</div>` : ''}
         </div>
         <div class="dswd-lh-line"></div>
       </div>`;
@@ -511,8 +738,8 @@ const TeacherReports = {
       <div class="dswd-footer">
         <div class="dswd-footer-line"></div>
         <p class="dswd-footer-text">
-          DSWD Field Office X, Masterson Ave., Upper Carmen, Cagayan de Oro City, Philippines (9000)<br>
-          Website: https://fo10.dswd.gov.ph/ &nbsp;|&nbsp; Tel Nos.: (088) 565 5795
+          National Child Development Center — Medina, Misamis Oriental<br>
+          For MSWDO / center liquidation records
         </p>
         <p class="dswd-footer-page">PAGE 1 of 1</p>
       </div>`;
@@ -532,14 +759,6 @@ const TeacherReports = {
           SY ${(schoolYear || '—')}
         </div>
       </div>`;
-  },
-
-  printCertA() {
-    this._printWindow('SFP Certification -A', this._certABodyHtml());
-  },
-
-  printCertC() {
-    this._printWindow('SFP Certification -C', this._certCBodyHtml());
   },
 
   printConsolidation() {
@@ -673,16 +892,24 @@ const TeacherReports = {
 
     let domains = [];
     if (finalScores && finalScores.domains) {
+      const ds = assessment.domainScores || {};
       domains = Object.keys(finalScores.domains).map(code => {
         const d = finalScores.domains[code];
         const name = (typeof ScoreProfile !== 'undefined' && ScoreProfile.DOMAIN_NAMES[code])
           || code;
         const sc = d.scaled;
         const n = sc !== '' && sc != null ? Number(sc) : null;
+        const src = ds[code] || {};
+        let percent = src.percent != null ? Math.round(Number(src.percent)) : null;
+        if (percent == null && src.total > 0 && src.present != null) {
+          percent = Math.round((Number(src.present) / Number(src.total)) * 100);
+        }
         return {
           code,
           name,
-          raw: d.raw,
+          raw: d.raw != null ? d.raw : src.present,
+          total: src.total != null ? src.total : null,
+          percent,
           scaled: sc,
           label: n != null && !isNaN(n)
             ? (n >= 14 ? 'Advanced' : n >= 7 ? 'Average' : 'Needs support')
@@ -694,6 +921,9 @@ const TeacherReports = {
         code: d.code,
         name: d.name,
         raw: d.raw,
+        total: d.total != null ? d.total : null,
+        percent: d.percent != null ? d.percent : (d.total > 0 && d.raw != null
+          ? Math.round((Number(d.raw) / Number(d.total)) * 100) : null),
         scaled: d.scaled,
         label: d.interpretation ? d.interpretation.label : (d.percent != null ? d.percent + '%' : '—')
       }));

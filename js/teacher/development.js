@@ -9,11 +9,56 @@ const TeacherDevelopment = {
   selectedSection: 'sunshine',
   catalog: null,
   _responses: {}, // key: `${childId}:${item_id}` -> true/false
+  searchQuery: '',
+  focusChildId: null,
+  /** Set by Children module before navigate('development') */
+  pendingChildId: null,
+  pendingOpenChecklist: false,
 
   async render(container) {
     this.container = container;
     await this._ensureCatalog();
+    await this._applyPendingChild();
     this._draw();
+  },
+
+  /**
+   * Jump from Children (or elsewhere) to this child's class, optionally open checklist.
+   */
+  async openForChild(childId, opts) {
+    opts = opts || {};
+    this.pendingChildId = childId;
+    this.pendingOpenChecklist = !!opts.openChecklist;
+    if (this.container) {
+      await this._applyPendingChild();
+      this._draw();
+    }
+  },
+
+  async _applyPendingChild() {
+    if (this.pendingChildId == null) return;
+    const id = this.pendingChildId;
+    const openChecklist = this.pendingOpenChecklist;
+    this.pendingChildId = null;
+    this.pendingOpenChecklist = false;
+
+    if (typeof ChildRegistry !== 'undefined') ChildRegistry.ensureMerged();
+    const child = (typeof SampleChildren !== 'undefined')
+      ? SampleChildren.find(c => String(c.id) === String(id))
+      : null;
+    if (!child) return;
+
+    if (child.sectionKey) this.selectedSection = child.sectionKey;
+    this.focusChildId = child.id;
+    this.searchQuery = '';
+
+    if (openChecklist) {
+      setTimeout(() => {
+        if (typeof TeacherDevelopment !== 'undefined') {
+          TeacherDevelopment.openAssessment(child.id);
+        }
+      }, 120);
+    }
   },
 
   async _ensureCatalog() {
@@ -36,18 +81,57 @@ const TeacherDevelopment = {
           { key: 'sunshine', label: 'Sunshine Group (4–5 yrs)' }
         ];
 
-    const children = SampleChildren.filter(c => c.sectionKey === this.selectedSection);
+    const q = String(this.searchQuery || '').trim().toLowerCase();
+    let children = (typeof SampleChildren !== 'undefined' ? SampleChildren : [])
+      .filter(c => c.sectionKey === this.selectedSection);
+
+    if (q) {
+      // Search across all classes when query is present
+      children = (typeof SampleChildren !== 'undefined' ? SampleChildren : []).filter(c => {
+        const hay = [
+          c.name, c.childCode, c.parentName, c.motherName, c.fatherName, c.section
+        ].map(x => String(x || '').toLowerCase()).join(' ');
+        return hay.includes(q);
+      });
+    }
+
+    const focusNote = this.focusChildId
+      ? (() => {
+          const fc = (SampleChildren || []).find(c => String(c.id) === String(this.focusChildId));
+          return fc
+            ? `<p class="text-muted" style="margin:0 0 0.75rem;font-size:0.9rem;">
+                 Focused on <strong>${fc.name}</strong>${fc.childCode ? ' · ' + fc.childCode : ''}
+                 · <button type="button" class="btn" style="padding:2px 8px;font-size:0.8rem;background:#e8e8e8;"
+                     onclick="TeacherDevelopment.clearFocus()">Clear focus</button>
+               </p>`
+            : '';
+        })()
+      : '';
 
     this.container.innerHTML = `
-      ${UI.pageHeader('📈 Development Tracking', 'Select a class, open a child, and encode the ECCD developmental checklist.')}
+      ${UI.pageHeader('📈 Development Tracking', 'Select a class, search a child, and encode the ECCD developmental checklist.')}
+
+      <div class="card">
+        <h3 style="margin-top:0;">Find a child</h3>
+        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:1;min-width:200px;">
+            <label class="ecc-field-label">Search name, Child ID, or parent</label>
+            <input type="search" id="dev-search" class="ecc-field-input" placeholder="e.g. Amina or NCDC-001"
+              value="${String(this.searchQuery || '').replace(/"/g, '&quot;')}"
+              oninput="TeacherDevelopment.onSearch(this.value)" />
+          </div>
+          ${q ? `<button type="button" class="btn" style="background:#e8e8e8;" onclick="TeacherDevelopment.onSearch('')">Clear search</button>` : ''}
+        </div>
+        ${q ? `<p class="text-muted" style="margin:0.5rem 0 0;font-size:0.85rem;">Showing matches across all classes (${children.length}).</p>` : ''}
+      </div>
 
       <div class="card">
         <h3>Select Class / Section</h3>
         <div class="flex flex-wrap gap-1 mt-2">
           ${sections.map(s => `
             <button
-              class="btn ${this.selectedSection === s.key ? 'btn-blue' : ''}"
-              style="${this.selectedSection !== s.key ? 'background:#e8e8e8;color:var(--text);' : ''}"
+              class="btn ${this.selectedSection === s.key && !q ? 'btn-blue' : ''}"
+              style="${this.selectedSection !== s.key || q ? 'background:#e8e8e8;color:var(--text);' : ''}"
               onclick="TeacherDevelopment.setSection('${s.key}')"
             >${s.label}</button>
           `).join('')}
@@ -55,20 +139,39 @@ const TeacherDevelopment = {
       </div>
 
       <div class="card">
-        <h3>Children in this section (${children.length})</h3>
+        <h3>${q ? 'Search results' : 'Children in this section'} (${children.length})</h3>
+        ${focusNote}
         ${children.length === 0
-          ? `<p class="text-muted">No children in this section.</p>`
+          ? `<p class="text-muted">${q ? 'No children match that search.' : 'No children in this section.'}</p>`
           : `<div class="children-grid" style="margin-top:1rem;">
               ${children.map(c => this._childCard(c)).join('')}
             </div>`
         }
       </div>
 
-      <div class="card">
+      ${!q ? `<div class="card">
         <h3>Overall Class Snapshot</h3>
         ${this._classSnapshotBlock(children)}
-      </div>
+      </div>` : ''}
     `;
+
+    // Scroll focused child into view
+    if (this.focusChildId) {
+      setTimeout(() => {
+        const el = document.getElementById('dev-child-' + this.focusChildId);
+        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 80);
+    }
+  },
+
+  onSearch(val) {
+    this.searchQuery = val || '';
+    this._draw();
+  },
+
+  clearFocus() {
+    this.focusChildId = null;
+    this._draw();
   },
 
   _classSnapshotBlock(children) {
@@ -101,6 +204,7 @@ const TeacherDevelopment = {
 
   setSection(key) {
     this.selectedSection = key;
+    this.searchQuery = '';
     this._draw();
   },
 
@@ -121,12 +225,20 @@ const TeacherDevelopment = {
       ? `<button class="btn" style="width:100%;margin-top:0.4rem;background:#e8e8e8;color:var(--text);"
            onclick="TeacherDevelopment.showTrends(${c.id})">📈 View Trends</button>`
       : '';
+    const focused = this.focusChildId != null && String(this.focusChildId) === String(c.id);
+    const focusStyle = focused
+      ? 'outline:3px solid var(--primary);box-shadow:0 0 0 4px rgba(33,150,243,0.2);'
+      : '';
+    const sectionLine = this.searchQuery
+      ? `<div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.35rem;">${c.section || c.sectionKey || ''}${c.childCode ? ' · ' + c.childCode : ''}</div>`
+      : (c.childCode ? `<div style="font-size:0.78rem;color:var(--muted);margin-bottom:0.35rem;">${c.childCode}</div>` : '');
     return `
-      <div class="card child-card" style="margin-bottom:0;">
+      <div class="card child-card" id="dev-child-${c.id}" style="margin-bottom:0;${focusStyle}">
         <div class="flex justify-between items-center" style="margin-bottom:0.35rem;">
           <strong>${c.name}</strong>
           <span style="font-size:0.85rem;color:var(--muted);">${c.ageLabel}</span>
         </div>
+        ${sectionLine}
         <div style="color:${color};font-weight:600;font-size:0.9rem;margin-bottom:0.35rem;">${label}</div>
         ${histNote}
         <button class="btn btn-blue" style="width:100%;" onclick="TeacherDevelopment.openAssessment(${c.id})">

@@ -85,7 +85,7 @@ const ApplicationStore = {
       siblings: data.siblings != null && data.siblings !== '' ? Number(data.siblings) : 0,
       siblingsDetail: Array.isArray(data.siblingsDetail) ? data.siblingsDetail : [],
       // Health / docs
-      documents: data.documents || { eccdCard: false, motherChildBook: false, other: '' },
+      documents: data.documents || { eccdCard: false, motherChildBook: false, other: '', files: [] },
       allergies: data.allergies || '',
       medicalConditions: data.medicalConditions || '',
       immunizations: data.immunizations || '',

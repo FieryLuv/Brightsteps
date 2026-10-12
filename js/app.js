@@ -43,9 +43,9 @@ const BrightSteps = (() => {
 
   /**
    * Parent login form:
-   * - Guardian name (required) — matches parentName / motherName / fatherName
-   * - Child ID optional (e.g. NCDC-001) — opens that child directly when name also matches
-   * One guardian can have several enrolled children.
+   * Credentials given after enrollment = Guardian name + Child ID (no password by default).
+   * Matching is case-insensitive; titles like Mr./Mrs./Ms. are ignored.
+   * If the parent later sets a password in Settings, that password is also required.
    */
   function showParentLogin() {
     const app = document.getElementById('app');
@@ -59,17 +59,20 @@ const BrightSteps = (() => {
             </div>
           </div>
           <p class="text-muted" style="font-size:0.9rem;margin:0 0 1.25rem;line-height:1.45;text-align:left;">
-            Enter the guardian name on the child’s enrollment record.
-            Optionally add the <strong>Child ID</strong> (e.g. NCDC-001) to open one child directly.
-            If you have more than one child at the center, you can switch between them after login.
+            Use the <strong>guardian name</strong> and <strong>Child ID</strong> given after enrollment.
+            Titles (Mr./Mrs.) and capital letters do not matter.
+            If you set a password in Settings, enter it below as well.
           </p>
           <div style="text-align:left;">
             <label class="ecc-field-label">Parent / Guardian name</label>
             <input type="text" id="parent-guardian-name" class="ecc-field-input" placeholder="e.g. Mr. Khalid or Fatima Khalid"
-              autocomplete="name" />
-            <label class="ecc-field-label" style="margin-top:1rem;">Child ID <span class="text-muted">(optional)</span></label>
+              autocomplete="username" />
+            <label class="ecc-field-label" style="margin-top:1rem;">Child ID <span class="text-muted">(recommended)</span></label>
             <input type="text" id="parent-child-code" class="ecc-field-input" placeholder="e.g. NCDC-001"
               autocomplete="off" />
+            <label class="ecc-field-label" style="margin-top:1rem;">Password <span class="text-muted">(only if you set one)</span></label>
+            <input type="password" id="parent-password" class="ecc-field-input" placeholder="Leave blank if not set"
+              autocomplete="current-password" />
             <p id="parent-login-error" style="color:#d32f2f;font-size:0.85rem;margin:0.75rem 0 0;display:none;"></p>
           </div>
           <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:0.6rem;">
@@ -78,7 +81,7 @@ const BrightSteps = (() => {
           </div>
           <div style="margin-top:1.25rem;padding:0.85rem;background:#f5f9fc;border-radius:10px;text-align:left;font-size:0.82rem;color:var(--muted);">
             <strong>Demo:</strong><br>
-            Guardian <code>Mr. Khalid</code> or <code>Fatima Khalid</code> → Amina (NCDC-001) &amp; Rayan (NCDC-009)<br>
+            Guardian <code>Mr. Khalid</code> or <code>Khalid</code> → Amina (NCDC-001) &amp; Rayan (NCDC-009)<br>
             Guardian <code>Mrs. Ahmed</code> + Child ID <code>NCDC-002</code> → Omar only
           </div>
         </div>
@@ -97,16 +100,52 @@ const BrightSteps = (() => {
       .trim();
   }
 
+  /** Strip common titles so "Mr. Khalid" and "Khalid" match the same record. */
+  function _stripHonorific(s) {
+    return _norm(s)
+      .replace(/^(mr|mrs|ms|miss|dr|eng|atty)\.?\s+/i, '')
+      .trim();
+  }
+
+  /**
+   * Whole-word / token match only — never character substrings.
+   * Prevents "Ali" matching inside "Khalid" (false sibling bug).
+   * Allows: "Khalid" ↔ "Mr. Khalid", "Fatima" ↔ "Fatima Khalid".
+   */
+  function _nameTokensMatch(a, b) {
+    const na = _stripHonorific(a);
+    const nb = _stripHonorific(b);
+    if (!na || !nb) return false;
+    if (na === nb) return true;
+
+    const wa = na.split(/\s+/).filter(Boolean);
+    const wb = nb.split(/\s+/).filter(Boolean);
+    if (!wa.length || !wb.length) return false;
+
+    // Single token equals any full token on the other side
+    if (wa.length === 1 && wb.includes(wa[0])) return true;
+    if (wb.length === 1 && wa.includes(wb[0])) return true;
+
+    // All tokens of the shorter name appear as tokens of the longer
+    const [shorter, longer] = wa.length <= wb.length ? [wa, wb] : [wb, wa];
+    if (shorter.every(t => longer.includes(t))) {
+      // Require a meaningful token (length ≥ 4) or multi-token to avoid weak hits
+      return shorter.length >= 2 || shorter.some(t => t.length >= 4);
+    }
+    return false;
+  }
+
   function _guardianMatches(child, guardianName) {
-    const g = _norm(guardianName);
+    const g = _stripHonorific(guardianName);
     if (!g) return false;
-    const fields = [child.parentName, child.motherName, child.fatherName];
-    return fields.some(f => {
-      const n = _norm(f);
-      if (!n) return false;
-      // allow partial match either way (e.g. "Khalid" matches "Mr. Khalid")
-      return n === g || n.includes(g) || g.includes(n);
-    });
+    const fields = [
+      child.parentLoginName,
+      child.parentName,
+      child.motherName,
+      child.fatherName,
+      child.guardianName
+    ];
+    return fields.some(f => f && _nameTokensMatch(f, guardianName));
   }
 
   function findChildrenForGuardian(guardianName, childCode) {
@@ -114,11 +153,14 @@ const BrightSteps = (() => {
     const code = _norm(childCode).toUpperCase().replace(/\s+/g, '');
 
     if (code) {
-      const byCode = list.find(c => _norm(c.childCode).toUpperCase() === code || String(c.id) === code.replace(/^ncdc-0*/, ''));
+      const byCode = list.find(c => {
+        const cc = _norm(c.childCode).toUpperCase().replace(/\s+/g, '');
+        return cc === code || String(c.id) === code.replace(/^ncdc-0*/i, '');
+      });
       if (!byCode) return { error: 'No child found with that Child ID.', children: [] };
       if (!_guardianMatches(byCode, guardianName)) {
         return {
-          error: 'That Child ID does not match this guardian name. Check the name on the enrollment record.',
+          error: 'That Child ID does not match this guardian name. Use the name from the enrollment credentials slip.',
           children: []
         };
       }
@@ -128,7 +170,7 @@ const BrightSteps = (() => {
     const matches = list.filter(c => _guardianMatches(c, guardianName));
     if (!matches.length) {
       return {
-        error: 'No enrolled children found for that guardian name. Try the name as written on the child’s record (e.g. Mr. Khalid, Fatima Khalid).',
+        error: 'No enrolled children found for that guardian name. Try the name from the credentials given after enrollment.',
         children: []
       };
     }
@@ -138,9 +180,11 @@ const BrightSteps = (() => {
   function submitParentLogin() {
     const nameEl = document.getElementById('parent-guardian-name');
     const codeEl = document.getElementById('parent-child-code');
+    const passEl = document.getElementById('parent-password');
     const errEl = document.getElementById('parent-login-error');
     const guardianName = (nameEl && nameEl.value || '').trim();
     const childCode = (codeEl && codeEl.value || '').trim();
+    const password = (passEl && passEl.value || '');
 
     if (!guardianName) {
       if (errEl) {
@@ -160,9 +204,24 @@ const BrightSteps = (() => {
     }
 
     const children = result.children;
+    // If any matched child has a password set, require it (same password shared across siblings under this guardian)
+    const requiredPass = children.map(c => c.parentPassword).find(p => p && String(p).length);
+    if (requiredPass) {
+      if (password !== String(requiredPass)) {
+        if (errEl) {
+          errEl.style.display = 'block';
+          errEl.textContent = password
+            ? 'Incorrect password. Use the password you set in Settings, or ask the teacher to reset it.'
+            : 'A password is set for this account. Enter it to continue.';
+        }
+        return;
+      }
+    }
+
+    const displayName = (children[0].parentLoginName || children[0].parentName || guardianName || '').trim();
     currentRole = 'parent';
     currentUser = {
-      name: guardianName,
+      name: displayName || guardianName,
       role: 'parent',
       center: 'NCDC Medina',
       children,
@@ -170,11 +229,12 @@ const BrightSteps = (() => {
       childName: children[0].name
     };
 
-    if (children.length === 1) {
-      ParentLayout.render(currentUser);
-    } else {
-      // Multi-child: still enter portal with first selected; header shows switcher
-      ParentLayout.render(currentUser);
+    ParentLayout.render(currentUser);
+  }
+
+  function openParentSettings() {
+    if (typeof ParentLayout !== 'undefined' && ParentLayout.openSettings) {
+      ParentLayout.openSettings();
     }
   }
 
@@ -209,15 +269,17 @@ const BrightSteps = (() => {
   function showVisitorShell() {
     const app = document.getElementById('app');
     app.innerHTML = `
-      <header class="parent-header visitor-header">
-        <div class="logo">🌱 BrightSteps</div>
+      <header class="parent-header visitor-header app-header">
+        <div class="header-left">
+          <div class="logo">🌱 BrightSteps</div>
+        </div>
         <nav class="visitor-nav" aria-label="Visitor">
           <button type="button" class="visitor-nav-btn is-active" id="visitor-nav-about" onclick="BrightSteps.showVisitorAbout()">About NCDC</button>
           <button type="button" class="visitor-nav-btn" id="visitor-nav-enroll" onclick="BrightSteps.showVisitorEnrollment()">Enrollment</button>
         </nav>
         <div class="user-info">
-          Visitor
-          <button class="btn" style="margin-left:0.75rem; padding:0.3rem 0.7rem; font-size:0.8rem;" onclick="BrightSteps.logout()">Exit</button>
+          <span class="user-info-text">Visitor</span>
+          <button class="btn btn-header-logout" onclick="BrightSteps.logout()">Exit</button>
         </div>
       </header>
       <div class="visitor-main" id="main-content"></div>
@@ -267,11 +329,16 @@ const BrightSteps = (() => {
     const main = document.getElementById('main-content');
     if (!main) return;
 
-    document.querySelectorAll('.nav-item').forEach(item => {
-      item.classList.remove('active');
-      const onclick = item.getAttribute('onclick') || '';
-      if (onclick.includes(`'${page}'`)) item.classList.add('active');
-    });
+    if (typeof TeacherLayout !== 'undefined') {
+      if (TeacherLayout.setActive) TeacherLayout.setActive(page);
+      if (TeacherLayout.closeNav) TeacherLayout.closeNav();
+    } else {
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.classList.remove('active');
+        const onclick = item.getAttribute('onclick') || '';
+        if (onclick.includes(`'${page}'`)) item.classList.add('active');
+      });
+    }
 
     const routes = {
       dashboard: () => TeacherDashboard.render(main),
@@ -330,6 +397,7 @@ const BrightSteps = (() => {
     selectChild,
     findChildrenForGuardian,
     showVisitorAbout,
-    showVisitorEnrollment
+    showVisitorEnrollment,
+    openParentSettings
   };
 })();

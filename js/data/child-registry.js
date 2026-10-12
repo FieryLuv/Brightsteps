@@ -27,27 +27,50 @@ const ChildRegistry = {
   _writeEnrolled(list) {
     try {
       localStorage.setItem(this.KEY, JSON.stringify(list));
-      return true;
+      return { ok: true };
     } catch (e) {
-      return false;
+      // Quota: strip heavy attachments and retry once
+      try {
+        const slim = (list || []).map(c => {
+          const copy = { ...c };
+          if (copy.photo && copy.photo.dataUrl) {
+            copy.photo = { name: copy.photo.name || 'photo', type: copy.photo.type || '', size: copy.photo.size || 0, dataUrl: null, stripped: true };
+          }
+          if (copy.documents && Array.isArray(copy.documents.files)) {
+            copy.documents = {
+              ...copy.documents,
+              files: copy.documents.files.map(f => ({
+                name: f.name, type: f.type, size: f.size, dataUrl: null, stripped: true
+              }))
+            };
+          }
+          return copy;
+        });
+        localStorage.setItem(this.KEY, JSON.stringify(slim));
+        return { ok: true, strippedAttachments: true };
+      } catch (e2) {
+        console.error('ChildRegistry._writeEnrolled failed', e2);
+        return { ok: false, error: 'Could not save to browser storage (storage full or blocked).' };
+      }
     }
   },
 
-  /** Ensure SampleChildren includes persisted enrollments (call once at boot / before lists). */
+  /**
+   * Merge persisted enrollments into SampleChildren.
+   * Enrolled records fully overwrite seed rows with the same id (so profile edits stick).
+   */
   ensureMerged() {
     if (typeof SampleChildren === 'undefined') return;
     const enrolled = this._readEnrolled();
     enrolled.forEach(c => {
-      if (!SampleChildren.some(x => x.id === c.id || (c.childCode && x.childCode === c.childCode))) {
+      const idx = SampleChildren.findIndex(
+        x => x.id === c.id || String(x.id) === String(c.id) ||
+          (c.childCode && x.childCode && x.childCode === c.childCode)
+      );
+      if (idx >= 0) {
+        SampleChildren[idx] = { ...SampleChildren[idx], ...c };
+      } else {
         SampleChildren.push(c);
-      }
-    });
-    // Apply transfers stored in enrolled over sample seeds
-    enrolled.forEach(c => {
-      const idx = SampleChildren.findIndex(x => x.id === c.id || String(x.id) === String(c.id));
-      if (idx >= 0 && c.sectionKey) {
-        SampleChildren[idx].sectionKey = c.sectionKey;
-        SampleChildren[idx].section = c.section || SampleChildren[idx].section;
       }
     });
     this.applyDeletions();
@@ -182,8 +205,12 @@ const ChildRegistry = {
       documents: {
         eccdCard: !!(data.documents && data.documents.eccdCard) || data.docEccdCard === true || data.docEccdCard === 'on',
         motherChildBook: !!(data.documents && data.documents.motherChildBook) || data.docMotherChildBook === true || data.docMotherChildBook === 'on',
-        other: (data.documents && data.documents.other) || data.docOther || ''
+        other: (data.documents && data.documents.other) || data.docOther || '',
+        files: Array.isArray(data.documents && data.documents.files)
+          ? data.documents.files
+          : (Array.isArray(data.docFiles) ? data.docFiles : [])
       },
+      photo: data.photo && data.photo.dataUrl ? data.photo : (data.photo || null),
       vaccines: vaccinesNorm,
       // enrollment meta
       enrollmentSource: opts.source || data.enrollmentSource || 'walk_in',
@@ -206,6 +233,15 @@ const ChildRegistry = {
    * Persist enrollment and push into SampleChildren.
    */
   enroll(data, opts = {}) {
+    // Keep health snapshot on the child record
+    if (!data.enrollmentHealth && (data.heightCm || data.weightKg || data.allergies || data.medicalConditions)) {
+      data.enrollmentHealth = {
+        heightCm: data.heightCm || '',
+        weightKg: data.weightKg || '',
+        allergies: data.allergies || '',
+        medicalConditions: data.medicalConditions || ''
+      };
+    }
     const child = this.buildChildRecord(data, opts);
     if (!child.name) {
       return { ok: false, error: 'Child name is required.' };
@@ -221,11 +257,16 @@ const ChildRegistry = {
     }
 
     SampleChildren.push(child);
-    const enrolled = this._readEnrolled().filter(c => c.id !== child.id);
+    const enrolled = this._readEnrolled().filter(c => c.id !== child.id && String(c.id) !== String(child.id));
     enrolled.push(child);
-    this._writeEnrolled(enrolled);
-
-    return { ok: true, child };
+    const write = this._writeEnrolled(enrolled);
+    if (!write.ok) {
+      // roll back in-memory push
+      const i = SampleChildren.findIndex(c => c.id === child.id);
+      if (i >= 0) SampleChildren.splice(i, 1);
+      return { ok: false, error: write.error || 'Could not save enrollment to browser storage.' };
+    }
+    return { ok: true, child, strippedAttachments: !!write.strippedAttachments };
   },
 
   /**
@@ -239,15 +280,88 @@ const ChildRegistry = {
     SampleChildren[idx] = { ...SampleChildren[idx], ...patch };
     const enrolled = this._readEnrolled();
     const eIdx = enrolled.findIndex(c => c.id === id || String(c.id) === String(id));
+    let write;
     if (eIdx >= 0) {
       enrolled[eIdx] = { ...enrolled[eIdx], ...patch };
-      this._writeEnrolled(enrolled);
+      write = this._writeEnrolled(enrolled);
     } else {
       // Persist sample-child edits so transfer/delete survives refresh
       enrolled.push(SampleChildren[idx]);
-      this._writeEnrolled(enrolled);
+      write = this._writeEnrolled(enrolled);
     }
-    return { ok: true, child: SampleChildren[idx] };
+    if (write && write.ok === false) {
+      return { ok: false, error: write.error || 'Could not save.' };
+    }
+    return { ok: true, child: SampleChildren[idx], strippedAttachments: !!(write && write.strippedAttachments) };
+  },
+
+  /**
+   * Parent-limited update: profile photo + digital document files only.
+   * Does not change names, demographics, health text flags, etc.
+   */
+  updateParentAttachments(id, payload = {}) {
+    this.ensureMerged();
+    if (typeof SampleChildren === 'undefined') return { ok: false, error: 'No children list.' };
+    const idx = SampleChildren.findIndex(c => c.id === id || String(c.id) === String(id));
+    if (idx < 0) return { ok: false, error: 'Child not found.' };
+    const existing = SampleChildren[idx];
+    const docs = { ...(existing.documents || {}) };
+
+    if (payload.files !== undefined) {
+      docs.files = Array.isArray(payload.files) ? payload.files : [];
+    }
+
+    const patch = {
+      documents: docs,
+      updatedAt: new Date().toISOString(),
+      parentAttachmentsUpdatedAt: new Date().toISOString()
+    };
+
+    if (payload.clearPhoto) {
+      patch.photo = null;
+    } else if (payload.photo !== undefined) {
+      patch.photo = payload.photo && payload.photo.dataUrl ? payload.photo : payload.photo;
+    }
+
+    return this.updateChild(id, patch);
+  },
+
+  /**
+   * Parent Settings: login name, optional password, and optional photo on the active child.
+   * Child ID remains center-controlled and is never changed here.
+   */
+  updateParentCredentials(id, payload = {}) {
+    this.ensureMerged();
+    if (typeof SampleChildren === 'undefined') return { ok: false, error: 'No children list.' };
+    const idx = SampleChildren.findIndex(c => c.id === id || String(c.id) === String(id));
+    if (idx < 0) return { ok: false, error: 'Child not found.' };
+
+    const patch = {
+      updatedAt: new Date().toISOString(),
+      parentCredentialsUpdatedAt: new Date().toISOString()
+    };
+
+    if (payload.parentLoginName !== undefined) {
+      const name = String(payload.parentLoginName || '').trim();
+      if (!name) return { ok: false, error: 'Login name is required.' };
+      patch.parentLoginName = name;
+      // Keep parentName aligned so teacher views and older matches stay consistent
+      patch.parentName = name;
+    }
+
+    if (payload.clearPassword) {
+      patch.parentPassword = '';
+    } else if (payload.parentPassword !== undefined && payload.parentPassword !== null && String(payload.parentPassword).length) {
+      patch.parentPassword = String(payload.parentPassword);
+    }
+
+    if (payload.clearPhoto) {
+      patch.photo = null;
+    } else if (payload.photo !== undefined) {
+      patch.photo = payload.photo && payload.photo.dataUrl ? payload.photo : payload.photo;
+    }
+
+    return this.updateChild(id, patch);
   },
 
   /**
@@ -286,6 +400,7 @@ const ChildRegistry = {
       motherTongueOther: child.motherTongueOther || '',
       otherDialects: child.otherDialects || '',
       documents: child.documents || {},
+      photo: child.photo || null,
       vaccines: child.vaccines || {},
       motherProfile: child.motherProfile || null,
       fatherProfile: child.fatherProfile || null,
@@ -308,28 +423,61 @@ const ChildRegistry = {
     this.ensureMerged();
     if (typeof SampleChildren === 'undefined') return { ok: false, error: 'No children list.' };
     const idx = SampleChildren.findIndex(c => c.id === id || String(c.id) === String(id));
-    if (idx < 0) return { ok: false, error: 'Child not found.' };
+    if (idx < 0) return { ok: false, error: 'Child not found. Try refreshing the page.' };
     const existing = SampleChildren[idx];
+
+    if (!data.enrollmentHealth && (data.heightCm || data.weightKg || data.allergies || data.medicalConditions)) {
+      data.enrollmentHealth = {
+        heightCm: data.heightCm || '',
+        weightKg: data.weightKg || '',
+        allergies: data.allergies || '',
+        medicalConditions: data.medicalConditions || ''
+      };
+    }
+    // Keep prior photo if form sent null but child already had one and no explicit clear
+    if ((data.photo == null || data.photo === '') && existing.photo && opts.keepPhoto !== false) {
+      data.photo = existing.photo;
+    }
+    if ((!data.documents || !data.documents.files || !data.documents.files.length) &&
+        existing.documents && existing.documents.files && existing.documents.files.length &&
+        opts.keepDocs !== false) {
+      data.documents = {
+        ...(data.documents || {}),
+        files: existing.documents.files
+      };
+    }
+
     const rebuilt = this.buildChildRecord({
       ...data,
       id: existing.id,
       childCode: existing.childCode,
-      enrolledAt: existing.enrolledAt,
+      enrolledAt: existing.enrolledAt || existing.enrolledAt,
       enrollmentSource: existing.enrollmentSource || data.enrollmentSource || opts.source || 'walk_in',
       applicationId: existing.applicationId || data.applicationId || null,
       status: existing.status,
       statusLabel: existing.statusLabel,
-      focusArea: existing.focusArea
+      focusArea: existing.focusArea,
+      motherProfile: data.motherProfile != null ? data.motherProfile : existing.motherProfile,
+      fatherProfile: data.fatherProfile != null ? data.fatherProfile : existing.fatherProfile
     }, {
       source: existing.enrollmentSource || opts.source || 'walk_in',
       applicationId: existing.applicationId || data.applicationId || null
     });
     rebuilt.updatedAt = new Date().toISOString();
     SampleChildren[idx] = rebuilt;
-    const enrolled = this._readEnrolled().filter(c => c.id !== existing.id && String(c.id) !== String(existing.id));
+    const enrolled = this._readEnrolled().filter(
+      c => c.id !== existing.id && String(c.id) !== String(existing.id)
+    );
     enrolled.push(rebuilt);
-    this._writeEnrolled(enrolled);
-    return { ok: true, child: rebuilt };
+    const write = this._writeEnrolled(enrolled);
+    if (!write.ok) {
+      return { ok: false, error: write.error || 'Could not save changes to browser storage.' };
+    }
+    return {
+      ok: true,
+      child: rebuilt,
+      strippedAttachments: !!write.strippedAttachments
+    };
   },
 
   /**

@@ -9,8 +9,13 @@ const VisitorAbout = {
     { src: 'assets/visitor/ncdc-play-1.jpg', alt: 'Play area with swings' },
     { src: 'assets/visitor/ncdc-play-3.jpg', alt: 'Covered playground' },
     { src: 'assets/visitor/ncdc-play-2.jpg', alt: 'Playground and classroom entrance' },
-    { src: 'assets/visitor/ncdc-wall-logo.jpg', alt: 'ECCD Council logo on center wall' },
-    { src: 'assets/visitor/ncdc-interior.jpg', alt: 'National Child Development Center interior' }
+    { src: 'assets/visitor/ncdc-interior.jpg', alt: 'National Child Development Center entrance interior' },
+    { src: 'assets/visitor/ncdc-class-main.jpg', alt: 'Main classroom with colorful tables' },
+    { src: 'assets/visitor/ncdc-class-tables.jpg', alt: 'Learning tables along the window wall' },
+    { src: 'assets/visitor/ncdc-class-corner.jpg', alt: 'Classroom learning corner' },
+    { src: 'assets/visitor/ncdc-class-activity.jpg', alt: 'Activity area and learning shelves' },
+    { src: 'assets/visitor/ncdc-class-overview.jpg', alt: 'Classroom overview with mini library' },
+    { src: 'assets/visitor/ncdc-spiritual-corner.jpg', alt: 'Quiet area and spiritual corner' }
   ],
   _timer: null,
   _index: 0,
@@ -167,20 +172,20 @@ const VisitorAbout = {
           <div class="visitor-section-inner">
             <h2>Location</h2>
             <p class="text-muted" style="margin-top:0;">
-              Municipality of Medina, Misamis Oriental, Northern Mindanao. Visit the center during office hours for enrollment
-              follow-up and in-person requirements.
+              <strong>20 Medina By-Pass Rd</strong>, Medina, Misamis Oriental, Northern Mindanao.
+              Visit the center during office hours for enrollment follow-up and in-person requirements.
             </p>
             <div class="visitor-map-wrap">
               <iframe
-                title="Map of Medina, Misamis Oriental"
-                src="https://maps.google.com/maps?q=Medina%2C%20Misamis%20Oriental%2C%20Philippines&z=14&output=embed"
+                title="Map of NCDC Medina"
+                src="https://maps.google.com/maps?q=8.913836,125.023616&z=18&output=embed"
                 loading="lazy"
                 referrerpolicy="no-referrer-when-downgrade"
                 allowfullscreen>
               </iframe>
             </div>
             <p style="margin-top:0.75rem;font-size:0.9rem;">
-              <a href="https://www.google.com/maps/search/?api=1&query=Medina+Misamis+Oriental+Philippines" target="_blank" rel="noopener noreferrer">
+              <a href="https://www.google.com/maps?q=8.913836,125.023616&z=18" target="_blank" rel="noopener noreferrer">
                 Open in Google Maps ↗
               </a>
             </p>
