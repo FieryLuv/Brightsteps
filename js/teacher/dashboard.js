@@ -10,12 +10,50 @@ const TeacherDashboard = {
     });
     const todayISO = new Date().toISOString().slice(0, 10);
     const hour = new Date().getHours();
-    const greeting = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
+    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-    const total = (typeof SampleChildren !== 'undefined') ? SampleChildren.length : 0;
-    const needsSupport = (SampleChildren || []).filter(c => c.status === 'needs_support');
-    const onTrack = (SampleChildren || []).filter(c => c.status === 'on_track');
-    const onTrackPct = total ? Math.round((onTrack.length / total) * 100) : 0;
+    const children = (typeof SampleChildren !== 'undefined') ? SampleChildren : [];
+    const total = children.length;
+
+    /** Live status from approved reports / latest assessment insight — not static sample flags. */
+    const liveStatusOf = (child) => {
+      if (typeof ReportStore !== 'undefined' && ReportStore.getLatestApproved) {
+        const rep = ReportStore.getLatestApproved(child.id);
+        if (rep && (rep.overallLabel || (rep.overallInterpretation && rep.overallInterpretation.label))) {
+          const label = String(rep.overallLabel || rep.overallInterpretation.label || '').toLowerCase();
+          const level = String((rep.overallInterpretation && rep.overallInterpretation.level) || '').toLowerCase();
+          if (level === 'needs_support' || level === 'emerging' ||
+              label.includes('need') || label.includes('support') || label.includes('emerging')) {
+            return { key: 'needs_support', label: rep.overallLabel || 'Needs support', focus: null };
+          }
+          return { key: 'on_track', label: rep.overallLabel || 'On track', focus: null };
+        }
+      }
+      if (typeof AssessmentStore !== 'undefined' && AssessmentStore.getLatest) {
+        const a = AssessmentStore.getLatest(child.id);
+        if (!a) return { key: 'not_assessed', label: 'Not assessed', focus: null };
+        const oi = a.insight && (a.insight.overallInterpretation || a.insight.overall);
+        if (oi) {
+          const level = String(oi.level || '').toLowerCase();
+          const label = oi.label || a.insight.interpretation || '';
+          if (level === 'needs_support' || level === 'emerging') {
+            return { key: 'needs_support', label: label || 'Needs support', focus: null };
+          }
+          if (level && level !== 'unknown') {
+            return { key: 'on_track', label: label || 'On track', focus: null };
+          }
+        }
+        // Checklist saved but no scored interpretation yet
+        return { key: 'assessed', label: 'Assessed', focus: null };
+      }
+      return { key: 'not_assessed', label: 'Not assessed', focus: null };
+    };
+
+    const withStatus = children.map(c => Object.assign({}, c, { _live: liveStatusOf(c) }));
+    const needsSupport = withStatus.filter(c => c._live.key === 'needs_support');
+    const onTrack = withStatus.filter(c => c._live.key === 'on_track');
+    const assessedCount = withStatus.filter(c => c._live.key !== 'not_assessed').length;
+    const onTrackPct = assessedCount ? Math.round((onTrack.length / assessedCount) * 100) : 0;
 
     const pendingApps = (typeof ApplicationStore !== 'undefined')
       ? ApplicationStore.pendingCount()
@@ -75,10 +113,10 @@ const TeacherDashboard = {
               onclick="BrightSteps.navigate('children'); setTimeout(function(){ if (window.TeacherChildren) TeacherChildren.openProfile(${c.id}); }, 80)">
               ${c.name}
             </button>
-            <span class="dash-tag">${c.focusArea || 'Needs support'}</span>
+            <span class="dash-tag">${c._live.label || c.focusArea || 'Needs support'}</span>
           </li>
         `).join('')
-      : `<li class="text-muted">No children currently flagged</li>`;
+      : `<li class="text-muted">No children currently flagged from saved assessments</li>`;
 
     const attStat = attRate != null ? `${attPresent} / ${attTotal}` : '—';
     const attBar = attRate != null ? attRate : 0;
@@ -95,11 +133,20 @@ const TeacherDashboard = {
           : 'From health participation flags')
       : 'No feeding records yet';
 
+    const profile = typeof TeacherStore !== 'undefined' ? TeacherStore.get() : {};
+    const user = typeof BrightSteps !== 'undefined' && BrightSteps.getUser ? BrightSteps.getUser() : null;
+    const staffName = (profile.fullName || (user && user.name) || 'Teacher').trim();
+    // "Good morning, Teacher Irish!" — first name with Teacher title
+    const firstName = staffName.replace(/^Teacher\s+/i, '').split(/\s+/)[0] || 'Teacher';
+    const greetName = /^teacher$/i.test(firstName) ? 'Teacher' : ('Teacher ' + firstName);
+    const roleTag = profile.isHead ? 'Head Teacher' : (profile.position || 'Teacher');
+    const centerLine = (profile.centerName || (user && user.center) || 'National Child Development Center — Medina');
+
     container.innerHTML = `
       <div class="dash-hero">
         <div>
-          <h1 class="dash-hero-title">${greeting}, Teacher Irish!</h1>
-          <p class="text-muted dash-hero-sub">${today} · National Child Development Center — Medina</p>
+          <h1 class="dash-hero-title">${greeting}, ${greetName}!</h1>
+          <p class="text-muted dash-hero-sub">${today} · ${roleTag} · ${centerLine}</p>
         </div>
       </div>
 
@@ -161,7 +208,8 @@ const TeacherDashboard = {
             <h3>Enrollment snapshot</h3>
             <ul class="dash-stat-list">
               <li><span>Enrolled</span><strong>${total}</strong></li>
-              <li><span>On track</span><strong>${onTrack.length} <span class="text-muted">(${onTrackPct}%)</span></strong></li>
+              <li><span>Assessed</span><strong>${assessedCount}</strong></li>
+              <li><span>On track</span><strong>${onTrack.length}${assessedCount ? ` <span class="text-muted">(${onTrackPct}% of assessed)</span>` : ''}</strong></li>
               <li><span>Needs support</span><strong class="${needsSupport.length ? 'is-warn' : ''}">${needsSupport.length}</strong></li>
             </ul>
           </div>

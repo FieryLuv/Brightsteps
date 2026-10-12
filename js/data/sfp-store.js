@@ -108,6 +108,13 @@ const SfpStore = {
     state.beneficiaries[id] = {
       childId: id,
       enrolledInSfp: data.enrolledInSfp !== false,
+      // Snapshot of identity (prefilled from child, editable on SFP form)
+      beneficiaryName: data.beneficiaryName != null ? data.beneficiaryName : (prev.beneficiaryName || ''),
+      beneficiarySex: data.beneficiarySex != null ? data.beneficiarySex : (prev.beneficiarySex || ''),
+      beneficiaryBirthDate: data.beneficiaryBirthDate != null ? data.beneficiaryBirthDate : (prev.beneficiaryBirthDate || ''),
+      beneficiaryAgeLabel: data.beneficiaryAgeLabel != null ? data.beneficiaryAgeLabel : (prev.beneficiaryAgeLabel || ''),
+      beneficiaryAddress: data.beneficiaryAddress != null ? data.beneficiaryAddress : (prev.beneficiaryAddress || ''),
+      parentGuardianName: data.parentGuardianName != null ? data.parentGuardianName : (prev.parentGuardianName || ''),
       disability: data.disability === true || data.disability === 'Yes',
       disabilitySpecify: data.disabilitySpecify || '',
       soloParent: data.soloParent === true || data.soloParent === 'Yes',

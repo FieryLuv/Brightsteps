@@ -421,29 +421,77 @@ const ProgressEngine = {
       filler.forEach(f => { if (tipLines.length < 4) tipLines.push(f); });
     }
 
-    const activityLines = parentActivities.slice(0, 3).map(pa =>
-      pa.domainName + ': ' + (pa.activities[0] || '')
-    );
+    // Domain-level parent summary (checklist-based advice, not a raw list of gaps)
+    const PARENT_DOMAIN_ADVICE = {
+      GM: {
+        support: 'Your child can benefit from more large-muscle play—running, climbing, balancing, and ball games—to strengthen Gross Motor skills on the checklist.',
+        maintain: 'Keep encouraging active play outdoors so Gross Motor skills stay strong.'
+      },
+      FM: {
+        support: 'Your child needs more chances to use the hands and fingers—drawing, stacking, playdough, and simple puzzles—to exercise Fine Motor skills still developing on the checklist.',
+        maintain: 'Continue short drawing and hand-play activities so Fine Motor skills keep growing.'
+      },
+      SH: {
+        support: 'Practice everyday independence at home (feeding, dressing, handwashing) so Self-Help checklist skills can develop with gentle coaching.',
+        maintain: 'Keep inviting your child to help with simple daily routines to maintain Self-Help progress.'
+      },
+      RL: {
+        support: 'Spend time on listening games and simple directions (“please get your shoes”) and shared picture books so Receptive Language skills can grow.',
+        maintain: 'Keep talking through daily routines and stories to support Receptive Language.'
+      },
+      EL: {
+        support: 'Invite your child to talk about their day, sing songs, and name feelings or objects so Expressive Language can expand.',
+        maintain: 'Continue conversations and songs that let your child practice speaking.'
+      },
+      COG: {
+        support: 'Play simple sorting, counting, and matching games so Cognitive skills on the checklist get regular practice.',
+        maintain: 'Keep exploring “how” and “why” questions during play to support Cognitive growth.'
+      },
+      SE: {
+        support: 'Support turn-taking, naming feelings, and calm routines so Social-Emotional skills can strengthen.',
+        maintain: 'Keep praising sharing, waiting, and kind play to nurture Social-Emotional development.'
+      }
+    };
 
-    const commentSummary = focusComments.slice(0, 4).map(c =>
-      '“' + c.itemTitle + '” — ' + c.comment
-    );
+    const supportAdvice = [];
+    const strengthAdvice = [];
+    domainResults.forEach(d => {
+      const advice = PARENT_DOMAIN_ADVICE[d.code];
+      if (!advice) return;
+      const needsHelp = (d.interpretation && (d.interpretation.level === 'needs_support' || d.interpretation.level === 'emerging'))
+        || (d.percent != null && d.percent < 60);
+      const isStrong = (d.interpretation && (d.interpretation.level === 'advanced' || d.interpretation.level === 'average'))
+        || (d.percent != null && d.percent >= 85);
+      if (needsHelp) supportAdvice.push(advice.support);
+      else if (isStrong) strengthAdvice.push(advice.maintain);
+    });
+    // If nothing flagged, still offer one gentle tip from lowest domains
+    if (!supportAdvice.length && guidanceTargets.length) {
+      guidanceTargets.slice(0, 2).forEach(d => {
+        const advice = PARENT_DOMAIN_ADVICE[d.code];
+        if (advice) supportAdvice.push(advice.support);
+      });
+    }
 
     const parentFriendlyDraft = [
-      assessment.period ? `Assessment period: ${assessment.period}.` : '',
-      overallInterpretation.description,
-      strengths.length ? 'Strengths: ' + strengths.slice(0, 4).join('; ') + '.' : '',
-      needs.length ? 'Areas to support: ' + needs.slice(0, 4).join('; ') + '.' : '',
-      focusItems.length
-        ? 'Skills still developing (examples): ' + focusItems.slice(0, 5).map(fi => fi.itemTitle).join('; ') + '.'
+      assessment.period
+        ? `This note is based on the ${assessment.period} ECCD developmental checklist evaluation.`
+        : 'This note is based on the ECCD developmental checklist evaluation.',
+      overallInterpretation && overallInterpretation.description
+        ? overallInterpretation.description
         : '',
-      commentSummary.length
-        ? 'Teacher observations: ' + commentSummary.join(' | ') + '.'
+      strengthAdvice.length
+        ? 'What is going well: ' + strengthAdvice.slice(0, 2).join(' ')
+        : (strengths.length
+          ? 'Your child shows solid progress in some developmental areas on the checklist.'
+          : ''),
+      supportAdvice.length
+        ? 'How you can help at home: ' + supportAdvice.slice(0, 3).join(' ')
+        : 'Continue warm, playful routines at home—reading, outdoor play, and everyday self-help—with guidance from the teacher.',
+      focusComments.length
+        ? 'Your child’s teacher also noted: ' + focusComments.slice(0, 2).map(c => c.comment).join(' ')
         : '',
-      activityLines.length
-        ? 'Suggested activities at home — ' + activityLines.join(' ')
-        : '',
-      'Based on the ECCD checklist. Teacher will review and approve before sharing with parents.'
+      'The teacher will review this summary before it appears on your parent portal.'
     ]
       .filter(Boolean)
       .join(' ');

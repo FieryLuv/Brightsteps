@@ -51,7 +51,12 @@ const VisitorEnrollment = {
             </div>
             <div>
               <label class="ecc-field-label">Date of birth *</label>
-              <input type="date" id="v-birth" class="ecc-field-input" />
+              <input type="date" id="v-birth" class="ecc-field-input"
+                onchange="VisitorEnrollment._fillChildAgeFromBirth()" />
+            </div>
+            <div>
+              <label class="ecc-field-label">Age (auto)</label>
+              <input type="text" id="v-age-label" class="ecc-field-input" readonly style="background:#f5f5f5;" placeholder="From date of birth" />
             </div>
             <div>
               <label class="ecc-field-label">Birth order</label>
@@ -498,6 +503,27 @@ const VisitorEnrollment = {
     const m = today.getMonth() - b.getMonth();
     if (m < 0 || (m === 0 && today.getDate() < b.getDate())) age--;
     ageEl.value = age >= 0 ? age : '';
+  },
+
+  /** Child age (years + months) from DOB. */
+  _fillChildAgeFromBirth() {
+    const birthEl = document.getElementById('v-birth');
+    const ageEl = document.getElementById('v-age-label');
+    if (!birthEl || !ageEl) return;
+    if (!birthEl.value) {
+      ageEl.value = '';
+      return;
+    }
+    if (typeof HealthStore !== 'undefined' && HealthStore.ageLabelFromBirthDate) {
+      ageEl.value = HealthStore.ageLabelFromBirthDate(birthEl.value);
+      return;
+    }
+    if (typeof ChildRegistry !== 'undefined' && ChildRegistry.ageFromBirthDate) {
+      const a = ChildRegistry.ageFromBirthDate(birthEl.value);
+      ageEl.value = (a && a.ageLabel) || '';
+      return;
+    }
+    this._fillAgeFromBirth('v-birth', 'v-age-label');
   },
 
   _readPhysical() {

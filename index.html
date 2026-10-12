@@ -10,11 +10,7 @@
   <!-- Root mounts either login or the role layout -->
   <div id="app"></div>
 
-  <!-- Core -->
-  <script src="js/app.js"></script>
-  <script src="js/shared/components.js"></script>
-  <script src="js/shared/file-attach.js"></script>
-  <script src="js/shared/score-profile.js"></script>
+  <!-- Data stores first (TeacherStore must load before app login handlers run) -->
   <script src="js/data/sample-children.js"></script>
   <script src="js/data/child-registry.js"></script>
   <script src="js/data/application-store.js"></script>
@@ -26,7 +22,14 @@
   <script src="js/data/calendar-store.js"></script>
   <script src="js/data/sfp-menu.js"></script>
   <script src="js/data/sfp-store.js"></script>
+  <script src="js/data/teacher-store.js"></script>
   <script src="js/data/contribution-store.js"></script>
+
+  <!-- Shared + core app -->
+  <script src="js/shared/components.js"></script>
+  <script src="js/shared/file-attach.js"></script>
+  <script src="js/shared/score-profile.js"></script>
+  <script src="js/app.js"></script>
 
   <!-- Engine -->
   <script src="js/engine/progress-engine.js"></script>

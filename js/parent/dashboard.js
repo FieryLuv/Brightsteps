@@ -271,6 +271,12 @@ const ParentDashboard = {
         (c.present ? '' : ' <span class="text-muted">(still developing)</span>') +
         ': ' + (c.comment || '') + '</li>'
       ).join('');
+      const strengthsList = (approved.strengths || []).map(s =>
+        '<span style="display:inline-block;margin:0.2rem 0.35rem 0.2rem 0;padding:0.25rem 0.6rem;border-radius:999px;font-size:0.82rem;background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;">' + s + '</span>'
+      ).join('');
+      const needsList = (approved.needs || []).map(n =>
+        '<span style="display:inline-block;margin:0.2rem 0.35rem 0.2rem 0;padding:0.25rem 0.6rem;border-radius:999px;font-size:0.82rem;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;">' + n + '</span>'
+      ).join('');
       const approvedDate = approved.approvedAt
         ? new Date(approved.approvedAt).toLocaleDateString()
         : '';
@@ -285,10 +291,21 @@ const ParentDashboard = {
         '</span>' +
         '<button class="btn" style="background:#fff3e0;color:#e65100;" onclick="window.print()">🖨 Print report</button></div>' +
         periodTabs +
-        '<h3 style="text-align:center;">🌟 Progress Report – ' + approved.period + ' Evaluation</h3>' +
+        '<div style="text-align:center;padding:0.75rem 1rem;margin-bottom:1rem;border-radius:14px;background:linear-gradient(135deg,#e8f5e9 0%,#e3f2fd 100%);border:1px solid #c8e6c9;">' +
+        '<h3 style="margin:0 0 0.35rem;">🌟 Progress Report – ' + approved.period + ' Evaluation</h3>' +
         (approved.overallLabel
-          ? '<p style="text-align:center;margin:0.5rem 0 1rem;"><strong>' + approved.overallLabel + '</strong>' +
+          ? '<p style="margin:0;font-size:1.05rem;"><strong>' + approved.overallLabel + '</strong>' +
             (approved.standardScore != null ? ' · Standard Score: ' + approved.standardScore : '') + '</p>'
+          : '') +
+        '</div>' +
+        ((strengthsList || needsList)
+          ? '<div style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-bottom:1rem;">' +
+            '<div style="background:#f1f8f4;padding:0.85rem;border-radius:12px;border-left:4px solid #43a047;">' +
+            '<h4 style="margin:0 0 0.4rem;color:#2e7d32;">✓ Strengths</h4>' +
+            (strengthsList || '<span class="text-muted" style="font-size:0.88rem;">—</span>') + '</div>' +
+            '<div style="background:#fff8f0;padding:0.85rem;border-radius:12px;border-left:4px solid #fb8c00;">' +
+            '<h4 style="margin:0 0 0.4rem;color:#e65100;">◎ Areas to support</h4>' +
+            (needsList || '<span class="text-muted" style="font-size:0.88rem;">—</span>') + '</div></div>'
           : '') +
         '<div style="margin:1.25rem 0 0.5rem;">' +
         '<h4 style="text-align:center;margin:0 0 0.35rem;color:var(--primary-dark);">Domain snapshot</h4>' +
@@ -314,9 +331,9 @@ const ParentDashboard = {
             '<ul style="padding-left:1.1rem;margin:0;line-height:1.7;font-size:0.95rem;">' + comments + '</ul></div>'
           : '') +
         (approved.parentDraft
-          ? '<div style="margin-top:1.25rem;padding:1rem;background:var(--primary-light);border-radius:12px;">' +
-            '<h4 style="margin:0 0 0.5rem;color:var(--primary-dark);">Summary</h4>' +
-            '<p style="margin:0;font-size:0.95rem;">' + approved.parentDraft + '</p></div>'
+          ? '<div style="margin-top:1.25rem;padding:1rem;background:#e3f2fd;border-radius:12px;border:1px solid #90caf9;">' +
+            '<h4 style="margin:0 0 0.5rem;color:var(--primary-dark);">Summary for the family</h4>' +
+            '<p style="margin:0;font-size:0.95rem;line-height:1.5;">' + approved.parentDraft + '</p></div>'
           : '') +
         (approvedDate
           ? '<p class="text-muted" style="text-align:center;margin-top:1rem;font-size:0.85rem;">Approved by teacher on ' + approvedDate + '</p>'

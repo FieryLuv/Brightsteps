@@ -51,6 +51,35 @@ const HealthStore = {
     return 'Obese';
   },
 
+  /**
+   * Map BMI to SFP nutrition status options (teacher may still override).
+   * Not a clinical WHO assessment — for classroom prefill only.
+   */
+  suggestNutrition(bmi) {
+    if (bmi == null || isNaN(bmi)) return '';
+    if (bmi < 12.5) return 'Severely Underweight';
+    if (bmi < 14) return 'Underweight';
+    if (bmi < 18) return 'Normal';
+    if (bmi < 21) return 'Overweight';
+    return 'Obese';
+  },
+
+  /** Age label from birth date (years + months for under ~6 yrs). */
+  ageLabelFromBirthDate(birthDate) {
+    if (!birthDate) return '';
+    const b = new Date(String(birthDate).slice(0, 10) + 'T00:00:00');
+    if (isNaN(b.getTime())) return '';
+    const now = new Date();
+    let months = (now.getFullYear() - b.getFullYear()) * 12 + (now.getMonth() - b.getMonth());
+    if (now.getDate() < b.getDate()) months -= 1;
+    if (months < 0) months = 0;
+    const years = Math.floor(months / 12);
+    const rem = months % 12;
+    if (years <= 0) return rem + (rem === 1 ? ' month' : ' months');
+    if (rem === 0) return years + (years === 1 ? ' year' : ' years');
+    return years + ' years ' + rem + ' months';
+  },
+
   saveMeasurement(entry) {
     const data = this._read();
     const id = entry.id || `hm_${entry.childId}_${Date.now()}`;

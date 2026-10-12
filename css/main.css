@@ -1417,6 +1417,7 @@ p {
 }
 .btn-header-menu:hover { background: rgba(255,255,255,0.32) !important; }
 .parent-header { position: relative; }
+.teacher-header .user-info { position: relative; }
 .parent-settings-menu {
   position: absolute;
   top: calc(100% - 0.35rem);

@@ -313,13 +313,88 @@ const TeacherHealth = {
             <div class="card" style="margin-bottom:1rem;border-left:4px solid #2e7d32;">
               <h3 style="margin-top:0;">🥗 SFP Beneficiary Profile <span class="text-muted" style="font-weight:500;font-size:0.85rem;">(Supplementary Feeding Program)</span></h3>
               <p class="text-muted" style="font-size:0.85rem;margin-top:0;">
-                Matches the official Beneficiary Profile intake. Used for MSWDO consolidation reports.
-                Prefills child identity from enrollment where possible.
+                Official Beneficiary Profile intake (Parts I–III). Identity is prefilled from enrollment and stays editable for this form / printout.
               </p>
               <label style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;font-weight:600;">
                 <input type="checkbox" id="sfp-enrolled" ${sfp.enrolledInSfp !== false && (sfp.childId || sfp.consent || sfp.fourPs != null) ? 'checked' : (sfp.enrolledInSfp === false ? '' : '')} />
                 Enrolled in Supplementary Feeding Program (SFP)
               </label>
+
+              ${(() => {
+                const a = child.address || {};
+                const addrDefault = [a.purok, a.barangay, a.municipality || 'Medina', a.province || 'Misamis Oriental'].filter(Boolean).join(', ');
+                const nameVal = sfp.beneficiaryName || child.name || '';
+                const sexVal = sfp.beneficiarySex || child.sex || '';
+                const birthVal = sfp.beneficiaryBirthDate || child.birthDate || '';
+                const ageVal = sfp.beneficiaryAgeLabel || child.ageLabel || '';
+                const addrVal = sfp.beneficiaryAddress || addrDefault;
+                const officialParent = (() => {
+                  const fromProfile = (prof) => {
+                    if (!prof) return '';
+                    const mid = (prof.middleInitial || '').trim();
+                    const parts = [
+                      (prof.firstName || '').trim(),
+                      mid ? (mid.length === 1 ? mid + '.' : mid) : '',
+                      (prof.lastName || '').trim()
+                    ].filter(Boolean);
+                    return parts.join(' ').replace(/\s+/g, ' ').trim();
+                  };
+                  return fromProfile(child.motherProfile) || String(child.motherName || '').trim()
+                    || fromProfile(child.fatherProfile) || String(child.fatherName || '').trim()
+                    || '';
+                })();
+                // Never auto-fill from guardian / parentName
+                const parentVal = sfp.parentGuardianName || officialParent || '';
+                const incomePrefill = (() => {
+                  if (sfp.incomeSource) return sfp.incomeSource;
+                  const m = child.motherProfile || {};
+                  const f = child.fatherProfile || {};
+                  return m.occupationOther || m.occupation || f.occupationOther || f.occupation || '';
+                })();
+                return `
+              <div style="background:#f8faf8;border:1px solid #e0e8e0;border-radius:10px;padding:0.85rem 1rem;margin-bottom:1rem;">
+                <div style="font-weight:700;font-size:0.9rem;margin-bottom:0.35rem;">Child &amp; parent identity</div>
+                <p class="text-muted" style="font-size:0.8rem;margin:0 0 0.75rem;">
+                  Prefilled from enrollment. Parent line uses <strong>mother / father</strong> only (not guardian).
+                  Class: <strong>${this._esc(child.section || child.sectionKey || '—')}</strong>
+                </p>
+                <div class="profile-grid">
+                  <div>
+                    <label class="ecc-field-label">Complete name of beneficiary</label>
+                    <input type="text" id="sfp-ben-name" class="ecc-field-input" value="${this._esc(nameVal)}" />
+                  </div>
+                  <div>
+                    <label class="ecc-field-label">Sex (M/F)</label>
+                    <select id="sfp-ben-sex" class="ecc-field-input">
+                      <option value="">—</option>
+                      <option value="Male" ${sexVal === 'Male' || sexVal === 'M' ? 'selected' : ''}>Male</option>
+                      <option value="Female" ${sexVal === 'Female' || sexVal === 'F' ? 'selected' : ''}>Female</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="ecc-field-label">Date of birth</label>
+                    <input type="date" id="sfp-ben-birth" class="ecc-field-input" value="${this._esc(birthVal)}"
+                      onchange="TeacherHealth._recalcSfpAge()" />
+                  </div>
+                  <div>
+                    <label class="ecc-field-label">Age of child (auto)</label>
+                    <input type="text" id="sfp-ben-age" class="ecc-field-input" value="${this._esc(ageVal)}"
+                      placeholder="From date of birth" />
+                  </div>
+                  <div style="grid-column:1 / -1;">
+                    <label class="ecc-field-label">Address</label>
+                    <input type="text" id="sfp-ben-address" class="ecc-field-input" value="${this._esc(addrVal)}" />
+                  </div>
+                  <div style="grid-column:1 / -1;">
+                    <label class="ecc-field-label">Complete name of parent (mother / father)</label>
+                    <input type="text" id="sfp-parent-name" class="ecc-field-input" value="${this._esc(parentVal)}"
+                      placeholder="Official parent full name — not guardian alias" />
+                  </div>
+                </div>
+              </div>`;
+              })()}
+
+              <h4 style="margin:0.5rem 0 0.75rem;font-size:0.95rem;">I. Child information (SFP flags)</h4>
               <div class="profile-grid">
                 <div>
                   <label class="ecc-field-label">Diagnosed disability?</label>
@@ -360,6 +435,42 @@ const TeacherHealth = {
                     <label><input type="radio" name="sfp-vita" value="No" ${chk(sfp.vitaminA === false)} /> No</label>
                   </div>
                 </div>
+              </div>
+
+              <h4 style="margin:1.25rem 0 0.75rem;font-size:0.95rem;">II. Parent / guardian information</h4>
+              <div class="profile-grid">
+                <div>
+                  <label class="ecc-field-label">Parent / guardian sex</label>
+                  <select id="sfp-parent-sex" class="ecc-field-input">
+                    <option value="">—</option>
+                    <option value="Male" ${sfp.parentSex === 'Male' ? 'selected' : ''}>Male</option>
+                    <option value="Female" ${sfp.parentSex === 'Female' ? 'selected' : ''}>Female</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="ecc-field-label">Parent PSN / PhilSys No.</label>
+                  <input type="text" id="sfp-psn" class="ecc-field-input" value="${this._esc(sfp.parentPsn)}" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Source of income</label>
+                  <input type="text" id="sfp-income" class="ecc-field-input" value="${this._esc((() => {
+                    if (sfp.incomeSource) return sfp.incomeSource;
+                    const m = child.motherProfile || {};
+                    const f = child.fatherProfile || {};
+                    return m.occupationOther || m.occupation || f.occupationOther || f.occupation || '';
+                  })())}" placeholder="Employed / Self-employed / occupation from parent profile" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Indigenous People affiliation</label>
+                  <input type="text" id="sfp-ip-aff" class="ecc-field-input" value="${this._esc(sfp.indigenousAffiliation)}" placeholder="If applicable" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Indigenous People?</label>
+                  <div class="yn-group">
+                    <label><input type="radio" name="sfp-ip" value="Yes" ${chk(sfp.indigenous)} /> Yes</label>
+                    <label><input type="radio" name="sfp-ip" value="No" ${chk(sfp.indigenous === false)} /> No</label>
+                  </div>
+                </div>
                 <div>
                   <label class="ecc-field-label">4Ps / MCCT beneficiary?</label>
                   <div class="yn-group">
@@ -372,35 +483,46 @@ const TeacherHealth = {
                   <input type="text" id="sfp-4ps-id" class="ecc-field-input" value="${this._esc(sfp.fourPsId)}" />
                 </div>
                 <div>
-                  <label class="ecc-field-label">Indigenous People?</label>
+                  <label class="ecc-field-label">Parent person with disability?</label>
                   <div class="yn-group">
-                    <label><input type="radio" name="sfp-ip" value="Yes" ${chk(sfp.indigenous)} /> Yes</label>
-                    <label><input type="radio" name="sfp-ip" value="No" ${chk(sfp.indigenous === false)} /> No</label>
+                    <label><input type="radio" name="sfp-parent-pwd" value="Yes" ${chk(sfp.parentPwd)} /> Yes</label>
+                    <label><input type="radio" name="sfp-parent-pwd" value="No" ${chk(sfp.parentPwd === false)} /> No</label>
                   </div>
                 </div>
                 <div>
-                  <label class="ecc-field-label">IP affiliation</label>
-                  <input type="text" id="sfp-ip-aff" class="ecc-field-input" value="${this._esc(sfp.indigenousAffiliation)}" />
+                  <label class="ecc-field-label">Previously attended FDS?</label>
+                  <div class="yn-group">
+                    <label><input type="radio" name="sfp-fds" value="Yes" ${chk(sfp.fdsAttended)} /> Yes</label>
+                    <label><input type="radio" name="sfp-fds" value="No" ${chk(sfp.fdsAttended === false)} /> No</label>
+                  </div>
                 </div>
                 <div>
-                  <label class="ecc-field-label">Parent PSN / PhilSys No.</label>
-                  <input type="text" id="sfp-psn" class="ecc-field-input" value="${this._esc(sfp.parentPsn)}" />
+                  <label class="ecc-field-label">PES modules completed (if any)</label>
+                  <input type="text" id="sfp-pes" class="ecc-field-input" value="${this._esc(sfp.pesModules)}" placeholder="e.g. 1, 2, 3" />
                 </div>
-                <div>
-                  <label class="ecc-field-label">Parent income source</label>
-                  <input type="text" id="sfp-income" class="ecc-field-input" value="${this._esc(sfp.incomeSource)}" placeholder="Employed / Self-employed / …" />
-                </div>
+              </div>
+
+              <h4 style="margin:1.25rem 0 0.75rem;font-size:0.95rem;">Weighing / nutrition (entry &amp; after 6 months)</h4>
+              <div class="profile-grid">
                 <div>
                   <label class="ecc-field-label">Entry weighing date</label>
                   <input type="date" id="sfp-entry-date" class="ecc-field-input" value="${this._esc(sfp.entryWeighDate)}" />
                 </div>
                 <div>
                   <label class="ecc-field-label">Entry height (cm)</label>
-                  <input type="number" id="sfp-entry-h" class="ecc-field-input" step="0.1" value="${sfp.entryHeightCm != null ? sfp.entryHeightCm : (latest && latest.heightCm != null ? latest.heightCm : '')}" />
+                  <input type="number" id="sfp-entry-h" class="ecc-field-input" step="0.1"
+                    value="${sfp.entryHeightCm != null ? sfp.entryHeightCm : (latest && latest.heightCm != null ? latest.heightCm : '')}"
+                    oninput="TeacherHealth._recalcSfpNutrition('entry')" />
                 </div>
                 <div>
                   <label class="ecc-field-label">Entry weight (kg)</label>
-                  <input type="number" id="sfp-entry-w" class="ecc-field-input" step="0.1" value="${sfp.entryWeightKg != null ? sfp.entryWeightKg : (latest && latest.weightKg != null ? latest.weightKg : '')}" />
+                  <input type="number" id="sfp-entry-w" class="ecc-field-input" step="0.1"
+                    value="${sfp.entryWeightKg != null ? sfp.entryWeightKg : (latest && latest.weightKg != null ? latest.weightKg : '')}"
+                    oninput="TeacherHealth._recalcSfpNutrition('entry')" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">Entry BMI (auto)</label>
+                  <input type="text" id="sfp-entry-bmi" class="ecc-field-input" readonly placeholder="—" />
                 </div>
                 <div>
                   <label class="ecc-field-label">After 6 months — date</label>
@@ -408,11 +530,19 @@ const TeacherHealth = {
                 </div>
                 <div>
                   <label class="ecc-field-label">After 6 mo height (cm)</label>
-                  <input type="number" id="sfp-6mo-h" class="ecc-field-input" step="0.1" value="${sfp.after6moHeightCm != null ? sfp.after6moHeightCm : ''}" />
+                  <input type="number" id="sfp-6mo-h" class="ecc-field-input" step="0.1"
+                    value="${sfp.after6moHeightCm != null ? sfp.after6moHeightCm : ''}"
+                    oninput="TeacherHealth._recalcSfpNutrition('6mo')" />
                 </div>
                 <div>
                   <label class="ecc-field-label">After 6 mo weight (kg)</label>
-                  <input type="number" id="sfp-6mo-w" class="ecc-field-input" step="0.1" value="${sfp.after6moWeightKg != null ? sfp.after6moWeightKg : ''}" />
+                  <input type="number" id="sfp-6mo-w" class="ecc-field-input" step="0.1"
+                    value="${sfp.after6moWeightKg != null ? sfp.after6moWeightKg : ''}"
+                    oninput="TeacherHealth._recalcSfpNutrition('6mo')" />
+                </div>
+                <div>
+                  <label class="ecc-field-label">After 6 mo BMI (auto)</label>
+                  <input type="text" id="sfp-6mo-bmi" class="ecc-field-input" readonly placeholder="—" />
                 </div>
                 <div>
                   <label class="ecc-field-label">Nutrition status (entry)</label>
@@ -433,15 +563,33 @@ const TeacherHealth = {
                   </select>
                 </div>
               </div>
-              <div style="margin-top:1rem;padding:0.75rem;background:#f5f9fc;border-radius:8px;">
+              <p class="text-muted" style="font-size:0.8rem;margin:0.35rem 0 0;">
+                BMI and nutrition status update automatically from height × weight (classroom estimate — teacher can still change the status).
+              </p>
+              <div style="margin-top:1rem;padding:0.85rem 1rem;background:#f5f9fc;border-radius:8px;border:1px solid #d6e4f0;">
+                <h4 style="margin:0 0 0.5rem;font-size:0.95rem;">III. Consent &amp; confidentiality</h4>
+                <p class="text-muted" style="font-size:0.82rem;margin:0 0 0.75rem;line-height:1.45;">
+                  Information on this intake may be processed for implementing, monitoring, and evaluating the
+                  Supplementary Feeding Program (SFP), including nutritional status, parent/guardian information,
+                  and coordination with partner agencies and LGUs, in accordance with the Data Privacy Act of 2012.
+                  The parent/guardian has the right to be informed, to access, and to have personal data corrected.
+                </p>
                 <label style="display:flex;align-items:flex-start;gap:0.5rem;font-size:0.9rem;">
                   <input type="checkbox" id="sfp-consent" style="margin-top:3px;" ${chk(sfp.consent)} />
-                  <span>Parent/guardian agrees to SFP data processing (Consent &amp; Confidentiality clause — Data Privacy Act of 2012).</span>
+                  <span>I agree to participate in this assessment and allow my answers to be used as indicated above.</span>
                 </label>
                 <div class="profile-grid" style="margin-top:0.75rem;">
                   <div>
-                    <label class="ecc-field-label">Consent signed by</label>
-                    <input type="text" id="sfp-consent-name" class="ecc-field-input" value="${this._esc(sfp.consentName || child.parentName || '')}" />
+                    <label class="ecc-field-label">Signature over printed name</label>
+                    <input type="text" id="sfp-consent-name" class="ecc-field-input" value="${this._esc(sfp.consentName || (() => {
+                      const fromProfile = (prof) => {
+                        if (!prof) return '';
+                        const mid = (prof.middleInitial || '').trim();
+                        const parts = [(prof.firstName || '').trim(), mid ? (mid.length === 1 ? mid + '.' : mid) : '', (prof.lastName || '').trim()].filter(Boolean);
+                        return parts.join(' ').replace(/\s+/g, ' ').trim();
+                      };
+                      return fromProfile(child.motherProfile) || child.motherName || fromProfile(child.fatherProfile) || child.fatherName || '';
+                    })())}" />
                   </div>
                   <div>
                     <label class="ecc-field-label">Consent date</label>
@@ -482,6 +630,11 @@ const TeacherHealth = {
         if (opt) sel.value = latest.status;
       }
     }
+    // Initial autofill for age / BMI / nutrition when values are present
+    this._recalcSfpAge();
+    this._recalcSfpNutrition('entry');
+    this._recalcSfpNutrition('6mo');
+    this._recalcBmi();
   },
 
   _esc(s) {
@@ -493,15 +646,60 @@ const TeacherHealth = {
   },
 
   _recalcBmi() {
+    if (typeof HealthStore === 'undefined') return;
     const h = parseFloat((document.getElementById('h-height') || {}).value);
     const w = parseFloat((document.getElementById('h-weight') || {}).value);
     const bmi = HealthStore.computeBmi(h, w);
     const bmiEl = document.getElementById('h-bmi');
     const statusEl = document.getElementById('h-status');
+    const nutEl = document.getElementById('h-nutrition');
     if (bmiEl) bmiEl.value = bmi != null ? bmi : '';
     if (statusEl && bmi != null) {
       const suggested = HealthStore.suggestStatus(bmi);
       if (suggested) statusEl.value = suggested;
+    }
+    if (nutEl && bmi != null) {
+      const nut = HealthStore.suggestNutrition(bmi);
+      // Only auto-set if option exists on the select
+      if (nut && Array.from(nutEl.options).some(o => o.value === nut)) {
+        nutEl.value = nut;
+      } else if (nut === 'Severely Underweight' || nut === 'Underweight') {
+        nutEl.value = 'Underweight';
+      } else if (nut === 'Obese' || nut === 'Overweight') {
+        nutEl.value = 'Overweight';
+      } else if (nut === 'Normal') {
+        nutEl.value = 'Normal';
+      }
+    }
+  },
+
+  _recalcSfpAge() {
+    const birth = (document.getElementById('sfp-ben-birth') || {}).value || '';
+    const ageEl = document.getElementById('sfp-ben-age');
+    if (!ageEl) return;
+    if (typeof HealthStore !== 'undefined' && HealthStore.ageLabelFromBirthDate) {
+      ageEl.value = HealthStore.ageLabelFromBirthDate(birth);
+    } else if (typeof ChildRegistry !== 'undefined' && ChildRegistry.ageFromBirthDate) {
+      const a = ChildRegistry.ageFromBirthDate(birth);
+      ageEl.value = (a && a.ageLabel) || '';
+    }
+  },
+
+  /** which: 'entry' | '6mo' */
+  _recalcSfpNutrition(which) {
+    if (typeof HealthStore === 'undefined') return;
+    const isEntry = which !== '6mo';
+    const h = parseFloat((document.getElementById(isEntry ? 'sfp-entry-h' : 'sfp-6mo-h') || {}).value);
+    const w = parseFloat((document.getElementById(isEntry ? 'sfp-entry-w' : 'sfp-6mo-w') || {}).value);
+    const bmi = HealthStore.computeBmi(h, w);
+    const bmiEl = document.getElementById(isEntry ? 'sfp-entry-bmi' : 'sfp-6mo-bmi');
+    const nutEl = document.getElementById(isEntry ? 'sfp-nut-entry' : 'sfp-nut-6mo');
+    if (bmiEl) bmiEl.value = bmi != null ? bmi : '';
+    if (nutEl && bmi != null) {
+      const suggested = HealthStore.suggestNutrition(bmi);
+      if (suggested && Array.from(nutEl.options).some(o => o.value === suggested)) {
+        nutEl.value = suggested;
+      }
     }
   },
 
@@ -572,6 +770,12 @@ const TeacherHealth = {
     const enrolled = !!(document.getElementById('sfp-enrolled') || {}).checked;
     const result = SfpStore.saveBeneficiary(childId, {
       enrolledInSfp: enrolled,
+      beneficiaryName: (document.getElementById('sfp-ben-name') || {}).value || '',
+      beneficiarySex: (document.getElementById('sfp-ben-sex') || {}).value || '',
+      beneficiaryBirthDate: (document.getElementById('sfp-ben-birth') || {}).value || '',
+      beneficiaryAgeLabel: (document.getElementById('sfp-ben-age') || {}).value || '',
+      beneficiaryAddress: (document.getElementById('sfp-ben-address') || {}).value || '',
+      parentGuardianName: (document.getElementById('sfp-parent-name') || {}).value || '',
       disability: flag('sfp-disability'),
       disabilitySpecify: (document.getElementById('sfp-disability-spec') || {}).value || '',
       soloParent: flag('sfp-solo'),
@@ -583,7 +787,11 @@ const TeacherHealth = {
       indigenous: flag('sfp-ip'),
       indigenousAffiliation: (document.getElementById('sfp-ip-aff') || {}).value || '',
       parentPsn: (document.getElementById('sfp-psn') || {}).value || '',
+      parentSex: (document.getElementById('sfp-parent-sex') || {}).value || '',
       incomeSource: (document.getElementById('sfp-income') || {}).value || '',
+      parentPwd: flag('sfp-parent-pwd'),
+      fdsAttended: flag('sfp-fds'),
+      pesModules: (document.getElementById('sfp-pes') || {}).value || '',
       entryWeighDate: (document.getElementById('sfp-entry-date') || {}).value || '',
       entryHeightCm: num('sfp-entry-h'),
       entryWeightKg: num('sfp-entry-w'),

@@ -196,6 +196,17 @@ const TeacherReports = {
         </div>
       </div>
 
+      <div class="card" style="margin-bottom:1rem;">
+        <h3 style="margin-top:0;">SFP Beneficiary Profile</h3>
+        <p class="text-muted" style="font-size:0.88rem;margin-top:0;">
+          Print the official-style Beneficiary Profile (Parts I–III). Part I is filled from cycle / worker
+          settings; Part II–III from each child’s SFP profile (identity prefilled from enrollment).
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;">
+          <button class="btn btn-blue" onclick="TeacherReports.openBeneficiaryPrintPicker()">🖨 Print beneficiary profile(s)</button>
+        </div>
+      </div>
+
       <div class="card">
         <h3 style="margin-top:0;">Consolidated Report (Figures)</h3>
         <p class="text-muted" style="font-size:0.88rem;margin-top:0;">
@@ -243,17 +254,42 @@ const TeacherReports = {
 
   _cycleMeta() {
     const cycle = typeof SfpStore !== 'undefined' ? SfpStore.getActiveCycle() : {};
+    const tp = typeof TeacherStore !== 'undefined' ? TeacherStore.get() : {};
+    const teacherName = (typeof TeacherStore !== 'undefined' && TeacherStore.workerName)
+      ? TeacherStore.workerName()
+      : '';
     return {
       cycle: cycle || {},
-      province: (cycle && cycle.province) || 'MISAMIS ORIENTAL',
-      municipality: (cycle && cycle.municipality) || 'MEDINA',
-      barangay: (cycle && cycle.barangay) || '',
-      facility: (cycle && cycle.facilityName) || 'National Child Development Center — Medina',
-      worker: (cycle && cycle.workerName) || '',
+      province: (cycle && cycle.province) || tp.province || 'MISAMIS ORIENTAL',
+      municipality: (cycle && cycle.municipality) || tp.municipality || 'MEDINA',
+      barangay: (cycle && cycle.barangay) || tp.barangay || '',
+      district: (cycle && cycle.district) || tp.district || '',
+      facility: (cycle && cycle.facilityName) || tp.centerName || 'National Child Development Center — Medina',
+      facilityAddress: tp.address || '',
+      worker: (cycle && cycle.workerName) || teacherName || '',
       startDate: (cycle && cycle.startDate) || '',
       cycleLabel: (cycle && (cycle.cycleLabel || cycle.cycleNumber)) || '15th',
       schoolYear: (cycle && cycle.schoolYear) || ''
     };
+  },
+
+  /** Official parent name only (mother → father). Never guardian / parentName alone. */
+  _officialParentName(child) {
+    if (!child) return '';
+    const fromProfile = (prof) => {
+      if (!prof) return '';
+      const mid = (prof.middleInitial || '').trim();
+      const parts = [
+        (prof.firstName || '').trim(),
+        mid ? (mid.length === 1 ? mid + '.' : mid) : '',
+        (prof.lastName || '').trim()
+      ].filter(Boolean);
+      return parts.join(' ').replace(/\s+/g, ' ').trim();
+    };
+    const mother = fromProfile(child.motherProfile) || String(child.motherName || '').trim();
+    if (mother) return mother;
+    const father = fromProfile(child.fatherProfile) || String(child.fatherName || '').trim();
+    return father || '';
   },
 
   _sectionOptions() {
@@ -716,6 +752,298 @@ const TeacherReports = {
   printCertA() { this.openSfpPrintPicker('certA'); },
   printCertC() { this.openSfpPrintPicker('certC'); },
 
+  /** Resolve identity: SFP snapshot first, then child profile. Parent = official parent only. */
+  _benIdentity(child, sfp) {
+    sfp = sfp || {};
+    const a = (child && child.address) || {};
+    const addrDefault = [a.purok, a.barangay, a.municipality || 'Medina', a.province || 'Misamis Oriental']
+      .filter(Boolean).join(', ');
+    const officialParent = this._officialParentName(child);
+    return {
+      name: sfp.beneficiaryName || (child && child.name) || '—',
+      sex: sfp.beneficiarySex || (child && child.sex) || '—',
+      birthDate: sfp.beneficiaryBirthDate || (child && child.birthDate) || '—',
+      ageLabel: sfp.beneficiaryAgeLabel || (child && child.ageLabel) || '—',
+      address: sfp.beneficiaryAddress || addrDefault || '—',
+      // Prefer saved SFP parent line; else official mother/father only (not guardian)
+      parentName: sfp.parentGuardianName || officialParent || '—',
+      section: (child && (child.section || child.sectionKey)) || '—'
+    };
+  },
+
+  _yn(v) {
+    if (v === true || v === 'Yes') return 'Yes';
+    if (v === false || v === 'No') return 'No';
+    return '—';
+  },
+
+  /**
+   * One child Beneficiary Profile — layout aligned to the paper SFP form.
+   * Part I = worker/facility. Part II–III = child + parent + consent.
+   */
+  _beneficiaryProfileHtml(child, sfp) {
+    sfp = sfp || {};
+    const meta = this._cycleMeta();
+    const cycle = meta.cycle || {};
+    const idn = this._benIdentity(child, sfp);
+    const box = (v, yes) => {
+      const on = v === true || v === 'Yes';
+      if (yes) return on ? '☑' : '☐';
+      return on ? '☐' : (v === false || v === 'No' ? '☑' : '☐');
+    };
+    const line = (val, minW) => {
+      const t = (val && String(val) !== '—') ? String(val) : '';
+      return '<span style="display:inline-block;min-width:' + (minW || '8rem') +
+        ';border-bottom:1px solid #222;padding:0 4px 1px;">' + (t || '&nbsp;') + '</span>';
+    };
+    const cat = cycle.facilityCategory || 'CDC';
+    const wash = cycle.withWashFacility;
+    const garden = cycle.withCommunityGarden;
+    const regDate = (child && (child.enrolledAt || child.registeredAt || child.createdAt))
+      ? String(child.enrolledAt || child.registeredAt || child.createdAt).slice(0, 10)
+      : '';
+
+    return `
+      <div class="sfp-print-section ben-profile-sheet" style="font-family:Times New Roman,Times,serif;font-size:11.5px;line-height:1.4;color:#111;">
+        <div style="text-align:center;margin-bottom:10px;">
+          <div style="font-size:10px;letter-spacing:0.02em;">Republic of the Philippines</div>
+          <div style="font-size:11px;font-weight:700;">Municipality of Medina · Misamis Oriental</div>
+          <div style="font-size:13px;font-weight:700;margin-top:6px;text-decoration:underline;">
+            SUPPLEMENTARY FEEDING PROGRAM BENEFICIARY PROFILE
+          </div>
+        </div>
+
+        <div style="font-weight:700;font-size:11.5px;margin:10px 0 4px;">
+          Part I - (FOR CHILD DEVELOPMENT WORKER ONLY - DO NOT FILL OUT)
+        </div>
+        <div style="margin-bottom:2px;">
+          Province: ${line(meta.province || 'Misamis Oriental', '10rem')}
+          &nbsp; District: ${line(meta.district, '6rem')}
+          &nbsp; City/Municipality: ${line(meta.municipality || 'Medina', '8rem')}
+        </div>
+        <div style="margin-bottom:2px;">
+          Barangay: ${line(meta.barangay, '10rem')}
+          &nbsp; Name of Facility: ${line(meta.facility, '16rem')}
+        </div>
+        ${meta.facilityAddress ? `<div style="margin-bottom:2px;">Facility address: ${line(meta.facilityAddress, '22rem')}</div>` : ''}
+        <div style="margin-bottom:2px;">
+          Date of Registration: ${line(regDate, '8rem')}
+          &nbsp; Facility Category:
+          ${cat === 'CDC' ? '☑' : '☐'} CDC &nbsp; ${cat === 'SNP' ? '☑' : '☐'} SNP
+        </div>
+        <div style="margin-bottom:2px;">
+          Complete Name of CDC/SNP Worker: ${line(meta.worker, '18rem')}
+        </div>
+        <div style="margin-bottom:8px;">
+          With Wash Facility: ${wash === true ? '☑' : '☐'} Yes &nbsp; ${wash === false ? '☑' : '☐'} No
+          &nbsp;&nbsp; With Community Garden: ${garden === true ? '☑' : '☐'} Yes &nbsp; ${garden === false ? '☑' : '☐'} No
+        </div>
+
+        <div style="font-weight:700;font-size:11.5px;margin:12px 0 4px;">
+          Part II - (FOR PARENTS)
+        </div>
+        <div style="font-weight:700;margin:4px 0;">I.&nbsp;&nbsp;Child Information:</div>
+        <div style="margin-bottom:2px;">
+          Complete Name of Beneficiary: ${line(idn.name, '16rem')}
+          &nbsp; Sex (M/F): ${line(idn.sex, '4rem')}
+        </div>
+        <div style="margin-bottom:2px;">
+          Address: ${line(idn.address, '28rem')}
+        </div>
+        <div style="margin-bottom:2px;">
+          Does the child have diagnosed disability:
+          ${box(sfp.disability, true)} Yes &nbsp; ${box(sfp.disability, false)} No
+        </div>
+        <div style="margin-bottom:2px;">
+          If yes, please indicate specific disability: ${line(sfp.disabilitySpecify, '18rem')}
+        </div>
+        <div style="margin-bottom:2px;">
+          Child of Solo Parent: ${box(sfp.soloParent, true)} Yes &nbsp; ${box(sfp.soloParent, false)} No
+          &nbsp;&nbsp; Child Monitored Under EO 70: ${box(sfp.eo70, true)} Yes &nbsp; ${box(sfp.eo70, false)} No
+        </div>
+        <div style="margin-bottom:2px;">
+          Date of Birth (MM/DD/YYYY): ${line(idn.birthDate, '8rem')}
+          &nbsp; Age of Child in Years: ${line(idn.ageLabel, '6rem')}
+        </div>
+        <div style="margin-bottom:2px;">
+          Date of Weighing (MM/DD/YYYY): ${line(sfp.entryWeighDate, '8rem')}
+          &nbsp; Height (in cm): ${line(sfp.entryHeightCm != null ? sfp.entryHeightCm : '', '4rem')}
+          &nbsp; Weight (in kg): ${line(sfp.entryWeightKg != null ? sfp.entryWeightKg : '', '4rem')}
+        </div>
+        <div style="margin-bottom:8px;">
+          Has the child been dewormed? ${box(sfp.dewormed, true)} Yes &nbsp; ${box(sfp.dewormed, false)} No
+          &nbsp;&nbsp; Received Vitamin A Supplement? ${box(sfp.vitaminA, true)} Yes &nbsp; ${box(sfp.vitaminA, false)} No
+        </div>
+
+        <div style="font-weight:700;margin:8px 0 4px;">II.&nbsp;&nbsp;Parent or Guardian Information:</div>
+        <div style="margin-bottom:2px;">
+          Complete Name of Parent/Guardian: ${line(idn.parentName, '16rem')}
+          &nbsp; Sex (M/F): ${line(sfp.parentSex, '4rem')}
+        </div>
+        <div style="margin-bottom:2px;">
+          PSN/PhilSys Number: ${line(sfp.parentPsn, '12rem')}
+        </div>
+        <div style="margin-bottom:2px;">
+          Source of Income (Employed/Self Employed): ${line(sfp.incomeSource, '14rem')}
+        </div>
+        <div style="margin-bottom:2px;">
+          Indigenous People Affiliation: ${line(sfp.indigenousAffiliation, '12rem')}
+          &nbsp; 4Ps/MCCT ID No.: ${line(sfp.fourPsId, '8rem')}
+        </div>
+        <div style="margin-bottom:2px;">
+          Person with Disability: ${box(sfp.parentPwd, true)} Yes &nbsp; ${box(sfp.parentPwd, false)} No
+          &nbsp;&nbsp; Previously attended FDS: ${box(sfp.fdsAttended, true)} Yes &nbsp; ${box(sfp.fdsAttended, false)} No
+        </div>
+        <div style="margin-bottom:10px;">
+          If yes, please indicate the Modules of PES completed: ${line(sfp.pesModules, '16rem')}
+        </div>
+
+        <div style="font-weight:700;font-size:11.5px;margin:12px 0 4px;border-top:1px solid #333;padding-top:6px;">
+          PART III - CONSENT &amp; CONFIDENTIALITY CLAUSE
+        </div>
+        <p style="font-size:10px;margin:0 0 10px;text-align:justify;line-height:1.35;">
+          All information collected through this intake sheet shall be maintained in a secured database and may
+          be processed manually or electronically for the purpose of implementing, monitoring, and evaluating
+          the Supplementary Feeding Program (SFP). This includes tracking the nutritional status of children
+          beneficiaries, validating parent/guardian information, and coordinating with partner agencies and local
+          government units (LGUs) for the effective delivery of services. Further, any controlled disclosure or
+          sharing of personal or sensitive personal information with development partners, other government
+          agencies, nutrition evaluators, researchers, or other stakeholders shall be carried out in accordance
+          with the Data Privacy Act of 2012. Your personal data may also be validated against existing
+          databases of other social welfare and protection programs to ensure accurate targeting and avoid
+          duplication of benefits. You have the right to the processing of your personal data, the right to access
+          your personal data that we will process, and the right to have your personal data corrected.
+        </p>
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:1.5rem;margin-top:12px;">
+          <div style="flex:1;">
+            <div style="margin-bottom:4px;">${sfp.consent ? '☑' : '☐'} I agree to participate in this assessment and</div>
+            <div style="padding-left:1.1rem;">allow my answers to be used as indicated above.</div>
+          </div>
+          <div style="text-align:center;min-width:12rem;">
+            <div style="border-bottom:1px solid #222;min-height:1.4rem;margin-bottom:2px;font-weight:600;">
+              ${sfp.consentName || '&nbsp;'}
+            </div>
+            <div style="font-size:10px;">Signature over Printed Name</div>
+            <div style="font-size:10px;margin-top:4px;">Date: ${sfp.consentDate || '____________'}</div>
+          </div>
+        </div>
+      </div>`;
+  },
+
+  openBeneficiaryPrintPicker() {
+    const existing = document.getElementById('sfp-ben-print-picker');
+    if (existing) existing.remove();
+
+    const bens = typeof SfpStore !== 'undefined' ? SfpStore.listBeneficiaries() : [];
+    const children = typeof SampleChildren !== 'undefined' ? SampleChildren : [];
+    const byId = {};
+    children.forEach(c => { byId[String(c.id)] = c; });
+
+    const childOpts = bens.map(b => {
+      const c = byId[String(b.childId)];
+      const label = (b.beneficiaryName || (c && c.name) || ('Child #' + b.childId)) +
+        (c && c.section ? ' · ' + c.section : '');
+      return `<option value="${b.childId}">${label}</option>`;
+    }).join('');
+
+    const sectionOpts = this._sectionOptions().map(s =>
+      `<option value="${s.key}">${s.label}</option>`
+    ).join('');
+
+    const html =
+      `<div id="sfp-ben-print-picker" class="bs-overlay no-print">
+        <div class="bs-modal-panel" style="max-width:460px;">
+          <div class="bs-modal-header">
+            <h2 style="margin:0;font-size:1.1rem;color:white;">Print Beneficiary Profile</h2>
+            <button type="button" class="bs-modal-close" onclick="document.getElementById('sfp-ben-print-picker').remove()">×</button>
+          </div>
+          <div class="bs-modal-body">
+            <p style="margin-top:0;font-size:0.9rem;">
+              Print one child, one class, or all enrolled SFP beneficiaries (one profile per page).
+            </p>
+            <label class="ecc-field-label">Scope</label>
+            <select id="ben-print-scope" class="ecc-field-input">
+              <option value="one">One child</option>
+              <option value="section">One section (all enrolled in class)</option>
+              <option value="all">All enrolled beneficiaries</option>
+            </select>
+            <div id="ben-print-child-wrap" style="margin-top:0.75rem;">
+              <label class="ecc-field-label">Child</label>
+              <select id="ben-print-child" class="ecc-field-input">
+                ${childOpts || '<option value="">No SFP beneficiaries saved yet</option>'}
+              </select>
+            </div>
+            <div id="ben-print-section-wrap" style="margin-top:0.75rem;display:none;">
+              <label class="ecc-field-label">Section</label>
+              <select id="ben-print-section" class="ecc-field-input">${sectionOpts}</select>
+            </div>
+          </div>
+          <div class="bs-modal-footer" style="display:flex;gap:0.5rem;justify-content:flex-end;">
+            <button type="button" class="btn" style="background:#e8e8e8;" onclick="document.getElementById('sfp-ben-print-picker').remove()">Cancel</button>
+            <button type="button" class="btn btn-blue" onclick="TeacherReports.confirmBeneficiaryPrint()">🖨 Print</button>
+          </div>
+        </div>
+      </div>`;
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    const scopeEl = document.getElementById('ben-print-scope');
+    const childWrap = document.getElementById('ben-print-child-wrap');
+    const secWrap = document.getElementById('ben-print-section-wrap');
+    if (scopeEl) {
+      scopeEl.addEventListener('change', () => {
+        const v = scopeEl.value;
+        if (childWrap) childWrap.style.display = v === 'one' ? 'block' : 'none';
+        if (secWrap) secWrap.style.display = v === 'section' ? 'block' : 'none';
+      });
+    }
+  },
+
+  confirmBeneficiaryPrint() {
+    const scope = (document.getElementById('ben-print-scope') || {}).value || 'one';
+    const childId = (document.getElementById('ben-print-child') || {}).value;
+    const sectionKey = (document.getElementById('ben-print-section') || {}).value;
+    const picker = document.getElementById('sfp-ben-print-picker');
+    if (picker) picker.remove();
+
+    const bens = typeof SfpStore !== 'undefined' ? SfpStore.listBeneficiaries() : [];
+    const children = typeof SampleChildren !== 'undefined' ? SampleChildren : [];
+    const byId = {};
+    children.forEach(c => { byId[String(c.id)] = c; });
+
+    let list = [];
+    if (scope === 'one') {
+      const b = bens.find(x => String(x.childId) === String(childId));
+      if (!b) {
+        alert('No SFP beneficiary selected. Save an SFP profile under Health first.');
+        return;
+      }
+      list = [b];
+    } else if (scope === 'section') {
+      list = bens.filter(b => {
+        const c = byId[String(b.childId)];
+        return c && c.sectionKey === sectionKey;
+      });
+    } else {
+      list = bens.slice();
+    }
+
+    if (!list.length) {
+      alert('No enrolled SFP beneficiaries match this selection.');
+      return;
+    }
+
+    const parts = list.map((b, i) => {
+      const child = byId[String(b.childId)] || { id: b.childId, name: b.beneficiaryName };
+      const block = this._beneficiaryProfileHtml(child, b);
+      return (i > 0 ? '<div class="sfp-page-break"></div>' : '') + block;
+    }).join('');
+
+    const title = list.length === 1
+      ? 'SFP Beneficiary Profile — ' + (list[0].beneficiaryName || list[0].childId)
+      : 'SFP Beneficiary Profiles (' + list.length + ')';
+    this._printWindow(title, parts);
+  },
+
     /** Certificate letterhead — NCDC Medina only (no DSWD branding). */
   _dswdCertHeader(formCode) {
     return `
@@ -1000,35 +1328,18 @@ const TeacherReports = {
       break;
     }
 
+    // Prefer engine narrative draft (domain advice). Only rebuild if empty.
     let parentDraft = insight.parentFriendlyDraft || '';
-    if (!parentDraft || (teacherComments.length && parentDraft.indexOf('Teacher observations') < 0)) {
+    if (!parentDraft) {
       parentDraft = [
-        'Assessment period: ' + assessment.period + '.',
-        overallLabel !== '—' ? 'Overall: ' + overallLabel + '.' : '',
-        strengths.length ? 'Strengths: ' + strengths.slice(0, 3).join('; ') + '.' : '',
-        needs.length ? 'Areas to support: ' + needs.slice(0, 3).join('; ') + '.' : '',
-        focusItems.length
-          ? 'Skills still developing (examples): ' + focusItems.slice(0, 5).map(fi => fi.itemTitle).join('; ') + '.'
-          : '',
-        teacherComments.length
-          ? 'Teacher observations: ' + teacherComments.slice(0, 4).map(c => '"' + c.itemTitle + '" — ' + c.comment).join(' | ') + '.'
-          : '',
-        "Your child's teacher can explain these results and suggest simple activities at home."
+        'This note is based on the ' + assessment.period + ' ECCD developmental checklist evaluation.',
+        overallLabel !== '—' ? overallLabel + '.' : '',
+        'Continue playful learning at home—reading, outdoor play, and everyday self-help—and ask the teacher which skills to practice next.'
       ].filter(Boolean).join(' ');
     }
 
-    const priorityLines = teacherPriorities
-      .filter(tp => tp.domainCode !== 'OVERALL')
-      .slice(0, 3)
-      .map(tp => tp.domainName + ': ' + ((tp.priorities && tp.priorities[0]) || tp.reason));
-    let teacherNote = priorityLines.length
-      ? 'Learning priorities — ' + priorityLines.join(' · ')
-      : (strengths.length
-        ? child.name + ' shows progress in ' + strengths.slice(0, 2).join(' and ') + '. Continue encouraging learning through play.'
-        : child.name + ' is being monitored with the ECCD checklist. Please see the domain summary and tips below.');
-    if (teacherComments.length) {
-      teacherNote += ' Checklist comments — ' + teacherComments.slice(0, 3).map(c => c.itemTitle + ': ' + c.comment).join(' · ');
-    }
+    // Teacher's note stays blank by default — optional for the teacher to write
+    const teacherNote = '';
 
     return {
       domains,
@@ -1072,9 +1383,8 @@ const TeacherReports = {
     // Fall back to engine draft only when nothing was saved yet.
     const existingTips = existing && existing.tips && existing.tips.length ? existing.tips : [];
     const hasSaved = !!(existing && (existing.teacherNote || existing.parentDraft || existingTips.length));
-    const teacherNote = hasSaved && existing.teacherNote
-      ? existing.teacherNote
-      : draft.teacherNote;
+    // Optional field — blank for new reports; keep only if teacher already typed one
+    const teacherNote = (existing && existing.teacherNote) ? existing.teacherNote : '';
     const parentDraft = hasSaved && existing.parentDraft
       ? existing.parentDraft
       : draft.parentDraft;
@@ -1177,6 +1487,8 @@ const TeacherReports = {
       teacherNote: teacherNote,
       tips: tips,
       parentDraft: parentDraft,
+      strengths: base.strengths || [],
+      needs: base.needs || [],
       teacherComments: base.teacherComments || [],
       focusItems: base.focusItems || []
     };

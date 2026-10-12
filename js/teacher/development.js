@@ -630,19 +630,73 @@ const TeacherDevelopment = {
     const tableNote = insight && !insight.tablesComplete
       ? `<p class="text-muted" style="margin-top:0.75rem;font-size:0.85rem;">Some official tables are incomplete for this age — scaled/standard scores appear when mappings exist.</p>`
       : '';
-    const strengths = insight && insight.strengths && insight.strengths.length
-      ? `<p style="margin-top:0.75rem;"><strong>Strengths:</strong> ${insight.strengths.join('; ')}</p>` : '';
-    const needs = insight && insight.needs && insight.needs.length
-      ? `<p><strong>Needs monitoring:</strong> ${insight.needs.join('; ')}</p>` : '';
+
+    const overallLabel = (insight && insight.overallInterpretation && insight.overallInterpretation.label)
+      || (insight && insight.interpretation)
+      || '';
+    const overallLevel = (insight && insight.overallInterpretation && insight.overallInterpretation.level) || '';
+    const levelTone = overallLevel === 'needs_support' || overallLevel === 'emerging'
+      ? '#e65100'
+      : overallLevel === 'advanced'
+        ? '#2e7d32'
+        : 'var(--primary-dark, #1565c0)';
+    const summaryCard = insight ? `
+      <div class="insight-summary-card card" style="margin-top:0.5rem;background:linear-gradient(135deg,#e8f5e9 0%,#e3f2fd 100%);border:1px solid #c8e6c9;">
+        <div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:0.75rem;align-items:flex-start;">
+          <div>
+            <div class="text-muted" style="font-size:0.8rem;text-transform:uppercase;letter-spacing:0.04em;">Progress insight · ${period || 'Latest'}</div>
+            <h3 style="margin:0.25rem 0 0;color:${levelTone};font-size:1.2rem;">${overallLabel || 'Assessment recorded'}</h3>
+            <p class="text-muted" style="margin:0.35rem 0 0;font-size:0.88rem;">${bandNote}</p>
+          </div>
+          ${insight.standardScore != null ? `
+            <div style="text-align:center;min-width:4.5rem;background:#fff;border-radius:12px;padding:0.5rem 0.75rem;border:1px solid #e0e0e0;">
+              <div class="text-muted" style="font-size:0.72rem;">Standard</div>
+              <div style="font-size:1.45rem;font-weight:700;color:var(--primary-dark);">${insight.standardScore}</div>
+            </div>` : ''}
+        </div>
+      </div>` : '';
+
+    const chip = (text, tone) =>
+      `<span class="insight-chip" style="display:inline-block;margin:0.2rem 0.35rem 0.2rem 0;padding:0.28rem 0.65rem;border-radius:999px;font-size:0.82rem;background:${tone.bg};color:${tone.fg};border:1px solid ${tone.bd};">${text}</span>`;
+    const strengthChips = (insight && insight.strengths && insight.strengths.length)
+      ? insight.strengths.map(s => chip(s, { bg: '#e8f5e9', fg: '#1b5e20', bd: '#a5d6a7' })).join('')
+      : '<span class="text-muted" style="font-size:0.88rem;">No strength highlights yet for this period.</span>';
+    const needChips = (insight && insight.needs && insight.needs.length)
+      ? insight.needs.map(n => chip(n, { bg: '#fff3e0', fg: '#e65100', bd: '#ffcc80' })).join('')
+      : '<span class="text-muted" style="font-size:0.88rem;">No areas flagged for extra support this period.</span>';
+
+    const strengthsNeedsHtml = `
+      <div class="insight-split" style="display:grid;grid-template-columns:1fr 1fr;gap:0.85rem;margin-top:1rem;">
+        <div class="card" style="margin:0;border-left:4px solid #43a047;">
+          <h3 style="margin:0 0 0.5rem;font-size:1rem;">✓ Strengths</h3>
+          <div>${strengthChips}</div>
+        </div>
+        <div class="card" style="margin:0;border-left:4px solid #fb8c00;">
+          <h3 style="margin:0 0 0.5rem;font-size:1rem;">◎ Needs monitoring</h3>
+          <div>${needChips}</div>
+        </div>
+      </div>
+      <style>@media (max-width:700px){ .insight-split{ grid-template-columns:1fr !important; } }</style>`;
+
+    let tipsHtml = '';
+    if (insight && insight.tipLines && insight.tipLines.length) {
+      tipsHtml = `
+        <div class="card" style="margin-top:1rem;border-left:5px solid #5c6bc0;">
+          <h3 style="margin-top:0;">Quick guidance tips</h3>
+          <ol style="margin:0;padding-left:1.25rem;font-size:0.9rem;line-height:1.45;">
+            ${insight.tipLines.slice(0, 8).map(t => `<li style="margin-bottom:0.35rem;">${t}</li>`).join('')}
+          </ol>
+        </div>`;
+    }
 
     let commentsHtml = '';
     if (insight && insight.teacherComments && insight.teacherComments.length) {
       commentsHtml = `
         <div class="card" style="margin-top:1rem;border-left:5px solid #f9a825;">
-          <h3 style="margin-top:0;">Teacher comments (checklist)</h3>
+          <h3 style="margin-top:0;">Teacher comments on checklist items</h3>
           <ul style="margin:0;padding-left:1.25rem;font-size:0.9rem;">
-            ${insight.teacherComments.slice(0, 8).map(c =>
-              `<li><strong>${c.itemTitle}</strong>${c.present ? '' : ' <span class="text-muted">(not yet present)</span>'}: ${c.comment}</li>`
+            ${insight.teacherComments.slice(0, 10).map(c =>
+              `<li style="margin-bottom:0.35rem;"><strong>${c.itemTitle}</strong>${c.present ? '' : ' <span class="text-muted">(still developing)</span>'}: ${c.comment}</li>`
             ).join('')}
           </ul>
         </div>`;
@@ -651,14 +705,14 @@ const TeacherDevelopment = {
     let focusHtml = '';
     if (insight && insight.focusItems && insight.focusItems.length) {
       focusHtml = `
-        <div class="card" style="margin-top:1rem;border-left:5px solid var(--orange, #e65100);">
-          <h3 style="margin-top:0;">Skills still developing (sample)</h3>
-          <p class="text-muted" style="font-size:0.85rem;margin-top:0;">Unchecked items used to shape parent tips.</p>
-          <ul style="margin:0;padding-left:1.25rem;font-size:0.9rem;">
-            ${insight.focusItems.slice(0, 8).map(fi =>
-              `<li><strong>${fi.domainName}:</strong> ${fi.itemTitle}</li>`
+        <div class="card" style="margin-top:1rem;border-left:5px solid #e65100;">
+          <h3 style="margin-top:0;">Skills still developing</h3>
+          <p class="text-muted" style="font-size:0.85rem;margin-top:0;">From items not yet marked Present — used for parent tips and priorities.</p>
+          <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
+            ${insight.focusItems.slice(0, 10).map(fi =>
+              `<span style="background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;padding:0.35rem 0.55rem;font-size:0.82rem;"><strong>${fi.domainName}</strong> · ${fi.itemTitle}</span>`
             ).join('')}
-          </ul>
+          </div>
         </div>`;
     }
 
@@ -667,16 +721,18 @@ const TeacherDevelopment = {
       teacherPriHtml = `
         <div class="card" style="margin-top:1rem;border-left:5px solid var(--primary);">
           <h3 style="margin-top:0;">Teacher learning priorities</h3>
-          <p class="text-muted" style="font-size:0.85rem;margin-top:0;">Based on ECCD domains that need support or monitoring for this child.</p>
-          ${insight.teacherPriorities.map(tp => `
-            <div style="margin-bottom:0.85rem;">
-              <strong>${tp.domainName}</strong>
-              <span class="text-muted" style="font-size:0.85rem;"> — ${tp.reason || ''}</span>
-              <ul style="margin:0.35rem 0 0;padding-left:1.25rem;font-size:0.9rem;">
-                ${(tp.priorities || []).map(p => `<li>${p}</li>`).join('')}
-              </ul>
-            </div>
-          `).join('')}
+          <p class="text-muted" style="font-size:0.85rem;margin-top:0;">Classroom focus based on domains that need support or monitoring.</p>
+          <div style="display:grid;gap:0.75rem;">
+            ${insight.teacherPriorities.map(tp => `
+              <div style="background:#f7fafc;border-radius:10px;padding:0.65rem 0.85rem;">
+                <strong>${tp.domainName}</strong>
+                <span class="text-muted" style="font-size:0.85rem;"> — ${tp.reason || ''}</span>
+                <ul style="margin:0.35rem 0 0;padding-left:1.25rem;font-size:0.9rem;">
+                  ${(tp.priorities || []).map(p => `<li>${p}</li>`).join('')}
+                </ul>
+              </div>
+            `).join('')}
+          </div>
         </div>`;
     }
 
@@ -685,21 +741,27 @@ const TeacherDevelopment = {
       parentActHtml = `
         <div class="card" style="margin-top:1rem;border-left:5px solid var(--success);">
           <h3 style="margin-top:0;">Suggested activities for parents</h3>
-          <p class="text-muted" style="font-size:0.85rem;margin-top:0;">Home ideas matched to domains for this checklist. Review before sharing.</p>
-          ${insight.parentActivities.map(pa => `
-            <div style="margin-bottom:0.85rem;">
-              <strong>${pa.domainName}</strong>
-              <span class="text-muted" style="font-size:0.85rem;"> — ${pa.reason || ''}</span>
-              <ul style="margin:0.35rem 0 0;padding-left:1.25rem;font-size:0.9rem;">
-                ${(pa.activities || []).map(a => `<li>${a}</li>`).join('')}
-              </ul>
-            </div>
-          `).join('')}
+          <p class="text-muted" style="font-size:0.85rem;margin-top:0;">Home ideas matched to this child’s domains. Review before sharing in the parent report.</p>
+          <div style="display:grid;gap:0.75rem;">
+            ${insight.parentActivities.map(pa => `
+              <div style="background:#f1f8f4;border-radius:10px;padding:0.65rem 0.85rem;">
+                <strong>${pa.domainName}</strong>
+                <span class="text-muted" style="font-size:0.85rem;"> — ${pa.reason || ''}</span>
+                <ul style="margin:0.35rem 0 0;padding-left:1.25rem;font-size:0.9rem;">
+                  ${(pa.activities || []).map(a => `<li>${a}</li>`).join('')}
+                </ul>
+              </div>
+            `).join('')}
+          </div>
         </div>`;
     }
 
     const draft = insight && insight.parentFriendlyDraft
-      ? `<div class="card" style="margin-top:1rem;background:var(--primary-light);"><strong>Parent-friendly draft</strong><p style="margin:0.5rem 0 0;font-size:0.9rem;">${insight.parentFriendlyDraft}</p></div>`
+      ? `<div class="card" style="margin-top:1rem;background:#e3f2fd;border:1px solid #90caf9;">
+          <h3 style="margin:0 0 0.35rem;font-size:1rem;">Parent-friendly report draft</h3>
+          <p class="text-muted" style="margin:0 0 0.5rem;font-size:0.82rem;">Editable later when you approve the parent report. Written in plain language.</p>
+          <p style="margin:0;font-size:0.95rem;line-height:1.5;">${insight.parentFriendlyDraft}</p>
+        </div>`
       : '';
 
     const persistNote =
@@ -740,10 +802,11 @@ const TeacherDevelopment = {
               Empty columns fill in as you mark Present under each evaluation.
             </p>
             ${trendNote}
+            ${summaryCard}
+            ${strengthsNeedsHtml}
+            ${tipsHtml}
             ${profilePanel}
             ${tableNote}
-            ${strengths}
-            ${needs}
             ${commentsHtml}
             ${focusHtml}
             ${teacherPriHtml}

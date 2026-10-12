@@ -30,7 +30,7 @@ const BrightSteps = (() => {
           </div>
           <p class="tagline">Child Development Monitoring System<br>Choose how you want to continue</p>
           <div class="role-buttons">
-            <button class="role-btn teacher" onclick="BrightSteps.login('teacher')">👩‍🏫  Login as Teacher</button>
+            <button class="role-btn teacher" onclick="BrightSteps.showTeacherLogin()">👩‍🏫  Login as Teacher / Head</button>
             <button class="role-btn parent"  onclick="BrightSteps.showParentLogin()">👨‍👧  Login as Parent / Guardian</button>
             <button class="role-btn role-btn-visitor"
               onclick="BrightSteps.login('visitor')">👋  Visitor — About &amp; Enrollment</button>
@@ -40,6 +40,99 @@ const BrightSteps = (() => {
       </div>
     `;
   }
+
+  /**
+   * Teacher / Head Teacher login — same portal for all staff.
+   * Head sees Staff management; faculty does not. One facility shared by all.
+   */
+  function showTeacherLogin() {
+    const app = document.getElementById('app');
+    app.innerHTML = `
+      <div class="login-screen">
+        <div class="login-card login-card-roles" style="max-width:440px;">
+          <div class="login-identity login-identity-simple login-identity-compact">
+            <div class="login-identity-text" style="text-align:center;width:100%;">
+              <div class="brand" style="font-size:1.45rem;">🌱 BrightSteps</div>
+              <p class="login-ncdc-line">Teacher / Head Teacher access</p>
+            </div>
+          </div>
+          <p class="text-muted" style="font-size:0.9rem;margin:0 0 1.25rem;line-height:1.45;text-align:left;">
+            All staff use the same portal. <strong>Head Teacher</strong> can manage staff and facility settings;
+            other teachers use the same modules without staff management.
+          </p>
+          <div style="text-align:left;">
+            <label class="ecc-field-label">Username</label>
+            <input type="text" id="teacher-username" class="ecc-field-input" placeholder="e.g. head or teacher"
+              autocomplete="username" />
+            <label class="ecc-field-label" style="margin-top:1rem;">Password</label>
+            <input type="password" id="teacher-password" class="ecc-field-input" placeholder="Password"
+              autocomplete="current-password"
+              onkeydown="if(event.key==='Enter')BrightSteps.submitTeacherLogin()" />
+            <p id="teacher-login-error" style="color:#d32f2f;font-size:0.85rem;margin:0.75rem 0 0;display:none;"></p>
+          </div>
+          <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:0.6rem;">
+            <button class="btn btn-blue" style="width:100%;" onclick="BrightSteps.submitTeacherLogin()">Sign in</button>
+            <button class="btn" style="width:100%;background:#e8e8e8;color:var(--text);" onclick="BrightSteps.showLogin()">← Back</button>
+          </div>
+          <div style="margin-top:1.25rem;padding:0.85rem;background:#f5f9fc;border-radius:10px;text-align:left;font-size:0.82rem;color:var(--muted);">
+            <strong>Staff login:</strong><br>
+            Irish Abordo (Head) · <code>irish</code> / <code>Abordo2026</code><br>
+            Maria Santos (Teacher) · <code>maria</code> / <code>Santos2026</code>
+          </div>
+        </div>
+      </div>
+    `;
+    setTimeout(() => {
+      const el = document.getElementById('teacher-username');
+      if (el) el.focus();
+    }, 50);
+  }
+
+  function submitTeacherLogin() {
+    const username = ((document.getElementById('teacher-username') || {}).value || '').trim();
+    const password = ((document.getElementById('teacher-password') || {}).value || '').trim();
+    const errEl = document.getElementById('teacher-login-error');
+    const showErr = (msg) => {
+      if (errEl) {
+        errEl.style.display = 'block';
+        errEl.textContent = msg;
+      } else {
+        alert(msg);
+      }
+    };
+    if (typeof TeacherStore === 'undefined') {
+      showErr('TeacherStore not loaded. Open artifacts/brightsteps/index.html and hard-refresh (Ctrl+Shift+R).');
+      return;
+    }
+    if (typeof TeacherStore.authenticate !== 'function') {
+      showErr('TeacherStore.authenticate missing — hard-refresh to load the latest teacher-store.js.');
+      return;
+    }
+    if (typeof TeacherLayout === 'undefined') {
+      showErr('TeacherLayout not loaded. Hard-refresh the page.');
+      return;
+    }
+    const result = TeacherStore.authenticate(username, password);
+    if (!result.ok) {
+      showErr(result.error || 'Login failed.');
+      return;
+    }
+    const staff = result.staff;
+    currentRole = 'teacher';
+    currentUser = {
+      name: staff.fullName || staff.username,
+      role: 'teacher',
+      staffRole: result.isHead ? 'head' : 'faculty',
+      isHead: !!result.isHead,
+      staffId: staff.id,
+      center: (typeof TeacherStore.getFacility === 'function'
+        ? (TeacherStore.getFacility().centerName || 'NCDC Medina')
+        : 'NCDC Medina')
+    };
+    TeacherLayout.render(currentUser);
+    navigate('dashboard');
+  }
+
 
   /**
    * Parent login form:
@@ -252,17 +345,14 @@ const BrightSteps = (() => {
       showParentLogin();
       return;
     }
+    if (role === 'teacher') {
+      showTeacherLogin();
+      return;
+    }
     if (role === 'visitor') {
       currentRole = 'visitor';
       currentUser = { name: 'Visitor', role: 'visitor', center: 'NCDC Medina' };
       showVisitorShell();
-      return;
-    }
-    currentRole = role;
-    currentUser = users[role];
-    if (role === 'teacher') {
-      TeacherLayout.render(currentUser);
-      navigate('dashboard');
     }
   }
 
@@ -392,6 +482,8 @@ const BrightSteps = (() => {
     getRole,
     getActiveChild,
     showLogin,
+    showTeacherLogin,
+    submitTeacherLogin,
     showParentLogin,
     submitParentLogin,
     selectChild,
