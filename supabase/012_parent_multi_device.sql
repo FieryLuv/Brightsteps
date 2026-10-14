@@ -1,14 +1,10 @@
 -- =============================================================================
--- BrightSteps — Parent multi-device access (anon-safe RPCs)
--- Parents log in with guardian name + Child ID (+ optional password).
--- SECURITY DEFINER functions return only that family's data.
+-- BrightSteps — Parent multi-device access (anon-safe RPC)
+-- Run this entire script once in Supabase SQL Editor.
 -- =============================================================================
 
 ALTER TABLE public.children
   ADD COLUMN IF NOT EXISTS parent_password text DEFAULT '';
-
-GRANT EXECUTE ON FUNCTION public.parent_portal_login(text, text, text) TO anon, authenticated;
--- (re-granted after create below)
 
 CREATE OR REPLACE FUNCTION public.parent_portal_login(
   p_guardian text,
@@ -26,20 +22,17 @@ DECLARE
   v_pass text := coalesce(p_password, '');
   v_children jsonb;
   v_child_ids uuid[];
-  v_id uuid;
   v_reports jsonb := '[]'::jsonb;
   v_assessments jsonb := '[]'::jsonb;
   v_attendance jsonb := '[]'::jsonb;
   v_health jsonb := '[]'::jsonb;
   v_contrib jsonb := '[]'::jsonb;
   v_sfp jsonb := '[]'::jsonb;
-  r record;
 BEGIN
   IF v_guardian = '' THEN
     RETURN jsonb_build_object('ok', false, 'error', 'Guardian name is required.');
   END IF;
 
-  -- Match guardian against login name / parent / mother / father (case-insensitive)
   SELECT coalesce(jsonb_agg(to_jsonb(c) ORDER BY c.full_name), '[]'::jsonb),
          array_agg(c.id)
   INTO v_children, v_child_ids
@@ -61,7 +54,6 @@ BEGIN
     );
   END IF;
 
-  -- If any matched child has a password, require it
   IF EXISTS (
     SELECT 1 FROM public.children c
     WHERE c.id = ANY (v_child_ids)
@@ -77,7 +69,7 @@ BEGIN
         'error', 'Incorrect or missing password. Use the password set in parent Settings, or ask the teacher.'
       );
     END IF;
-    -- Narrow to children that share this password (or empty)
+
     SELECT coalesce(jsonb_agg(to_jsonb(c) ORDER BY c.full_name), '[]'::jsonb),
            array_agg(c.id)
     INTO v_children, v_child_ids
@@ -86,7 +78,6 @@ BEGIN
       AND (coalesce(trim(c.parent_password), '') = '' OR c.parent_password = v_pass);
   END IF;
 
-  -- Approved progress reports
   SELECT coalesce(jsonb_agg(to_jsonb(pr)), '[]'::jsonb) INTO v_reports
   FROM public.progress_reports pr
   WHERE pr.child_id = ANY (v_child_ids)
@@ -125,6 +116,5 @@ BEGIN
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION public.parent_portal_login(text, text, text) TO anon, authenticated;
-REVOKE ALL ON FUNCTION public.parent_portal_login(text, text, text) FROM public;
+REVOKE ALL ON FUNCTION public.parent_portal_login(text, text, text) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.parent_portal_login(text, text, text) TO anon, authenticated;
