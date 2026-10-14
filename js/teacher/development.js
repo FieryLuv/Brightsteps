@@ -142,7 +142,7 @@ const TeacherDevelopment = {
               ).join('')}
             </select>
           </div>
-          ${q ? '<button type="button" class="btn filter-bar-clear" style="background:#e8e8e8;" onclick="TeacherDevelopment.onSearch('')">Clear</button>' : ''}
+          ${q ? `<button type="button" class="btn filter-bar-clear" style="background:#e8e8e8;" onclick="TeacherDevelopment.onSearch('')">Clear</button>` : ''}
         </div>
         ${q ? `<p class="text-muted" style="margin:0.65rem 0 0;font-size:0.85rem;">Search is across all classes · ${children.length} match(es)</p>` : ''}
       </div>

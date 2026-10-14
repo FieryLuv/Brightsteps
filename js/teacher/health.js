@@ -129,7 +129,7 @@ const TeacherHealth = {
             <select id="health-section" class="ecc-field-input" ${q ? 'disabled' : ''}
               onchange="TeacherHealth.selectSection(this.value)">${sectionOpts}</select>
           </div>
-          ${q ? '<button type="button" class="btn filter-bar-clear" style="background:#e8e8e8;" onclick="TeacherHealth.onSearch(\'\')">Clear</button>' : ''}
+          ${q ? `<button type="button" class="btn filter-bar-clear" style="background:#e8e8e8;" onclick="TeacherHealth.onSearch('')">Clear</button>` : ''}
         </div>
         ${q ? `<p class="text-muted" style="margin:0.65rem 0 0;font-size:0.85rem;">Search is across all classes · ${children.length} match(es)</p>` : ''}
       </div>
