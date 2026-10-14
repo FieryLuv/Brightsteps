@@ -10,14 +10,24 @@ const TeacherContributions = {
 
   render(container) {
     this._container = container;
-    if (typeof ChildRegistry !== 'undefined') ChildRegistry.ensureMerged();
     if (!this.yearMonth && typeof ContributionStore !== 'undefined') {
       this.yearMonth = ContributionStore.currentYearMonth();
     } else if (!this.yearMonth) {
       const d = new Date();
       this.yearMonth = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
     }
-    this._draw();
+    const finish = function () { TeacherContributions._draw(); };
+    const load = async function () {
+      if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+        await ChildrenRemote.ensureLoaded();
+      } else if (typeof ChildRegistry !== 'undefined') {
+        ChildRegistry.ensureMerged();
+      }
+      if (typeof ContributionStore !== 'undefined' && ContributionStore.hydrateMonth) {
+        await ContributionStore.hydrateMonth(TeacherContributions.yearMonth);
+      }
+    };
+    load().then(finish).catch(finish);
   },
 
   _sections() {
@@ -33,7 +43,9 @@ const TeacherContributions = {
   },
 
   _children() {
-    let list = typeof SampleChildren !== 'undefined' ? SampleChildren.slice() : [];
+    let list = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
+      ? ChildRegistry.activeList()
+      : (typeof SampleChildren !== 'undefined' ? SampleChildren.filter(c => c.archived !== true) : []);
     if (this.sectionKey && this.sectionKey !== 'all') {
       list = list.filter(c => c.sectionKey === this.sectionKey);
     }

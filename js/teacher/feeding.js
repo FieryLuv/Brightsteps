@@ -33,8 +33,10 @@ const TeacherFeeding = {
   },
 
   _children() {
-    return (typeof SampleChildren !== 'undefined' ? SampleChildren : [])
-      .filter(c => c.sectionKey === this.sectionKey);
+    const list = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
+      ? ChildRegistry.activeList()
+      : (typeof SampleChildren !== 'undefined' ? SampleChildren.filter(c => c.archived !== true) : []);
+    return list.filter(c => c.sectionKey === this.sectionKey);
   },
 
   _draw() {

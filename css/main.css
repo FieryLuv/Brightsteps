@@ -2318,8 +2318,9 @@ body:has(.parent-child-switcher) .parent-main {
 #sfp-print-overlay .sfp-print-page {
   overflow: auto;
   padding: 1.25rem 1.5rem 2rem;
-  font-family: Arial, sans-serif;
-  font-size: 12px;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12pt;
+  line-height: 1.35;
   color: #000;
   background: #fff;
 }
@@ -2328,29 +2329,117 @@ body:has(.parent-child-switcher) .parent-main {
 #sfp-print-overlay .sfp-print-page h3,
 #sfp-print-overlay .sfp-print-page p {
   text-align: center;
-  margin: 4px 0;
+  margin: 6px 0;
+}
+#sfp-print-overlay .sfp-print-page h3 {
+  font-size: 12pt;
+  font-weight: 700;
+}
+#sfp-print-overlay .sfp-print-page p,
+#sfp-print-overlay .sfp-print-page td,
+#sfp-print-overlay .sfp-print-page th {
+  font-size: 11pt;
 }
 #sfp-print-overlay .sfp-print-page table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 10px;
+  margin-top: 8px;
 }
 #sfp-print-overlay .sfp-print-page th,
 #sfp-print-overlay .sfp-print-page td {
   border: 1px solid #000;
-  padding: 5px;
+  padding: 4px 6px;
   vertical-align: top;
 }
 #sfp-print-overlay .sfp-print-page .label { font-weight: bold; }
-#sfp-print-overlay .sfp-print-page .sub { padding-left: 20px; }
+#sfp-print-overlay .sfp-print-page .sub { padding-left: 18px; }
 #sfp-print-overlay .sfp-print-page .sig {
-  margin-top: 48px;
+  margin-top: 36px;
   display: flex;
   justify-content: space-between;
   gap: 24px;
 }
 #sfp-print-overlay .sfp-print-page .sig div { text-align: center; flex: 1; }
 #sfp-print-overlay .sfp-print-page .left { text-align: left; }
+
+/* Consolidation: label | number — value column ~ half width */
+#sfp-print-overlay .sfp-consol-figures {
+  table-layout: fixed;
+  width: 100%;
+}
+#sfp-print-overlay .sfp-consol-figures col.sfp-consol-label-col { width: 50%; }
+#sfp-print-overlay .sfp-consol-figures col.sfp-consol-value-col { width: 50%; }
+#sfp-print-overlay .sfp-consol-figures td.sfp-consol-num {
+  width: 50%;
+  text-align: center;
+  font-weight: 600;
+  min-height: 1.35em;
+  padding: 5px 10px;
+}
+
+/* Beneficiary Profile — A4, 11/12 pt, slightly open spacing */
+#sfp-print-overlay .ben-profile-sheet {
+  font-family: 'Times New Roman', Times, serif;
+  font-size: 11pt;
+  line-height: 1.45;
+  color: #111;
+}
+#sfp-print-overlay .ben-profile-head {
+  text-align: center;
+  margin-bottom: 12px;
+}
+#sfp-print-overlay .ben-profile-rep {
+  font-size: 11pt;
+  letter-spacing: 0.02em;
+}
+#sfp-print-overlay .ben-profile-lgu {
+  font-size: 11pt;
+  font-weight: 700;
+}
+#sfp-print-overlay .ben-profile-title {
+  font-size: 12pt;
+  font-weight: 700;
+  margin-top: 8px;
+  text-decoration: underline;
+}
+#sfp-print-overlay .ben-profile-part {
+  font-weight: 700;
+  font-size: 11pt;
+  margin: 12px 0 6px;
+}
+#sfp-print-overlay .ben-profile-part--iii {
+  border-top: 1px solid #333;
+  padding-top: 8px;
+}
+#sfp-print-overlay .ben-profile-consent {
+  font-size: 11pt;
+  margin: 0 0 10px;
+  text-align: justify;
+  line-height: 1.4;
+}
+#sfp-print-overlay .ben-profile-sheet > div {
+  margin-bottom: 3px;
+}
+
+/* Screen preview paper sizes */
+#sfp-print-overlay .sfp-print-page--a4 {
+  max-width: 210mm;
+  margin: 0 auto;
+}
+#sfp-print-overlay .sfp-print-page--legal {
+  max-width: 8.5in;
+  margin: 0 auto;
+}
+
+/* Named pages: A4 = Beneficiary Profile; long bond = consolidation + matrices */
+@page sfp-a4 {
+  size: A4;
+  margin: 1in;
+}
+@page sfp-legal {
+  size: 8.5in 13in; /* Philippine long bond */
+  margin: 0.5in;
+}
 
 @media print {
   body.sfp-print-open > *:not(#sfp-print-overlay) {
@@ -2378,6 +2467,34 @@ body:has(.parent-child-switcher) .parent-main {
   #sfp-print-overlay .sfp-print-page {
     overflow: visible;
     padding: 0;
+    max-width: none;
+    font-size: 12pt;
+  }
+  #sfp-print-overlay .sfp-print-page--a4 {
+    page: sfp-a4;
+  }
+  #sfp-print-overlay .sfp-print-page--legal {
+    page: sfp-legal;
+  }
+  #sfp-print-overlay .sfp-print-page p,
+  #sfp-print-overlay .sfp-print-page td,
+  #sfp-print-overlay .sfp-print-page th {
+    font-size: 11pt;
+  }
+  #sfp-print-overlay .sfp-print-page h3 {
+    font-size: 12pt;
+    margin: 8px 0 6px;
+  }
+  #sfp-print-overlay .sfp-consol-figures td {
+    padding: 4px 8px;
+  }
+  #sfp-print-overlay .sfp-matrix-table {
+    font-size: 10pt;
+  }
+  #sfp-print-overlay .sfp-matrix-table th,
+  #sfp-print-overlay .sfp-matrix-table td {
+    padding: 3px 4px;
+    font-size: 10pt;
   }
 }
 
@@ -2864,3 +2981,45 @@ body:has(.parent-child-switcher) .parent-main {
   gap: 0.65rem;
   margin-bottom: 0.4rem;
 }
+
+/* Calendar event states */
+.cal-event-today {
+  background: #e8f5e9 !important;
+  border-color: #66bb6a !important;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.35);
+}
+.cal-event-today .cal-dot { background: #2e7d32; }
+.cal-event-today .cal-event-label { color: #1b5e20; }
+.cal-event-past {
+  background: #fff8e1 !important;
+  border-color: #ffc107 !important;
+  cursor: default;
+}
+.cal-event-past .cal-dot { background: #f9a825; }
+.cal-event-past .cal-event-label { color: #f57f17; }
+.cal-holiday {
+  background: #ffebee;
+  border-color: #ef9a9a;
+}
+.cal-holiday .cal-daynum { color: #c62828; }
+.cal-holiday .cal-event-label { color: #b71c1c; }
+.cal-holiday.cal-event-today {
+  background: #e8f5e9 !important;
+}
+.cal-past-day {
+  opacity: 0.72;
+}
+.cal-legend-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  vertical-align: middle;
+  margin-right: 0.25rem;
+}
+.cal-legend-swatch.cal-event-today { background: #e8f5e9; border-color: #66bb6a; }
+.cal-legend-swatch.cal-event-past { background: #fff8e1; border-color: #ffc107; }
+.cal-legend-swatch.cal-has-event { background: #e3f2fd; border-color: #90caf9; }
+.cal-legend-swatch.cal-holiday { background: #ffebee; border-color: #ef9a9a; }
+.cal-list-past { color: var(--muted); }

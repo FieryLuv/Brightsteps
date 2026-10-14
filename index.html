@@ -10,6 +10,20 @@
   <!-- Root mounts either login or the role layout -->
   <div id="app"></div>
 
+  <!-- Supabase (optional online backend). Fill js/data/supabase-config.js -->
+  <script src="js/data/supabase-config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/data/supabase-client.js"></script>
+  <script src="js/data/children-remote.js"></script>
+  <script src="js/data/attendance-remote.js"></script>
+  <script src="js/data/assessment-remote.js"></script>
+  <script src="js/data/report-remote.js"></script>
+  <script src="js/data/application-remote.js"></script>
+  <script src="js/data/health-remote.js"></script>
+  <script src="js/data/sfp-remote.js"></script>
+  <script src="js/data/contribution-remote.js"></script>
+  <script src="js/data/calendar-remote.js"></script>
+
   <!-- Data stores first (TeacherStore must load before app login handlers run) -->
   <script src="js/data/sample-children.js"></script>
   <script src="js/data/child-registry.js"></script>

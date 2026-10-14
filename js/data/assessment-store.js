@@ -84,7 +84,43 @@ const AssessmentStore = {
     else list.push(record);
 
     this._write(list);
+
+    // Dual-write to Supabase (async). Online mode surfaces errors via console + flag.
+    if (typeof AssessmentRemote !== 'undefined' && AssessmentRemote.online()) {
+      AssessmentRemote.upsert(record).then(function (r) {
+        if (!r.ok) {
+          console.error('[AssessmentStore] remote save failed', r.error);
+          record._remoteError = r.error;
+        } else if (r.assessment) {
+          // Keep UUID id from server
+          const list2 = AssessmentStore._read();
+          const i = list2.findIndex(a => String(a.childId) === String(record.childId) && a.period === record.period);
+          if (i >= 0) {
+            list2[i] = Object.assign({}, list2[i], r.assessment, {
+              childName: list2[i].childName || record.childName
+            });
+            AssessmentStore._write(list2);
+          }
+          console.info('[AssessmentStore] synced to Supabase', record.period);
+        }
+      });
+    }
     return record;
+  },
+
+  async hydrateForChild(childId) {
+    if (typeof AssessmentRemote === 'undefined' || !AssessmentRemote.online()) {
+      return this.listForChild(childId);
+    }
+    const remote = await AssessmentRemote.listForChild(childId);
+    if (!remote.ok) {
+      console.warn('[AssessmentStore] hydrate failed', remote.error);
+      return this.listForChild(childId);
+    }
+    const list = this._read().filter(a => String(a.childId) !== String(childId));
+    remote.list.forEach(function (a) { list.push(a); });
+    this._write(list);
+    return this.listForChild(childId);
   },
 
   listForChild(childId) {

@@ -131,14 +131,26 @@ const SfpStore = {
       parentPwd: data.parentPwd === true || data.parentPwd === 'Yes',
       fdsAttended: data.fdsAttended === true || data.fdsAttended === 'Yes',
       pesModules: data.pesModules || '',
-      entryWeighDate: data.entryWeighDate || prev.entryWeighDate || '',
-      entryHeightCm: data.entryHeightCm != null ? data.entryHeightCm : prev.entryHeightCm,
-      entryWeightKg: data.entryWeightKg != null ? data.entryWeightKg : prev.entryWeightKg,
-      after6moWeighDate: data.after6moWeighDate || prev.after6moWeighDate || '',
-      after6moHeightCm: data.after6moHeightCm != null ? data.after6moHeightCm : prev.after6moHeightCm,
-      after6moWeightKg: data.after6moWeightKg != null ? data.after6moWeightKg : prev.after6moWeightKg,
-      nutritionEntry: data.nutritionEntry || prev.nutritionEntry || '',
-      nutritionAfter6mo: data.nutritionAfter6mo || prev.nutritionAfter6mo || '',
+      entryWeighDate: data.entryWeighDate != null ? (data.entryWeighDate || '') : (prev.entryWeighDate || ''),
+      entryHeightCm: Object.prototype.hasOwnProperty.call(data, 'entryHeightCm')
+        ? data.entryHeightCm
+        : prev.entryHeightCm,
+      entryWeightKg: Object.prototype.hasOwnProperty.call(data, 'entryWeightKg')
+        ? data.entryWeightKg
+        : prev.entryWeightKg,
+      after6moWeighDate: Object.prototype.hasOwnProperty.call(data, 'after6moWeighDate')
+        ? (data.after6moWeighDate || '')
+        : (prev.after6moWeighDate || ''),
+      after6moHeightCm: Object.prototype.hasOwnProperty.call(data, 'after6moHeightCm')
+        ? data.after6moHeightCm
+        : prev.after6moHeightCm,
+      after6moWeightKg: Object.prototype.hasOwnProperty.call(data, 'after6moWeightKg')
+        ? data.after6moWeightKg
+        : prev.after6moWeightKg,
+      nutritionEntry: data.nutritionEntry != null ? (data.nutritionEntry || '') : (prev.nutritionEntry || ''),
+      nutritionAfter6mo: Object.prototype.hasOwnProperty.call(data, 'nutritionAfter6mo')
+        ? (data.nutritionAfter6mo || '')
+        : (prev.nutritionAfter6mo || ''),
       consent: data.consent === true || data.consent === 'Yes',
       consentDate: data.consentDate || prev.consentDate || '',
       consentName: data.consentName || prev.consentName || '',
@@ -146,7 +158,28 @@ const SfpStore = {
       updatedAt: new Date().toISOString()
     };
     this._write(state);
+    if (typeof SfpRemote !== 'undefined' && SfpRemote.online()) {
+      SfpRemote.upsertBeneficiary(id, state.beneficiaries[id]).then(function (r) {
+        if (!r.ok) console.error('[SfpStore] remote beneficiary failed', r.error);
+        else console.info('[SfpStore] beneficiary synced');
+      });
+    }
     return { ok: true, beneficiary: state.beneficiaries[id] };
+  },
+
+  async hydrateBeneficiaries() {
+    if (typeof SfpRemote === 'undefined' || !SfpRemote.online()) return;
+    const remote = await SfpRemote.fetchBeneficiaries();
+    if (!remote.ok) {
+      console.warn('[SfpStore] hydrate beneficiaries', remote.error);
+      return;
+    }
+    const state = this._read();
+    (remote.list || []).forEach(function (row) {
+      const local = SfpRemote.rowToLocalBen(row);
+      if (local && local.childId) state.beneficiaries[String(local.childId)] = local;
+    });
+    this._write(state);
   },
 
   listBeneficiaries() {
@@ -190,6 +223,12 @@ const SfpStore = {
     if (idx >= 0) state.feedingDays[idx] = record;
     else state.feedingDays.push(record);
     this._write(state);
+    if (typeof SfpRemote !== 'undefined' && SfpRemote.online()) {
+      SfpRemote.saveHotMealDay(record).then(function (r) {
+        if (!r.ok) console.error('[SfpStore] remote hot meal failed', r.error);
+        else console.info('[SfpStore] hot meal synced', r.count);
+      });
+    }
     return { ok: true, day: record };
   },
 
@@ -265,6 +304,12 @@ const SfpStore = {
       else state.altDeliveries.push(record);
     }
     this._write(state);
+    if (typeof SfpRemote !== 'undefined' && SfpRemote.online()) {
+      SfpRemote.saveAltDelivery(record).then(function (r) {
+        if (!r.ok) console.error('[SfpStore] remote nutricombo failed', r.error);
+        else console.info('[SfpStore] nutricombo synced', r.count);
+      });
+    }
     return { ok: true, delivery: record };
   },
 

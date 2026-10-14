@@ -8,9 +8,31 @@ const TeacherReports = {
 
   render(container) {
     this._container = container;
-    if (typeof ChildRegistry !== 'undefined') ChildRegistry.ensureMerged();
     if (typeof SfpStore !== 'undefined') SfpStore.ensureSeed();
-    this._draw();
+    const draw = function () { TeacherReports._draw(); };
+    const load = async function () {
+      if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+        await ChildrenRemote.ensureLoaded();
+      } else if (typeof ChildRegistry !== 'undefined') {
+        ChildRegistry.ensureMerged();
+      }
+      // Pull assessments from server so Open period buttons appear after refresh
+      if (typeof AssessmentRemote !== 'undefined' && AssessmentRemote.online() &&
+          typeof AssessmentStore !== 'undefined' && AssessmentStore.hydrateForChild) {
+        const kids = (typeof SampleChildren !== 'undefined') ? SampleChildren : [];
+        for (let i = 0; i < kids.length; i++) {
+          try { await AssessmentStore.hydrateForChild(kids[i].id); } catch (e) { /* ignore */ }
+        }
+      }
+      if (typeof ReportRemote !== 'undefined' && ReportRemote.online() &&
+          typeof ReportStore !== 'undefined' && ReportStore.hydrateForChild) {
+        const kids = (typeof SampleChildren !== 'undefined') ? SampleChildren : [];
+        for (let i = 0; i < kids.length; i++) {
+          try { await ReportStore.hydrateForChild(kids[i].id); } catch (e) { /* ignore */ }
+        }
+      }
+    };
+    load().then(draw).catch(draw);
   },
 
   setTab(key) {
@@ -39,7 +61,10 @@ const TeacherReports = {
   },
 
   _eccdReportsHtml() {
-    const children = typeof SampleChildren !== 'undefined' ? SampleChildren : [];
+    // Active children only — archived keep prior assessments/reports in storage
+    const children = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
+      ? ChildRegistry.activeList()
+      : (typeof SampleChildren !== 'undefined' ? SampleChildren.filter(c => c.archived !== true) : []);
     const periodOrder = { '1st': 1, '2nd': 2, '3rd': 3, '4th': 4, '5th': 5, '6th': 6 };
     const rows = children.map(c => {
       const history = typeof AssessmentStore !== 'undefined'
@@ -71,7 +96,7 @@ const TeacherReports = {
           ${badge}
           ${h.finalized ? '<span class="text-muted" style="font-size:0.78rem;">scores finalized</span>' : ''}
           <button class="btn btn-blue" style="padding:4px 12px;font-size:0.82rem;"
-            onclick="TeacherReports.openEditor(${c.id}, '${h.period}')">${label}</button>
+            onclick="TeacherReports.openEditor('${c.id}', '${h.period}')">${label}</button>
         </div>`;
       }).join('');
 
@@ -219,27 +244,38 @@ const TeacherReports = {
 
   /**
    * In-page print preview (no pop-up). Avoids blocked window.open.
+   * @param {string} title
+   * @param {string} bodyHtml
+   * @param {{ paper?: 'a4'|'legal' }} [opts] — a4 = bond A4 (consolidation); legal = long bond (matrices)
    */
-  _printWindow(title, bodyHtml) {
+  _printWindow(title, bodyHtml, opts) {
     const existing = document.getElementById('sfp-print-overlay');
     if (existing) existing.remove();
 
+    const paper = (opts && opts.paper) || 'a4';
+    const paperClass = paper === 'legal' ? 'sfp-print-page--legal' : 'sfp-print-page--a4';
+    const paperHint = paper === 'legal' ? 'Long bond (8.5×13 in)' : 'A4 bond · 1 in margins';
+
     const overlay = document.createElement('div');
     overlay.id = 'sfp-print-overlay';
+    overlay.setAttribute('data-paper', paper);
     overlay.innerHTML = `
       <div class="sfp-print-backdrop no-print" onclick="if(event.target===this)TeacherReports.closeSfpPrint()"></div>
       <div class="sfp-print-shell">
         <div class="sfp-print-toolbar no-print">
           <strong style="color:white;flex:1;">${title}</strong>
+          <span style="color:rgba(255,255,255,0.9);font-size:0.85rem;">${paperHint}</span>
           <button class="btn" style="background:white;color:var(--primary-dark);" onclick="TeacherReports.doSfpPrint()">🖨 Print / Save as PDF</button>
           <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherReports.closeSfpPrint()">Close</button>
         </div>
-        <div class="sfp-print-page" id="sfp-print-page">
+        <div class="sfp-print-page ${paperClass}" id="sfp-print-page">
           ${bodyHtml}
         </div>
       </div>`;
     document.body.appendChild(overlay);
     document.body.classList.add('sfp-print-open');
+    if (paper === 'legal') document.body.classList.add('sfp-print-legal');
+    else document.body.classList.add('sfp-print-a4');
   },
 
   doSfpPrint() {
@@ -249,7 +285,7 @@ const TeacherReports = {
   closeSfpPrint() {
     const el = document.getElementById('sfp-print-overlay');
     if (el) el.remove();
-    document.body.classList.remove('sfp-print-open');
+    document.body.classList.remove('sfp-print-open', 'sfp-print-a4', 'sfp-print-legal');
   },
 
   _cycleMeta() {
@@ -311,12 +347,17 @@ const TeacherReports = {
     return s ? s.label : (key || 'All classes');
   },
 
-  /** Beneficiaries limited to one section (by child's sectionKey), or all if sectionKey is null. */
+  /** Beneficiaries limited to one section (by child's sectionKey), or all if sectionKey is null.
+   *  Archived children are excluded from operational SFP lists (history stays in storage). */
   _beneficiariesForSection(sectionKey) {
     const bens = typeof SfpStore !== 'undefined' ? SfpStore.listBeneficiaries() : [];
-    if (!sectionKey) return bens;
-    const list = typeof SampleChildren !== 'undefined' ? SampleChildren : [];
-    return bens.filter(b => {
+    const list = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
+      ? ChildRegistry.activeList()
+      : (typeof SampleChildren !== 'undefined' ? SampleChildren.filter(c => c.archived !== true) : []);
+    const activeIds = new Set(list.map(c => String(c.id)));
+    let out = bens.filter(b => activeIds.has(String(b.childId)));
+    if (!sectionKey) return out;
+    return out.filter(b => {
       const c = list.find(x => String(x.id) === String(b.childId));
       return c && c.sectionKey === sectionKey;
     });
@@ -741,7 +782,11 @@ const TeacherReports = {
     const suffix = isAll
       ? ' (all classes)'
       : (opts.sectionKey ? ` (${this._sectionLabel(opts.sectionKey)})` : '');
-    this._printWindow((titles[kind] || 'SFP form') + suffix, parts.join(''));
+    // Matrices (and packs that include them) use long bond; certificates stay A4
+    const paper = (kind === 'matrixA' || kind === 'matrixC' || kind === 'packA' || kind === 'packC')
+      ? 'legal'
+      : 'a4';
+    this._printWindow((titles[kind] || 'SFP form') + suffix, parts.join(''), { paper });
   },
 
   // Back-compat wrappers (open picker)
@@ -804,16 +849,16 @@ const TeacherReports = {
       : '';
 
     return `
-      <div class="sfp-print-section ben-profile-sheet" style="font-family:Times New Roman,Times,serif;font-size:11.5px;line-height:1.4;color:#111;">
-        <div style="text-align:center;margin-bottom:10px;">
-          <div style="font-size:10px;letter-spacing:0.02em;">Republic of the Philippines</div>
-          <div style="font-size:11px;font-weight:700;">Municipality of Medina · Misamis Oriental</div>
-          <div style="font-size:13px;font-weight:700;margin-top:6px;text-decoration:underline;">
+      <div class="sfp-print-section ben-profile-sheet">
+        <div class="ben-profile-head">
+          <div class="ben-profile-rep">Republic of the Philippines</div>
+          <div class="ben-profile-lgu">Municipality of Medina · Misamis Oriental</div>
+          <div class="ben-profile-title">
             SUPPLEMENTARY FEEDING PROGRAM BENEFICIARY PROFILE
           </div>
         </div>
 
-        <div style="font-weight:700;font-size:11.5px;margin:10px 0 4px;">
+        <div class="ben-profile-part">
           Part I - (FOR CHILD DEVELOPMENT WORKER ONLY - DO NOT FILL OUT)
         </div>
         <div style="margin-bottom:2px;">
@@ -839,7 +884,7 @@ const TeacherReports = {
           &nbsp;&nbsp; With Community Garden: ${garden === true ? '☑' : '☐'} Yes &nbsp; ${garden === false ? '☑' : '☐'} No
         </div>
 
-        <div style="font-weight:700;font-size:11.5px;margin:12px 0 4px;">
+        <div class="ben-profile-part">
           Part II - (FOR PARENTS)
         </div>
         <div style="font-weight:700;margin:4px 0;">I.&nbsp;&nbsp;Child Information:</div>
@@ -898,10 +943,10 @@ const TeacherReports = {
           If yes, please indicate the Modules of PES completed: ${line(sfp.pesModules, '16rem')}
         </div>
 
-        <div style="font-weight:700;font-size:11.5px;margin:12px 0 4px;border-top:1px solid #333;padding-top:6px;">
+        <div class="ben-profile-part ben-profile-part--iii">
           PART III - CONSENT &amp; CONFIDENTIALITY CLAUSE
         </div>
-        <p style="font-size:10px;margin:0 0 10px;text-align:justify;line-height:1.35;">
+        <p class="ben-profile-consent">
           All information collected through this intake sheet shall be maintained in a secured database and may
           be processed manually or electronically for the purpose of implementing, monitoring, and evaluating
           the Supplementary Feeding Program (SFP). This includes tracking the nutritional status of children
@@ -1041,7 +1086,8 @@ const TeacherReports = {
     const title = list.length === 1
       ? 'SFP Beneficiary Profile — ' + (list[0].beneficiaryName || list[0].childId)
       : 'SFP Beneficiary Profiles (' + list.length + ')';
-    this._printWindow(title, parts);
+    // A4 bond · 1 in margins · 11/12 pt (see CSS .sfp-print-page--a4 + .sfp-ben-profile)
+    this._printWindow(title, '<div class="sfp-ben-profile-wrap">' + parts + '</div>', { paper: 'a4' });
   },
 
     /** Certificate letterhead — NCDC Medina only (no DSWD branding). */
@@ -1105,36 +1151,37 @@ const TeacherReports = {
       <h3 class="cert-title" style="margin-top:12px;">CONSOLIDATED REPORT (FIGURES)</h3>
 
       <h3>CONSOLIDATED PHYSICAL STATUS REPORT</h3>
-      <table>
-        <tr><td class="label">Total No. of Beneficiaries:</td><td>${s ? z(s.beneficiaries) : ''}</td></tr>
-        <tr><td class="sub">No. of Male Beneficiaries:</td><td>${s ? m(s.beneficiaries) : ''}</td></tr>
-        <tr><td class="sub">No. of Female Beneficiaries:</td><td>${s ? f(s.beneficiaries) : ''}</td></tr>
-        <tr><td class="label">Total No. of CDCs/SNPs:</td><td>1</td></tr>
-        <tr><td class="sub">No. of CDCs:</td><td>1</td></tr>
-        <tr><td class="sub">No. of SNPs:</td><td>0</td></tr>
-        <tr><td class="label">Total No. Of Children Beneficiaries (Age Bracket):</td><td></td></tr>
-        <tr><td class="sub">2 yrs. Old:</td><td>${z(age(2))}</td></tr>
-        <tr><td class="sub">3 yrs. Old:</td><td>${z(age(3))}</td></tr>
-        <tr><td class="sub">4 yrs. Old:</td><td>${z(age(4))}</td></tr>
-        <tr><td class="sub">5 yrs. Old:</td><td>${z(age(5))}</td></tr>
-        <tr><td class="label">Total No. of 4Ps Beneficiaries:</td><td>${s ? z(s.fourPs) : ''}</td></tr>
-        <tr><td class="sub">Male:</td><td>${s ? m(s.fourPs) : ''}</td></tr>
-        <tr><td class="sub">Female:</td><td>${s ? f(s.fourPs) : ''}</td></tr>
-        <tr><td class="label">Total No. of Child with Disability Beneficiaries:</td><td>${s ? z(s.disability) : ''}</td></tr>
-        <tr><td class="sub">Male:</td><td>${s ? m(s.disability) : ''}</td></tr>
-        <tr><td class="sub">Female:</td><td>${s ? f(s.disability) : ''}</td></tr>
-        <tr><td class="label">Total No. of Indigenous Child Beneficiaries:</td><td>${s ? z(s.indigenous) : ''}</td></tr>
-        <tr><td class="sub">Male:</td><td>${s ? m(s.indigenous) : ''}</td></tr>
-        <tr><td class="sub">Female:</td><td>${s ? f(s.indigenous) : ''}</td></tr>
-        <tr><td class="label">Total No. of Child with Solo Parent:</td><td>${s ? z(s.soloParent) : ''}</td></tr>
-        <tr><td class="sub">Male:</td><td>${s ? m(s.soloParent) : ''}</td></tr>
-        <tr><td class="sub">Female:</td><td>${s ? f(s.soloParent) : ''}</td></tr>
-        <tr><td class="label">Total No. of Child Dewormed:</td><td>${s ? z(s.dewormed) : ''}</td></tr>
-        <tr><td class="sub">Male:</td><td>${s ? m(s.dewormed) : ''}</td></tr>
-        <tr><td class="sub">Female:</td><td>${s ? f(s.dewormed) : ''}</td></tr>
-        <tr><td class="label">Total No. of Child Supplemented with Vitamin A:</td><td>${s ? z(s.vitaminA) : ''}</td></tr>
-        <tr><td class="sub">Male:</td><td>${s ? m(s.vitaminA) : ''}</td></tr>
-        <tr><td class="sub">Female:</td><td>${s ? f(s.vitaminA) : ''}</td></tr>
+      <table class="sfp-consol-figures">
+        <colgroup><col class="sfp-consol-label-col" /><col class="sfp-consol-value-col" /></colgroup>
+        <tr><td class="label">Total No. of Beneficiaries:</td><td class="sfp-consol-num">${s ? z(s.beneficiaries) : ''}</td></tr>
+        <tr><td class="sub">No. of Male Beneficiaries:</td><td class="sfp-consol-num">${s ? m(s.beneficiaries) : ''}</td></tr>
+        <tr><td class="sub">No. of Female Beneficiaries:</td><td class="sfp-consol-num">${s ? f(s.beneficiaries) : ''}</td></tr>
+        <tr><td class="label">Total No. of CDCs/SNPs:</td><td class="sfp-consol-num">1</td></tr>
+        <tr><td class="sub">No. of CDCs:</td><td class="sfp-consol-num">1</td></tr>
+        <tr><td class="sub">No. of SNPs:</td><td class="sfp-consol-num">0</td></tr>
+        <tr><td class="label">Total No. Of Children Beneficiaries (Age Bracket):</td><td class="sfp-consol-num"></td></tr>
+        <tr><td class="sub">2 yrs. Old:</td><td class="sfp-consol-num">${z(age(2))}</td></tr>
+        <tr><td class="sub">3 yrs. Old:</td><td class="sfp-consol-num">${z(age(3))}</td></tr>
+        <tr><td class="sub">4 yrs. Old:</td><td class="sfp-consol-num">${z(age(4))}</td></tr>
+        <tr><td class="sub">5 yrs. Old:</td><td class="sfp-consol-num">${z(age(5))}</td></tr>
+        <tr><td class="label">Total No. of 4Ps Beneficiaries:</td><td class="sfp-consol-num">${s ? z(s.fourPs) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td class="sfp-consol-num">${s ? m(s.fourPs) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td class="sfp-consol-num">${s ? f(s.fourPs) : ''}</td></tr>
+        <tr><td class="label">Total No. of Child with Disability Beneficiaries:</td><td class="sfp-consol-num">${s ? z(s.disability) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td class="sfp-consol-num">${s ? m(s.disability) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td class="sfp-consol-num">${s ? f(s.disability) : ''}</td></tr>
+        <tr><td class="label">Total No. of Indigenous Child Beneficiaries:</td><td class="sfp-consol-num">${s ? z(s.indigenous) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td class="sfp-consol-num">${s ? m(s.indigenous) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td class="sfp-consol-num">${s ? f(s.indigenous) : ''}</td></tr>
+        <tr><td class="label">Total No. of Child with Solo Parent:</td><td class="sfp-consol-num">${s ? z(s.soloParent) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td class="sfp-consol-num">${s ? m(s.soloParent) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td class="sfp-consol-num">${s ? f(s.soloParent) : ''}</td></tr>
+        <tr><td class="label">Total No. of Child Dewormed:</td><td class="sfp-consol-num">${s ? z(s.dewormed) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td class="sfp-consol-num">${s ? m(s.dewormed) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td class="sfp-consol-num">${s ? f(s.dewormed) : ''}</td></tr>
+        <tr><td class="label">Total No. of Child Supplemented with Vitamin A:</td><td class="sfp-consol-num">${s ? z(s.vitaminA) : ''}</td></tr>
+        <tr><td class="sub">Male:</td><td class="sfp-consol-num">${s ? m(s.vitaminA) : ''}</td></tr>
+        <tr><td class="sub">Female:</td><td class="sfp-consol-num">${s ? f(s.vitaminA) : ''}</td></tr>
       </table>
 
       <h3 style="margin-top:20px;">CONSOLIDATED NUTRITIONAL STATUS REPORT</h3>
@@ -1174,7 +1221,8 @@ const TeacherReports = {
         <div><b>Prepared by:</b><br><br>_________________________<br>ECCD / SFP Focal Person</div>
         <div><b>Noted by:</b><br><br>_________________________<br>MSWDO — MEDINA</div>
       </div>`;
-    this._printWindow('SFP Consolidated Report', body);
+    // Long bond for consolidated physical / nutritional status report
+    this._printWindow('SFP Consolidated Report', body, { paper: 'legal' });
   },
 
 
@@ -1359,7 +1407,7 @@ const TeacherReports = {
   },
 
   openEditor(childId, period) {
-    const child = SampleChildren.find(c => c.id === childId);
+    const child = SampleChildren.find(c => String(c.id) === String(childId));
     if (!child) return;
 
     const history = AssessmentStore.listForChild(childId);
@@ -1448,9 +1496,9 @@ const TeacherReports = {
         : '<div class="card" style="margin-bottom:1rem;"><p class="text-muted" style="margin:0;font-size:0.88rem;">No checklist comments found for this period. Add comments on unchecked items in Development Tracking, then re-save the assessment for richer parent tips.</p></div>') +
       '</div><div class="bs-modal-footer" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;">' +
       '<button class="btn" style="background:#e0e0e0;color:#333;" onclick="TeacherReports.closeEditor()">Cancel</button>' +
-      '<button class="btn btn-blue" onclick="TeacherReports.saveDraft(' + child.id + ', \'' + assessment.period + '\')">' +
+      '<button class="btn btn-blue" onclick="TeacherReports.saveDraft(\'' + String(child.id).replace(/'/g, '') + '\', \'' + assessment.period + '\')">' +
       (existing && existing.status === 'approved' ? 'Save changes (keep approved)' : 'Save draft') + '</button>' +
-      '<button class="btn" style="background:var(--success);" onclick="TeacherReports.approve(' + child.id + ', \'' + assessment.period + '\')">' +
+      '<button class="btn" style="background:var(--success);" onclick="TeacherReports.approve(\'' + String(child.id).replace(/'/g, '') + '\', \'' + assessment.period + '\')">' +
       (existing && existing.status === 'approved' ? '✓ Update parent view' : '✓ Approve for parent') + '</button>' +
       '</div></div></div>';
 
@@ -1467,7 +1515,7 @@ const TeacherReports = {
   },
 
   _readForm(childId, period) {
-    const child = SampleChildren.find(c => c.id === childId);
+    const child = SampleChildren.find(c => String(c.id) === String(childId));
     const assessment = this._pendingAssessment;
     const base = this._pendingDraft || this._buildDraft(child, assessment);
     const teacherNote = (document.getElementById('report-teacher-note') || {}).value || '';

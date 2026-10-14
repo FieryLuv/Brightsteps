@@ -274,6 +274,9 @@ const TeacherLayout = {
 
     const state = TeacherStore.getState();
     const staff = TeacherStore.listStaff();
+    const archived = typeof TeacherStore.listArchivedStaff === 'function'
+      ? TeacherStore.listArchivedStaff()
+      : [];
     const headId = state.headStaffId;
     const currentId = state.currentStaffId;
 
@@ -292,11 +295,24 @@ const TeacherLayout = {
             onclick="TeacherLayout.proposeTransfer('${s.id}')">Propose as Head</button>` : ''}
           ${!isSelf ? `<button type="button" class="btn" style="font-size:0.78rem;padding:0.25rem 0.5rem;background:#f5f5f5;"
             onclick="TeacherLayout.switchStaff('${s.id}')">Sign in as</button>` : ''}
-          ${!isHead && !isSelf ? `<button type="button" class="btn" style="font-size:0.78rem;padding:0.25rem 0.5rem;background:#ffebee;color:#c62828;"
-            onclick="TeacherLayout.removeStaff('${s.id}')">Remove</button>` : ''}
+          ${!isHead && !isSelf ? `<button type="button" class="btn" style="font-size:0.78rem;padding:0.25rem 0.5rem;background:#fff3e0;color:#e65100;"
+            onclick="TeacherLayout.archiveStaff('${s.id}')">📦 Archive</button>` : ''}
         </td>
       </tr>`;
     }).join('');
+
+    const archivedRows = archived.map(s => `
+      <tr style="opacity:0.92;">
+        <td>
+          <strong>${TeacherLayout._esc(s.fullName)}</strong>
+          <span style="font-size:0.72rem;background:#eceff1;color:#546e7a;padding:0.12rem 0.4rem;border-radius:999px;margin-left:0.25rem;">Archived</span>
+          <div class="text-muted" style="font-size:0.78rem;">${TeacherLayout._esc(s.position || '')} · @${TeacherLayout._esc(s.username || '—')}</div>
+        </td>
+        <td style="text-align:right;">
+          <button type="button" class="btn" style="font-size:0.78rem;padding:0.25rem 0.5rem;background:#e8f5e9;color:#2e7d32;"
+            onclick="TeacherLayout.restoreStaff('${s.id}')">↩ Restore</button>
+        </td>
+      </tr>`).join('');
 
     const html = `
       <div id="teacher-staff-overlay" class="bs-overlay">
@@ -309,6 +325,7 @@ const TeacherLayout = {
             <p class="text-muted" style="margin-top:0;font-size:0.88rem;">
               Only <strong>one Head Teacher / Admin</strong> at a time. Proposing a new head requires
               the head password; the appointed teacher must <strong>Accept</strong> or <strong>Decline</strong>.
+              Archive soft-deactivates faculty (login blocked); restore anytime.
             </p>
             ${(() => {
               const pend = TeacherStore.getPendingHeadTransfer();
@@ -321,10 +338,18 @@ const TeacherLayout = {
             })()}
             <div class="eccd-table-wrap" style="margin-bottom:1rem;">
               <table class="eccd-table">
-                <thead><tr><th>Staff</th><th style="text-align:right;">Actions</th></tr></thead>
+                <thead><tr><th>Active staff</th><th style="text-align:right;">Actions</th></tr></thead>
                 <tbody>${rows || '<tr><td colspan="2">No staff</td></tr>'}</tbody>
               </table>
             </div>
+            ${archived.length ? `
+            <h4 style="margin:0 0 0.5rem;font-size:0.95rem;">Archived staff</h4>
+            <div class="eccd-table-wrap" style="margin-bottom:1rem;">
+              <table class="eccd-table">
+                <thead><tr><th>Staff</th><th style="text-align:right;">Actions</th></tr></thead>
+                <tbody>${archivedRows}</tbody>
+              </table>
+            </div>` : ''}
             <h4 style="margin:0 0 0.5rem;font-size:0.95rem;">Add faculty</h4>
             <div class="profile-grid">
               <div>
@@ -387,15 +412,32 @@ const TeacherLayout = {
     this._toast('Signed in as ' + result.staff.fullName);
   },
 
-  removeStaff(staffId) {
-    if (!confirm('Remove this faculty member from the active roster?')) return;
-    const result = TeacherStore.removeStaff(staffId);
+  archiveStaff(staffId) {
+    if (!confirm('Archive this faculty member?\n\nThey cannot log in while archived. Profile stays on file and can be restored.')) return;
+    const result = TeacherStore.archiveStaff
+      ? TeacherStore.archiveStaff(staffId)
+      : TeacherStore.removeStaff(staffId);
     if (!result.ok) {
-      alert(result.error || 'Could not remove.');
+      alert(result.error || 'Could not archive staff.');
       return;
     }
-    this._toast('Staff removed');
+    this._toast('Staff archived');
     this._renderStaffManager();
+  },
+
+  restoreStaff(staffId) {
+    if (!confirm('Restore this faculty member to the active roster?')) return;
+    const result = TeacherStore.restoreStaff(staffId);
+    if (!result.ok) {
+      alert(result.error || 'Could not restore staff.');
+      return;
+    }
+    this._toast('Staff restored');
+    this._renderStaffManager();
+  },
+
+  removeStaff(staffId) {
+    this.archiveStaff(staffId);
   },
 
   proposeTransfer(staffId) {

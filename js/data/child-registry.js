@@ -82,6 +82,22 @@ const ChildRegistry = {
     return typeof SampleChildren !== 'undefined' ? SampleChildren : [];
   },
 
+  /** Enrolled children who are not archived (default working set). */
+  activeList() {
+    return this.all().filter(c => c.archived !== true);
+  },
+
+  /** Soft-deleted / inactive children. */
+  archivedList() {
+    return this.all().filter(c => c.archived === true);
+  },
+
+  isArchived(childOrId) {
+    if (childOrId && typeof childOrId === 'object') return childOrId.archived === true;
+    const c = this.all().find(x => x.id === childOrId || String(x.id) === String(childOrId));
+    return !!(c && c.archived === true);
+  },
+
   nextId() {
     const all = this.all();
     const max = all.reduce((m, c) => Math.max(m, Number(c.id) || 0), 0);
@@ -265,6 +281,18 @@ const ChildRegistry = {
       const i = SampleChildren.findIndex(c => c.id === child.id);
       if (i >= 0) SampleChildren.splice(i, 1);
       return { ok: false, error: write.error || 'Could not save enrollment to browser storage.' };
+    }
+    // Dual-write to Supabase when online (async fire — caller may refresh list)
+    if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+      ChildrenRemote.insert(child).then(function (remote) {
+        if (remote.ok && remote.child) {
+          const idx = SampleChildren.findIndex(c => c.id === child.id || String(c.id) === String(child.id));
+          if (idx >= 0) SampleChildren[idx] = remote.child;
+          console.info('[ChildRegistry] synced enroll to Supabase', remote.child.childCode);
+        } else {
+          console.warn('[ChildRegistry] Supabase enroll failed', remote.error);
+        }
+      });
     }
     return { ok: true, child, strippedAttachments: !!write.strippedAttachments };
   },
@@ -498,8 +526,76 @@ const ChildRegistry = {
   },
 
   /**
-   * Remove child from active list. Soft-delete sample data by filtering out of SampleChildren;
-   * removes from enrolled storage. Related assessment/health data is left (orphan) for safety.
+   * Soft-archive: keep record + history, hide from active lists.
+   * Prefer this over removeChild for normal “inactive” / transfer-out cases.
+   */
+  archiveChild(id, reason) {
+    this.ensureMerged();
+    if (typeof SampleChildren === 'undefined') return { ok: false, error: 'No children list.' };
+    const idx = SampleChildren.findIndex(c => c.id === id || String(c.id) === String(id));
+    if (idx < 0) return { ok: false, error: 'Child not found.' };
+    const next = Object.assign({}, SampleChildren[idx], {
+      archived: true,
+      archivedAt: new Date().toISOString(),
+      archiveReason: reason || ''
+    });
+    SampleChildren[idx] = next;
+    this._persistChildRecord(next);
+    if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+      ChildrenRemote.setArchived(id, true, reason || '').then(function (r) {
+        if (!r.ok) console.warn('[ChildRegistry] remote archive failed', r.error);
+      });
+    }
+    return { ok: true, child: next };
+  },
+
+  archiveChildren(ids, reason) {
+    const out = [];
+    (ids || []).forEach(id => out.push(this.archiveChild(id, reason)));
+    return { ok: out.every(r => r.ok), results: out, count: out.filter(r => r.ok).length };
+  },
+
+  /** Restore an archived child to the active list. */
+  restoreChild(id) {
+    this.ensureMerged();
+    if (typeof SampleChildren === 'undefined') return { ok: false, error: 'No children list.' };
+    const idx = SampleChildren.findIndex(c => c.id === id || String(c.id) === String(id));
+    if (idx < 0) return { ok: false, error: 'Child not found.' };
+    const next = Object.assign({}, SampleChildren[idx], {
+      archived: false,
+      archivedAt: null,
+      archiveReason: '',
+      restoredAt: new Date().toISOString()
+    });
+    SampleChildren[idx] = next;
+    this._persistChildRecord(next);
+    if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+      ChildrenRemote.setArchived(id, false, '').then(function (r) {
+        if (!r.ok) console.warn('[ChildRegistry] remote restore failed', r.error);
+      });
+    }
+    return { ok: true, child: next };
+  },
+
+  restoreChildren(ids) {
+    const out = [];
+    (ids || []).forEach(id => out.push(this.restoreChild(id)));
+    return { ok: out.every(r => r.ok), results: out, count: out.filter(r => r.ok).length };
+  },
+
+  /** Upsert full child into enrolled LocalStorage (works for seed + enrolled). */
+  _persistChildRecord(child) {
+    if (!child || child.id == null) return;
+    const enrolled = this._readEnrolled();
+    const i = enrolled.findIndex(c => c.id === child.id || String(c.id) === String(child.id));
+    if (i >= 0) enrolled[i] = child;
+    else enrolled.push(child);
+    this._writeEnrolled(enrolled);
+  },
+
+  /**
+   * Hard-remove from active list (legacy). Prefer archiveChild for soft-delete.
+   * Related assessment/health data is left for safety.
    */
   removeChild(id) {
     this.ensureMerged();
@@ -516,7 +612,6 @@ const ChildRegistry = {
     const enrolled = this._readEnrolled().filter(c => c.id !== id && String(c.id) !== String(id));
     this._writeEnrolled(enrolled);
 
-    // Track deleted sample IDs so ensureMerged does not need special handling
     try {
       const KEY = 'brightsteps_deleted_children_v1';
       const raw = localStorage.getItem(KEY);
@@ -569,6 +664,34 @@ const ChildRegistry = {
       middleInitial: parts.slice(1, -1).map(p => p[0]).join('').slice(0, 5),
       lastName: parts[parts.length - 1]
     };
+  },
+
+
+  /**
+   * Online-first enroll when Supabase is connected. Falls back to local enroll.
+   * Returns a Promise when online.
+   */
+  async enrollAsync(data, opts) {
+    opts = opts || {};
+    if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+      const built = this.buildChildRecord(data, opts);
+      if (!built.name) return { ok: false, error: 'Child name is required.' };
+      // Let DB generate UUID — strip numeric local id
+      delete built.id;
+      const remote = await ChildrenRemote.insert(built);
+      if (!remote.ok) {
+        console.warn('[ChildRegistry] online enroll failed, falling back local', remote.error);
+        return this.enroll(data, opts);
+      }
+      // Also keep a local copy for offline resilience
+      try {
+        const enrolled = this._readEnrolled().filter(c => String(c.id) !== String(remote.child.id));
+        enrolled.push(remote.child);
+        this._writeEnrolled(enrolled);
+      } catch (e) { /* ignore */ }
+      return { ok: true, child: remote.child, remote: true };
+    }
+    return this.enroll(data, opts);
   },
 
   mapApplicationToForm(application) {
@@ -686,13 +809,18 @@ const ChildRegistry = {
 
   /**
    * Enroll from an approved online application object.
+   * Uses enrollAsync when online so the child is stored in Supabase.
    */
   enrollFromApplication(application) {
     const mapped = this.mapApplicationToForm(application);
-    return this.enroll(mapped, {
+    const opts = {
       source: 'online_application',
       applicationId: mapped.applicationId
-    });
+    };
+    if (typeof this.enrollAsync === 'function') {
+      return this.enrollAsync(mapped, opts);
+    }
+    return this.enroll(mapped, opts);
   }
 };
 

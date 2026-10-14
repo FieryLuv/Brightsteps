@@ -56,15 +56,33 @@ const TeacherHealth = {
 
   render(container) {
     this._container = container;
-    if (typeof ChildRegistry !== 'undefined') ChildRegistry.ensureMerged();
-    if (typeof SfpStore !== 'undefined') SfpStore.ensureSeed();
+    if (typeof SfpStore !== 'undefined') {
+      SfpStore.ensureSeed();
+      if (SfpStore.hydrateBeneficiaries) SfpStore.hydrateBeneficiaries().catch(function () {});
+    }
     this._applyPendingChild();
-    this._draw();
+    const finish = function () { TeacherHealth._draw(); };
+    const load = async function () {
+      if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+        await ChildrenRemote.ensureLoaded();
+      } else if (typeof ChildRegistry !== 'undefined') {
+        ChildRegistry.ensureMerged();
+      }
+      if (typeof HealthStore !== 'undefined' && HealthStore.hydrateForChild) {
+        const kids = (typeof SampleChildren !== 'undefined') ? SampleChildren : [];
+        for (let i = 0; i < kids.length; i++) {
+          try { await HealthStore.hydrateForChild(kids[i].id); } catch (e) { /* ignore */ }
+        }
+      }
+    };
+    load().then(finish).catch(finish);
   },
 
   _childrenInSection() {
-    return (typeof SampleChildren !== 'undefined' ? SampleChildren : [])
-      .filter(c => c.sectionKey === this.selectedSection);
+    const list = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
+      ? ChildRegistry.activeList()
+      : (typeof SampleChildren !== 'undefined' ? SampleChildren.filter(c => c.archived !== true) : []);
+    return list.filter(c => c.sectionKey === this.selectedSection);
   },
 
   _draw() {
@@ -153,14 +171,14 @@ const TeacherHealth = {
           </span>
         </div>
         ${metrics}
-        <button class="btn btn-blue" style="width:100%;" onclick="TeacherHealth.openProfile(${c.id})">
+        <button class="btn btn-blue" style="width:100%;" onclick="TeacherHealth.openProfile('${c.id}')">
           Open health record
         </button>
       </div>`;
   },
 
   openProfile(childId) {
-    const child = SampleChildren.find(c => c.id === childId);
+    const child = SampleChildren.find(c => String(c.id) === String(childId));
     if (!child) return;
 
     const history = HealthStore.listForChild(childId);
@@ -280,7 +298,7 @@ const TeacherHealth = {
                 <label class="ecc-field-label">Notes</label>
                 <textarea id="h-notes" class="ecc-report-textarea" rows="2" placeholder="Appetite, observations…"></textarea>
               </div>
-              <button class="btn btn-blue" style="margin-top:1rem;" onclick="TeacherHealth.saveMeasurement(${child.id})">
+              <button class="btn btn-blue" style="margin-top:1rem;" onclick="TeacherHealth.saveMeasurement('${child.id}')">
                 💾 Save measurement
               </button>
             </div>
@@ -305,7 +323,7 @@ const TeacherHealth = {
                 <label class="ecc-field-label">Other medical notes</label>
                 <textarea id="h-mednotes" class="ecc-report-textarea" rows="2">${this._esc(profile.notes)}</textarea>
               </div>
-              <button class="btn btn-blue" style="margin-top:1rem;" onclick="TeacherHealth.saveProfile(${child.id})">
+              <button class="btn btn-blue" style="margin-top:1rem;" onclick="TeacherHealth.saveProfile('${child.id}')">
                 💾 Save medical profile
               </button>
             </div>
@@ -597,7 +615,7 @@ const TeacherHealth = {
                   </div>
                 </div>
               </div>
-              <button class="btn btn-blue" style="margin-top:1rem;" onclick="TeacherHealth.saveSfpBeneficiary(${child.id})">
+              <button class="btn btn-blue" style="margin-top:1rem;" onclick="TeacherHealth.saveSfpBeneficiary('${child.id}')">
                 💾 Save SFP beneficiary profile
               </button>
             </div>
@@ -704,7 +722,7 @@ const TeacherHealth = {
   },
 
   saveMeasurement(childId) {
-    const child = SampleChildren.find(c => c.id === childId);
+    const child = SampleChildren.find(c => String(c.id) === String(childId));
     if (!child) return;
 
     const heightCm = parseFloat((document.getElementById('h-height') || {}).value);
@@ -808,11 +826,75 @@ const TeacherHealth = {
       alert(result.error || 'Could not save SFP profile.');
       return;
     }
-    // Keep health measurement participation in sync when enrolled
-    if (enrolled && typeof HealthStore !== 'undefined') {
-      const latest = HealthStore.getLatest(childId);
-      if (latest) {
-        HealthStore.saveMeasurement({ ...latest, feedingParticipating: true });
+    // Sync H/W into health history:
+    // - entry fields → update latest (or create first) record
+    // - after 6 months (date + H or W) → append a NEW milestone record only
+    if (typeof HealthStore !== 'undefined') {
+      const child = SampleChildren.find(c => String(c.id) === String(childId));
+      const entryH = num('sfp-entry-h');
+      const entryW = num('sfp-entry-w');
+      const entryDate = (document.getElementById('sfp-entry-date') || {}).value || '';
+      if (entryH != null || entryW != null) {
+        const bmi = HealthStore.computeBmi(entryH, entryW);
+        HealthStore.saveMeasurement({
+          childId,
+          childName: child ? child.name : '',
+          date: entryDate || undefined,
+          heightCm: entryH,
+          weightKg: entryW,
+          bmi,
+          nutritionStatus: (document.getElementById('sfp-nut-entry') || {}).value || '',
+          feedingParticipating: enrolled,
+          kind: 'sfp_entry',
+          forceNew: false
+        });
+      }
+      const m6H = num('sfp-6mo-h');
+      const m6W = num('sfp-6mo-w');
+      const m6Date = (document.getElementById('sfp-6mo-date') || {}).value || '';
+      const m6Nut = (document.getElementById('sfp-nut-6mo') || {}).value || '';
+      const hadComplete6mo = !!(m6Date && (m6H != null || m6W != null));
+      if (hadComplete6mo) {
+        const hist = HealthStore.listForChild(childId) || [];
+        const already = hist.find(function (m) {
+          return m.kind === 'sfp_6mo' && String(m.date || '') === String(m6Date);
+        });
+        const bmi6 = HealthStore.computeBmi(m6H, m6W);
+        HealthStore.saveMeasurement({
+          childId,
+          childName: child ? child.name : '',
+          date: m6Date,
+          heightCm: m6H,
+          weightKg: m6W,
+          bmi: bmi6,
+          nutritionStatus: m6Nut,
+          feedingParticipating: enrolled,
+          kind: 'sfp_6mo',
+          forceNew: !already
+        });
+        // Clear after-6-months fields so a later accidental save does not stack rows.
+        // Entry (before) fields stay; 6-mo point remains in health history.
+        // Explicit clear (store no longer restores prev when these keys are present)
+        SfpStore.saveBeneficiary(childId, Object.assign({}, result.beneficiary || {}, {
+          after6moWeighDate: '',
+          after6moHeightCm: null,
+          after6moWeightKg: null,
+          nutritionAfter6mo: ''
+        }));
+        // Clear form inputs immediately so reopen does not flash old values
+        ['sfp-6mo-date','sfp-6mo-h','sfp-6mo-w','sfp-6mo-bmi','sfp-nut-6mo'].forEach(function (id) {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
+      } else if (enrolled) {
+        const latest = HealthStore.getLatest(childId);
+        if (latest) {
+          HealthStore.saveMeasurement({
+            childId,
+            feedingParticipating: true,
+            forceNew: false
+          });
+        }
       }
     }
     this._toast(enrolled ? 'SFP beneficiary profile saved' : 'SFP profile updated (not enrolled)');

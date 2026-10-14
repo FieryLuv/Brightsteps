@@ -566,7 +566,7 @@ const VisitorEnrollment = {
     };
   },
 
-  submit() {
+  async submit() {
     const err = document.getElementById('v-error');
     const show = (m) => {
       if (err) { err.style.display = 'block'; err.textContent = m; }
@@ -667,6 +667,21 @@ const VisitorEnrollment = {
     }
     data.contactPhone = phoneDigits;
 
+    if (typeof ApplicationStore.submitAsync === 'function') {
+      try {
+        const result = await ApplicationStore.submitAsync(data);
+        if (!result.ok) {
+          alert(result.error || 'Could not submit application to server.');
+          if (result.application) this._showSuccess(result.application);
+          return;
+        }
+        this._showSuccess(result.application);
+      } catch (e) {
+        console.error(e);
+        alert('Could not submit application.');
+      }
+      return;
+    }
     const rec = ApplicationStore.submit(data);
     this._showSuccess(rec);
   },

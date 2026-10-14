@@ -36,7 +36,7 @@ const ApplicationStore = {
   },
 
   get(id) {
-    return this._read().find(a => a.id === id) || null;
+    return this._read().find(a => String(a.id) === String(id)) || null;
   },
 
   submit(data) {
@@ -103,9 +103,47 @@ const ApplicationStore = {
     return record;
   },
 
+  /**
+   * Online-first submit. Returns Promise.
+   */
+  async submitAsync(data) {
+    const local = this.submit(data);
+    if (typeof ApplicationRemote === 'undefined' || !ApplicationRemote.online()) {
+      return { ok: true, application: local, remote: false };
+    }
+    const remote = await ApplicationRemote.submit(local);
+    if (!remote.ok) {
+      console.error('[ApplicationStore] remote submit failed', remote.error);
+      return {
+        ok: false,
+        error: 'Could not submit to server: ' + (remote.error || 'unknown') +
+          '. Check applications RLS (anon insert) and try again.',
+        application: local
+      };
+    }
+    // Replace local APP-* id with server UUID
+    const list = this._read().filter(a => String(a.id) !== String(local.id));
+    list.push(remote.application);
+    this._write(list);
+    return { ok: true, application: remote.application, remote: true };
+  },
+
+  async hydrateAll() {
+    if (typeof ApplicationRemote === 'undefined' || !ApplicationRemote.online()) {
+      return this.listAll();
+    }
+    const remote = await ApplicationRemote.fetchAll();
+    if (!remote.ok) {
+      console.warn('[ApplicationStore] hydrate failed', remote.error);
+      return this.listAll();
+    }
+    this._write(remote.list);
+    return remote.list;
+  },
+
   updateStatus(id, status, extra = {}) {
     const list = this._read();
-    const idx = list.findIndex(a => a.id === id);
+    const idx = list.findIndex(a => String(a.id) === String(id));
     if (idx < 0) return null;
     list[idx] = {
       ...list[idx],
@@ -117,6 +155,11 @@ const ApplicationStore = {
       enrolledChildCode: extra.enrolledChildCode != null ? extra.enrolledChildCode : list[idx].enrolledChildCode
     };
     this._write(list);
+    if (typeof ApplicationRemote !== 'undefined' && ApplicationRemote.online()) {
+      ApplicationRemote.updateStatus(id, status, extra).then(function (r) {
+        if (!r.ok) console.warn('[ApplicationStore] remote status failed', r.error);
+      });
+    }
     return list[idx];
   },
 

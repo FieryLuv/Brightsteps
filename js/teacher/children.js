@@ -6,11 +6,27 @@
 const TeacherChildren = {
   filterText: '',
   filterSection: 'all',
+  /** 'active' | 'archived' */
+  listMode: 'active',
   selectedIds: [],
 
   render(container) {
     this.container = container;
     if (typeof ChildRegistry !== 'undefined') ChildRegistry.ensureMerged();
+    if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+      this.container.innerHTML = '<div class="card" style="padding:1.5rem;"><p class="text-muted" style="margin:0;">Loading children from server…</p></div>';
+      ChildrenRemote.ensureLoaded(true).then(function (res) {
+        if (!res.ok) console.warn('[Children] remote load failed, using local', res.error);
+        const done = function () { TeacherChildren._draw(); };
+        if (typeof ApplicationStore !== 'undefined' && ApplicationStore.hydrateAll) {
+          ApplicationStore.hydrateAll().then(done).catch(done);
+        } else done();
+      }).catch(function (err) {
+        console.warn('[Children] remote load error', err);
+        TeacherChildren._draw();
+      });
+      return;
+    }
     this._draw();
   },
 
@@ -32,17 +48,32 @@ const TeacherChildren = {
       ? ApplicationStore.listByStatus('approved')
       : [];
 
-    const pendingBlock = this._pendingApplicationsHtml(pending, approvedWait);
+    const pendingBlock = this.listMode === 'active'
+      ? this._pendingApplicationsHtml(pending, approvedWait)
+      : '';
+
+    const archivedCount = typeof ChildRegistry !== 'undefined'
+      ? ChildRegistry.archivedList().length
+      : 0;
+    const activeCount = typeof ChildRegistry !== 'undefined'
+      ? ChildRegistry.activeList().length
+      : SampleChildren.filter(c => c.archived !== true).length;
 
     const listHtml = children.length
       ? `<div class="children-grid">${children.map(c => this._card(c)).join('')}</div>`
       : `<div class="card children-empty">
-           <div style="font-size:2rem; margin-bottom:0.5rem;">🔍</div>
-           <p style="margin:0 0 0.35rem; font-weight:600; color:var(--text);">No children found</p>
-           <p class="text-muted" style="margin:0 0 1rem; font-size:0.9rem;">
-             Try a different name, age, or section filter.
+           <div style="font-size:2rem; margin-bottom:0.5rem;">${this.listMode === 'archived' ? '📦' : '🔍'}</div>
+           <p style="margin:0 0 0.35rem; font-weight:600; color:var(--text);">
+             ${this.listMode === 'archived' ? 'No archived children' : 'No children found'}
            </p>
-           <button class="btn" onclick="TeacherChildren.clearFilters()">Clear filters</button>
+           <p class="text-muted" style="margin:0 0 1rem; font-size:0.9rem;">
+             ${this.listMode === 'archived'
+               ? 'Archived children are inactive but their records stay available to restore.'
+               : 'Try a different name, age, or section filter.'}
+           </p>
+           ${this.listMode === 'archived'
+             ? `<button class="btn btn-blue" onclick="TeacherChildren.setListMode('active')">← Back to active</button>`
+             : `<button class="btn" onclick="TeacherChildren.clearFilters()">Clear filters</button>`}
          </div>`;
 
     this.container.innerHTML = `
@@ -58,6 +89,15 @@ const TeacherChildren = {
       </div>
 
       ${pendingBlock}
+
+      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:0.85rem;">
+        <button class="btn ${this.listMode === 'active' ? 'btn-blue' : ''}"
+          style="${this.listMode !== 'active' ? 'background:#e8e8e8;color:var(--text);' : ''}"
+          onclick="TeacherChildren.setListMode('active')">Active (${activeCount})</button>
+        <button class="btn ${this.listMode === 'archived' ? 'btn-blue' : ''}"
+          style="${this.listMode !== 'archived' ? 'background:#e8e8e8;color:var(--text);' : ''}"
+          onclick="TeacherChildren.setListMode('archived')">📦 Archived (${archivedCount})</button>
+      </div>
 
       <div class="card" style="margin-bottom:1.25rem;">
         <div class="flex flex-wrap gap-1 items-center" style="justify-content:space-between;">
@@ -83,7 +123,9 @@ const TeacherChildren = {
       ${this._bulkBarHtml(children)}
 
       <p class="text-muted mb-2" style="font-size:0.9rem;">
-        Showing <strong>${children.length}</strong> of ${SampleChildren.length} enrolled children
+        Showing <strong>${children.length}</strong>
+        ${this.listMode === 'archived' ? 'archived' : 'active'} child(ren)
+        · ${activeCount} active · ${archivedCount} archived
       </p>
 
       ${listHtml}
@@ -105,15 +147,24 @@ const TeacherChildren = {
 
   _filtered() {
     const q = this.filterText.trim().toLowerCase();
+    const wantArchived = this.listMode === 'archived';
     return SampleChildren.filter(c => {
+      const isArchived = c.archived === true;
+      if (wantArchived !== isArchived) return false;
       const matchSection = this.filterSection === 'all' || c.sectionKey === this.filterSection;
       const matchText = !q ||
-        c.name.toLowerCase().includes(q) ||
-        c.ageLabel.toLowerCase().includes(q) ||
-        c.section.toLowerCase().includes(q) ||
+        (c.name && c.name.toLowerCase().includes(q)) ||
+        (c.ageLabel && c.ageLabel.toLowerCase().includes(q)) ||
+        (c.section && c.section.toLowerCase().includes(q)) ||
         (c.focusArea && c.focusArea.toLowerCase().includes(q));
       return matchSection && matchText;
     });
+  },
+
+  setListMode(mode) {
+    this.listMode = mode === 'archived' ? 'archived' : 'active';
+    this.selectedIds = [];
+    this._draw();
   },
 
   setSection(key) {
@@ -993,7 +1044,7 @@ const TeacherChildren = {
     this.openAddChild(mapped);
   },
 
-  saveEnrollment() {
+  async saveEnrollment() {
     const errEl = document.getElementById('enroll-error');
     const showErr = (msg) => {
       if (errEl) {
@@ -1116,14 +1167,23 @@ const TeacherChildren = {
 
     let result;
     try {
-      result = isEdit
-        ? ChildRegistry.updateFromForm(editId, data, {
-            source,
-            applicationId: data.applicationId,
-            keepPhoto: !photoCleared,
-            keepDocs: true
-          })
-        : ChildRegistry.enroll(data, { source, applicationId: data.applicationId });
+      if (isEdit) {
+        result = ChildRegistry.updateFromForm(editId, data, {
+          source,
+          applicationId: data.applicationId,
+          keepPhoto: !photoCleared,
+          keepDocs: true
+        });
+        if (result && result.ok && typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+          ChildrenRemote.update(editId, result.child).then(function (r) {
+            if (!r.ok) console.warn('[Children] remote update failed', r.error);
+          });
+        }
+      } else if (typeof ChildRegistry.enrollAsync === 'function') {
+        result = await ChildRegistry.enrollAsync(data, { source, applicationId: data.applicationId });
+      } else {
+        result = ChildRegistry.enroll(data, { source, applicationId: data.applicationId });
+      }
     } catch (err) {
       console.error('saveEnrollment', err);
       showErr((err && err.message) ? err.message : 'Unexpected error while saving.');
@@ -1200,20 +1260,33 @@ const TeacherChildren = {
   },
 
   _card(c) {
+    const archived = c.archived === true;
     const isSupport = c.status === 'needs_support';
-    const statusColor = isSupport ? 'var(--orange)' : 'var(--success)';
-    const statusText = isSupport
-      ? `${c.focusArea || 'Area'}: Needs Support`
-      : 'Development: On Track';
+    const statusColor = archived ? '#757575' : (isSupport ? 'var(--orange)' : 'var(--success)');
+    const statusText = archived
+      ? 'Archived / inactive'
+      : (isSupport
+        ? `${c.focusArea || 'Area'}: Needs Support`
+        : 'Development: On Track');
     const checked = this.selectedIds.map(String).includes(String(c.id)) ? 'checked' : '';
 
+    const actions = archived
+      ? `<button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#e8f5e9;color:#2e7d32;"
+            onclick="TeacherChildren.confirmRestore([${c.id}])">↩ Restore</button>`
+      : `<button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#e8f5e9;color:#2e7d32;"
+            onclick="TeacherChildren.openEditChild(${c.id})">Edit</button>
+          <button class="btn" style="padding:4px 10px;font-size:0.78rem;"
+            onclick="TeacherChildren.openTransfer([${c.id}])">Transfer</button>
+          <button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#fff3e0;color:#e65100;"
+            onclick="TeacherChildren.confirmArchive([${c.id}])">📦 Archive</button>`;
+
     return `
-      <div class="card child-card" style="position:relative;">
+      <div class="card child-card" style="position:relative;${archived ? 'opacity:0.92;border-style:dashed;' : ''}">
         <label style="position:absolute;top:10px;left:10px;z-index:2;cursor:pointer;"
           onclick="event.stopPropagation();">
           <input type="checkbox" ${checked}
             onchange="TeacherChildren.toggleSelect(${c.id}, this.checked)"
-            title="Select for transfer or delete" />
+            title="Select for bulk actions" />
         </label>
         <div onclick="TeacherChildren.openProfile(${c.id})" style="cursor:pointer;padding-left:1.4rem;">
           <div class="child-card-avatar-row">
@@ -1221,9 +1294,10 @@ const TeacherChildren = {
             <div style="min-width:0;flex:1;">
               <div class="flex justify-between items-center" style="margin-bottom:0.15rem;">
                 <strong style="font-size:1.05rem; color:var(--text);">${c.name}</strong>
+                ${archived ? '<span style="font-size:0.72rem;background:#eceff1;color:#546e7a;padding:0.15rem 0.45rem;border-radius:999px;">Archived</span>' : ''}
               </div>
               <div style="color:var(--muted); font-size:0.92rem; margin-bottom:0.35rem;">
-                ${c.ageLabel} • ${c.section}
+                ${c.ageLabel || ''} • ${c.section || ''}
               </div>
               <span style="color:${statusColor}; font-weight:600; font-size:0.9rem;">${statusText}</span>
             </div>
@@ -1231,12 +1305,7 @@ const TeacherChildren = {
         </div>
         <div style="display:flex;gap:0.35rem;margin-top:0.75rem;padding-top:0.5rem;border-top:1px solid var(--border);flex-wrap:wrap;"
           onclick="event.stopPropagation();">
-          <button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#e8f5e9;color:#2e7d32;"
-            onclick="TeacherChildren.openEditChild(${c.id})">Edit</button>
-          <button class="btn" style="padding:4px 10px;font-size:0.78rem;"
-            onclick="TeacherChildren.openTransfer([${c.id}])">Transfer</button>
-          <button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#ffebee;color:#c62828;"
-            onclick="TeacherChildren.confirmDelete([${c.id}])">Delete</button>
+          ${actions}
         </div>
       </div>
     `;
@@ -1244,12 +1313,14 @@ const TeacherChildren = {
 
   _bulkBarHtml(visibleChildren) {
     const n = this.selectedIds.length;
+    const archivedMode = this.listMode === 'archived';
     if (!n) {
       return `
         <div class="card" style="margin-bottom:1rem;padding:0.75rem 1rem;background:#fafafa;">
           <p class="text-muted" style="margin:0;font-size:0.88rem;">
-            Select children with the checkboxes to <strong>transfer class</strong> or <strong>delete</strong> in bulk.
-            Or use Transfer / Delete on each card.
+            ${archivedMode
+              ? 'Select archived children to <strong>restore</strong> them to the active list.'
+              : 'Select children to <strong>transfer class</strong> or <strong>archive</strong> (soft-delete). Records stay available under Archived.'}
           </p>
         </div>`;
     }
@@ -1258,8 +1329,10 @@ const TeacherChildren = {
         <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:0.75rem;">
           <strong>${n} selected</strong>
           <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
-            <button class="btn btn-blue" onclick="TeacherChildren.openTransfer(TeacherChildren.selectedIds.slice())">⇄ Transfer class</button>
-            <button class="btn" style="background:#ffebee;color:#c62828;" onclick="TeacherChildren.confirmDelete(TeacherChildren.selectedIds.slice())">🗑 Delete</button>
+            ${archivedMode
+              ? `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.confirmRestore(TeacherChildren.selectedIds.slice())">↩ Restore</button>`
+              : `<button class="btn btn-blue" onclick="TeacherChildren.openTransfer(TeacherChildren.selectedIds.slice())">⇄ Transfer class</button>
+                 <button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.confirmArchive(TeacherChildren.selectedIds.slice())">📦 Archive</button>`}
             <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherChildren.clearSelection()">Clear</button>
           </div>
         </div>
@@ -1344,7 +1417,7 @@ const TeacherChildren = {
     setTimeout(() => toast.remove(), 2800);
   },
 
-  confirmDelete(ids) {
+  confirmArchive(ids) {
     if (!ids || !ids.length) {
       alert('Select at least one child.');
       return;
@@ -1353,18 +1426,51 @@ const TeacherChildren = {
       const c = SampleChildren.find(x => x.id === id || String(x.id) === String(id));
       return c ? c.name : id;
     });
-    if (!confirm(`Delete ${ids.length} child(ren)?\n\n${names.join(', ')}\n\nThis removes them from the active list. You can re-enroll later if needed.`)) {
+    if (!confirm(
+      `Archive ${ids.length} child(ren)?\n\n${names.join(', ')}\n\n` +
+      `They become inactive and leave Active lists (attendance, development, feeding).\n` +
+      `Records stay under Archived and can be restored anytime.`
+    )) {
       return;
     }
-    const result = ChildRegistry.removeChildren(ids);
+    const result = ChildRegistry.archiveChildren(ids);
     this.selectedIds = this.selectedIds.filter(id => !ids.map(String).includes(String(id)));
     this.closeModal();
     this._draw();
     const toast = document.createElement('div');
     toast.className = 'ecc-toast';
-    toast.textContent = `Removed ${result.count} child(ren)`;
+    toast.textContent = `Archived ${result.count} child(ren)`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2800);
+  },
+
+  confirmRestore(ids) {
+    if (!ids || !ids.length) {
+      alert('Select at least one child.');
+      return;
+    }
+    const names = ids.map(id => {
+      const c = SampleChildren.find(x => x.id === id || String(x.id) === String(id));
+      return c ? c.name : id;
+    });
+    if (!confirm(`Restore ${ids.length} child(ren) to the active list?\n\n${names.join(', ')}`)) {
+      return;
+    }
+    const result = ChildRegistry.restoreChildren(ids);
+    this.selectedIds = this.selectedIds.filter(id => !ids.map(String).includes(String(id)));
+    this.closeModal();
+    this.listMode = 'active';
+    this._draw();
+    const toast = document.createElement('div');
+    toast.className = 'ecc-toast';
+    toast.textContent = `Restored ${result.count} child(ren)`;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2800);
+  },
+
+  /** @deprecated Use confirmArchive — kept for any leftover callers */
+  confirmDelete(ids) {
+    this.confirmArchive(ids);
   },
 
 
@@ -1408,10 +1514,12 @@ const TeacherChildren = {
           </div>
 
           <div class="no-print" style="padding:1rem 1.5rem;border-top:1px solid var(--border);background:#fafafa;display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;flex-shrink:0;">
-            <button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.closeModal();TeacherChildren.openEditChild(${child.id})">✏️ Edit profile</button>
+            ${child.archived
+              ? `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.confirmRestore([${child.id}])">↩ Restore to active</button>`
+              : `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.closeModal();TeacherChildren.openEditChild(${child.id})">✏️ Edit profile</button>
             <button class="btn" style="background:#e3f2fd;color:#1565c0;" onclick="TeacherChildren.closeModal();TeacherChildren.openTransfer([${child.id}])">⇄ Transfer class</button>
-            <button class="btn" style="background:#ffebee;color:#c62828;" onclick="TeacherChildren.confirmDelete([${child.id}])">🗑 Delete</button>
-            <button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.printEccdForms()">🖨 Print ECCD forms</button>
+            <button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.confirmArchive([${child.id}])">📦 Archive</button>`}
+            <button class="btn" style="background:#fff8e1;color:#f57f17;" onclick="TeacherChildren.printEccdForms()">🖨 Print ECCD forms</button>
             <button class="btn btn-blue" onclick="TeacherChildren.closeModal()">Close</button>
           </div>
         </div>

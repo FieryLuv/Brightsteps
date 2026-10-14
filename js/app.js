@@ -61,23 +61,24 @@ const BrightSteps = (() => {
             other teachers use the same modules without staff management.
           </p>
           <div style="text-align:left;">
-            <label class="ecc-field-label">Username</label>
-            <input type="text" id="teacher-username" class="ecc-field-input" placeholder="e.g. head or teacher"
+            <label class="ecc-field-label">Email or username</label>
+            <input type="text" id="teacher-username" class="ecc-field-input"
+              placeholder="Online: email used in Supabase · Offline: irish / maria"
               autocomplete="username" />
             <label class="ecc-field-label" style="margin-top:1rem;">Password</label>
             <input type="password" id="teacher-password" class="ecc-field-input" placeholder="Password"
               autocomplete="current-password"
               onkeydown="if(event.key==='Enter')BrightSteps.submitTeacherLogin()" />
             <p id="teacher-login-error" style="color:#d32f2f;font-size:0.85rem;margin:0.75rem 0 0;display:none;"></p>
+            <p id="teacher-login-mode" class="text-muted" style="font-size:0.78rem;margin:0.5rem 0 0;"></p>
           </div>
           <div style="margin-top:1.25rem;display:flex;flex-direction:column;gap:0.6rem;">
-            <button class="btn btn-blue" style="width:100%;" onclick="BrightSteps.submitTeacherLogin()">Sign in</button>
+            <button class="btn btn-blue" style="width:100%;" id="teacher-login-btn" onclick="BrightSteps.submitTeacherLogin()">Sign in</button>
             <button class="btn" style="width:100%;background:#e8e8e8;color:var(--text);" onclick="BrightSteps.showLogin()">← Back</button>
           </div>
           <div style="margin-top:1.25rem;padding:0.85rem;background:#f5f9fc;border-radius:10px;text-align:left;font-size:0.82rem;color:var(--muted);">
-            <strong>Staff login:</strong><br>
-            Irish Abordo (Head) · <code>irish</code> / <code>Abordo2026</code><br>
-            Maria Santos (Teacher) · <code>maria</code> / <code>Santos2026</code>
+            <strong>Online (Supabase):</strong> use the <em>email</em> + password you created under Authentication → Users.<br>
+            <strong>Offline demo:</strong> Irish · <code>irish</code> / <code>Abordo2026</code> · Maria · <code>maria</code> / <code>Santos2026</code>
           </div>
         </div>
       </div>
@@ -85,13 +86,52 @@ const BrightSteps = (() => {
     setTimeout(() => {
       const el = document.getElementById('teacher-username');
       if (el) el.focus();
+      const modeEl = document.getElementById('teacher-login-mode');
+      if (modeEl && typeof BsSupabase !== 'undefined') {
+        modeEl.textContent = BsSupabase.isConfigured()
+          ? ('Mode: ' + BsSupabase.statusLabel())
+          : 'Mode: LocalStorage only (fill supabase-config.js for online login)';
+      }
     }, 50);
   }
 
-  function submitTeacherLogin() {
+  function _enterTeacherSession(staff, isHead, source) {
+    currentRole = 'teacher';
+    currentUser = {
+      name: staff.fullName || staff.username || staff.email || 'Teacher',
+      role: 'teacher',
+      staffRole: isHead ? 'head' : 'faculty',
+      isHead: !!isHead,
+      staffId: staff.id,
+      authSource: source || 'local',
+      center: (typeof TeacherStore !== 'undefined' && typeof TeacherStore.getFacility === 'function'
+        ? (TeacherStore.getFacility().centerName || 'NCDC Medina')
+        : 'NCDC Medina')
+    };
+    if (typeof TeacherLayout === 'undefined') {
+      alert('TeacherLayout not loaded. Hard-refresh the page.');
+      return;
+    }
+    const finishEnter = function () {
+      TeacherLayout.render(currentUser);
+      navigate('dashboard');
+    };
+    if (source === 'supabase' && typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+      ChildrenRemote.ensureLoaded(true).then(finishEnter).catch(finishEnter);
+      return;
+    }
+    finishEnter();
+  }
+
+  /**
+   * Prefer Supabase Auth when configured (email + password).
+   * Falls back to LocalStorage TeacherStore (username + password).
+   */
+  async function submitTeacherLogin() {
     const username = ((document.getElementById('teacher-username') || {}).value || '').trim();
     const password = ((document.getElementById('teacher-password') || {}).value || '').trim();
     const errEl = document.getElementById('teacher-login-error');
+    const btn = document.getElementById('teacher-login-btn');
     const showErr = (msg) => {
       if (errEl) {
         errEl.style.display = 'block';
@@ -100,37 +140,84 @@ const BrightSteps = (() => {
         alert(msg);
       }
     };
+    if (errEl) errEl.style.display = 'none';
+    if (!username || !password) {
+      showErr('Enter email/username and password.');
+      return;
+    }
+
+    const online = typeof BsSupabase !== 'undefined' && BsSupabase.isConfigured();
+    if (online) {
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = 'Signing in…';
+      }
+      try {
+        // Supabase Auth uses email. If user typed a short username, try common pattern
+        // or ask them to use the Auth email from step 3.
+        let email = username;
+        if (!username.includes('@')) {
+          // Optional local alias map for demo usernames → Auth emails (edit if needed)
+          const aliases = (window.BRIGHTSTEPS_SUPABASE && window.BRIGHTSTEPS_SUPABASE.usernameEmailMap) || {};
+          email = aliases[username.toLowerCase()] || username;
+          if (!email.includes('@')) {
+            showErr('Online login needs the email from Supabase Authentication → Users (not the old offline username).');
+            return;
+          }
+        }
+        const result = await BsSupabase.signIn(email, password);
+        if (!result.ok) {
+          // Fall back to offline demo usernames if online fails
+          if (!username.includes('@') && typeof TeacherStore !== 'undefined' && TeacherStore.authenticate) {
+            const local = TeacherStore.authenticate(username, password);
+            if (local.ok) {
+              if (TeacherStore.clearRemoteSession) TeacherStore.clearRemoteSession();
+              _enterTeacherSession(local.staff, !!local.isHead, 'local');
+              return;
+            }
+          }
+          showErr(result.error || 'Online login failed.');
+          return;
+        }
+        const profile = result.profile || {};
+        const isHead = profile.is_head === true || profile.role === 'head';
+        if (typeof TeacherStore !== 'undefined' && TeacherStore.applyRemoteProfile) {
+          TeacherStore.applyRemoteProfile(profile);
+        }
+        _enterTeacherSession({
+          id: profile.id || (result.user && result.user.id),
+          fullName: profile.full_name || (result.user && result.user.email) || 'Teacher',
+          username: profile.username || '',
+          email: (result.user && result.user.email) || email
+        }, isHead, 'supabase');
+        return;
+      } catch (e) {
+        showErr(e.message || 'Online login error.');
+        return;
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = 'Sign in';
+        }
+      }
+    }
+
+    // Offline / LocalStorage path
     if (typeof TeacherStore === 'undefined') {
-      showErr('TeacherStore not loaded. Open artifacts/brightsteps/index.html and hard-refresh (Ctrl+Shift+R).');
+      showErr('TeacherStore not loaded. Hard-refresh (Ctrl+Shift+R).');
       return;
     }
     if (typeof TeacherStore.authenticate !== 'function') {
-      showErr('TeacherStore.authenticate missing — hard-refresh to load the latest teacher-store.js.');
+      showErr('TeacherStore.authenticate missing — hard-refresh.');
       return;
     }
-    if (typeof TeacherLayout === 'undefined') {
-      showErr('TeacherLayout not loaded. Hard-refresh the page.');
-      return;
-    }
+    if (TeacherStore.clearRemoteSession) TeacherStore.clearRemoteSession();
     const result = TeacherStore.authenticate(username, password);
     if (!result.ok) {
       showErr(result.error || 'Login failed.');
       return;
     }
-    const staff = result.staff;
-    currentRole = 'teacher';
-    currentUser = {
-      name: staff.fullName || staff.username,
-      role: 'teacher',
-      staffRole: result.isHead ? 'head' : 'faculty',
-      isHead: !!result.isHead,
-      staffId: staff.id,
-      center: (typeof TeacherStore.getFacility === 'function'
-        ? (TeacherStore.getFacility().centerName || 'NCDC Medina')
-        : 'NCDC Medina')
-    };
-    TeacherLayout.render(currentUser);
-    navigate('dashboard');
+    _enterTeacherSession(result.staff, !!result.isHead, 'local');
   }
 
 
@@ -412,6 +499,12 @@ const BrightSteps = (() => {
   function logout() {
     currentRole = null;
     currentUser = null;
+    if (typeof TeacherStore !== 'undefined' && TeacherStore.clearRemoteSession) {
+      TeacherStore.clearRemoteSession();
+    }
+    if (typeof BsSupabase !== 'undefined' && BsSupabase.signOut) {
+      BsSupabase.signOut().catch(function () { /* ignore */ });
+    }
     showLogin();
   }
 

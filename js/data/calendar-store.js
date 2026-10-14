@@ -1,29 +1,23 @@
 /**
  * CalendarStore — center events.
  * Key: brightsteps_calendar_v1
+ * Online: Supabase calendar_events is source of truth (no demo seed).
  */
 
 const CalendarStore = {
   KEY: 'brightsteps_calendar_v1',
 
-  defaults: [
-    { id: 'e1', date: '2026-09-25', title: 'Parent-Teacher Meeting', time: '2:00 PM', type: 'Meeting', audience: 'Parents & Teachers', notes: 'Quarterly progress discussion.' },
-    { id: 'e2', date: '2026-09-28', title: 'Health & Nutrition Screening', time: '9:00 AM', type: 'Health', audience: 'All children', notes: 'Height, weight, and nutrition check.' },
-    { id: 'e3', date: '2026-10-05', title: 'Storytelling Session', time: '10:00 AM', type: 'Activity', audience: 'All sections', notes: 'Guest reader from the community.' },
-    { id: 'e4', date: '2026-10-12', title: 'End of Month Celebration', time: '1:00 PM', type: 'Event', audience: 'Families', notes: 'Simple program and recognition.' }
-  ],
+  /** Demo only when offline and storage empty */
+  defaults: [],
 
   _read() {
     try {
       const raw = localStorage.getItem(this.KEY);
-      if (!raw) {
-        this._write(this.defaults);
-        return this.defaults.slice();
-      }
+      if (!raw) return [];
       const data = JSON.parse(raw);
-      return Array.isArray(data) ? data : this.defaults.slice();
+      return Array.isArray(data) ? data : [];
     } catch (e) {
-      return this.defaults.slice();
+      return [];
     }
   },
 
@@ -41,8 +35,7 @@ const CalendarStore = {
   },
 
   listForMonth(year, monthIndex) {
-    // monthIndex 0-11
-    const prefix = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+    const prefix = year + '-' + String(monthIndex + 1).padStart(2, '0');
     return this.listAll().filter(e => (e.date || '').startsWith(prefix));
   },
 
@@ -52,7 +45,7 @@ const CalendarStore = {
 
   save(event) {
     const list = this._read();
-    const id = event.id || `ev_${Date.now()}`;
+    const id = event.id || ('ev_' + Date.now());
     const record = {
       id,
       date: event.date,
@@ -62,16 +55,57 @@ const CalendarStore = {
       audience: event.audience || '',
       notes: event.notes || ''
     };
-    const idx = list.findIndex(e => e.id === id);
+    const idx = list.findIndex(e => String(e.id) === String(id));
     if (idx >= 0) list[idx] = record;
     else list.push(record);
     this._write(list);
+
+    if (typeof CalendarRemote !== 'undefined' && CalendarRemote.online()) {
+      CalendarRemote.upsert(record).then(function (r) {
+        if (!r.ok) {
+          console.error('[CalendarStore] remote save failed', r.error);
+          return;
+        }
+        if (r.event) {
+          const list2 = CalendarStore._read();
+          const i = list2.findIndex(e => String(e.id) === String(record.id));
+          if (i >= 0) list2[i] = r.event;
+          else list2.push(r.event);
+          // Drop temp local id if server returned UUID
+          if (String(record.id) !== String(r.event.id)) {
+            const j = list2.findIndex(e => String(e.id) === String(record.id));
+            if (j >= 0) list2.splice(j, 1);
+            if (!list2.some(e => String(e.id) === String(r.event.id))) list2.push(r.event);
+          }
+          CalendarStore._write(list2);
+        }
+        console.info('[CalendarStore] synced event');
+      });
+    }
     return record;
   },
 
   remove(id) {
-    const list = this._read().filter(e => e.id !== id);
+    const list = this._read().filter(e => String(e.id) !== String(id));
     this._write(list);
+    if (typeof CalendarRemote !== 'undefined' && CalendarRemote.online()) {
+      CalendarRemote.remove(id).then(function (r) {
+        if (!r.ok) console.warn('[CalendarStore] remote delete failed', r.error);
+      });
+    }
+  },
+
+  async hydrateAll() {
+    if (typeof CalendarRemote === 'undefined' || !CalendarRemote.online()) {
+      return this.listAll();
+    }
+    const remote = await CalendarRemote.fetchAll();
+    if (!remote.ok) {
+      console.warn('[CalendarStore] hydrate failed', remote.error);
+      return this.listAll();
+    }
+    this._write(remote.list || []);
+    return this.listAll();
   },
 
   upcoming(limit) {

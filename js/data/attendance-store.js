@@ -48,6 +48,47 @@ const AttendanceStore = {
       savedAt: new Date().toISOString()
     };
     this._write(map);
+    // Fire-and-forget kept for callers of saveDay; prefer saveDayAsync when UI needs result
+    if (typeof AttendanceRemote !== 'undefined' && AttendanceRemote.online()) {
+      AttendanceRemote.saveDay({ date, sectionKey, marks, remarks }).then(function (r) {
+        if (!r.ok) console.warn('[AttendanceStore] remote save failed', r.error);
+        else console.info('[AttendanceStore] synced to Supabase', r.count, 'rows');
+      });
+    }
+    return map[key];
+  },
+
+  async saveDayAsync({ date, sectionKey, marks, remarks }) {
+    const local = this.saveDay({ date, sectionKey, marks, remarks });
+    // saveDay already kicked remote; call again await for result (idempotent upsert)
+    if (typeof AttendanceRemote === 'undefined' || !AttendanceRemote.online()) {
+      return { ok: true, local: true, remoteCount: null };
+    }
+    const remote = await AttendanceRemote.saveDay({ date, sectionKey, marks, remarks });
+    if (!remote.ok) return { ok: true, local: true, remoteError: remote.error, remoteCount: 0 };
+    return { ok: true, local: true, remoteCount: remote.count };
+  },
+
+  async hydrateDay(date, sectionKey) {
+    if (typeof AttendanceRemote === 'undefined' || !AttendanceRemote.online()) {
+      return this.getDay(date, sectionKey);
+    }
+    const remote = await AttendanceRemote.fetchDay(date, sectionKey);
+    if (!remote.ok) {
+      console.warn('[AttendanceStore] hydrate failed', remote.error);
+      return this.getDay(date, sectionKey);
+    }
+    const map = this._read();
+    const key = this._key(date, sectionKey);
+    map[key] = {
+      date,
+      sectionKey,
+      marks: remote.marks || {},
+      remarks: remote.remarks || {},
+      savedAt: new Date().toISOString(),
+      _fromRemote: true
+    };
+    this._write(map);
     return map[key];
   },
 

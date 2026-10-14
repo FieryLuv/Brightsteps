@@ -18,6 +18,16 @@ const TeacherDevelopment = {
   async render(container) {
     this.container = container;
     await this._ensureCatalog();
+    // Online: load Supabase children so list matches Children module (no demo seeds)
+    if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+      try {
+        await ChildrenRemote.ensureLoaded();
+      } catch (e) {
+        console.warn('[Development] children load', e);
+      }
+    } else if (typeof ChildRegistry !== 'undefined') {
+      ChildRegistry.ensureMerged();
+    }
     await this._applyPendingChild();
     this._draw();
   },
@@ -82,12 +92,14 @@ const TeacherDevelopment = {
         ];
 
     const q = String(this.searchQuery || '').trim().toLowerCase();
-    let children = (typeof SampleChildren !== 'undefined' ? SampleChildren : [])
-      .filter(c => c.sectionKey === this.selectedSection);
+    const baseList = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
+      ? ChildRegistry.activeList()
+      : (typeof SampleChildren !== 'undefined' ? SampleChildren.filter(c => c.archived !== true) : []);
+    let children = baseList.filter(c => c.sectionKey === this.selectedSection);
 
     if (q) {
-      // Search across all classes when query is present
-      children = (typeof SampleChildren !== 'undefined' ? SampleChildren : []).filter(c => {
+      // Search across all classes when query is present (active only)
+      children = baseList.filter(c => {
         const hay = [
           c.name, c.childCode, c.parentName, c.motherName, c.fatherName, c.section
         ].map(x => String(x || '').toLowerCase()).join(' ');
@@ -223,7 +235,7 @@ const TeacherDevelopment = {
       : `<div style="font-size:0.8rem;color:var(--muted);margin-bottom:0.5rem;">No saved assessments yet</div>`;
     const trendBtn = history.length
       ? `<button class="btn" style="width:100%;margin-top:0.4rem;background:#e8e8e8;color:var(--text);"
-           onclick="TeacherDevelopment.showTrends(${c.id})">📈 View Trends</button>`
+           onclick="TeacherDevelopment.showTrends('${c.id}')">📈 View Trends</button>`
       : '';
     const focused = this.focusChildId != null && String(this.focusChildId) === String(c.id);
     const focusStyle = focused
@@ -241,7 +253,7 @@ const TeacherDevelopment = {
         ${sectionLine}
         <div style="color:${color};font-weight:600;font-size:0.9rem;margin-bottom:0.35rem;">${label}</div>
         ${histNote}
-        <button class="btn btn-blue" style="width:100%;" onclick="TeacherDevelopment.openAssessment(${c.id})">
+        <button class="btn btn-blue" style="width:100%;" onclick="TeacherDevelopment.openAssessment('${c.id}')">
           Encode ECCD Checklist
         </button>
         ${trendBtn}
@@ -250,7 +262,7 @@ const TeacherDevelopment = {
   },
 
   showTrends(childId) {
-    const child = SampleChildren.find(c => c.id === childId);
+    const child = SampleChildren.find(c => String(c.id) === String(childId));
     if (!child || typeof AssessmentStore === 'undefined') return;
     const history = AssessmentStore.listForChild(childId);
     const trends = (typeof ProgressEngine !== 'undefined')
@@ -309,7 +321,7 @@ const TeacherDevelopment = {
 
   async openAssessment(childId) {
     await this._ensureCatalog();
-    const child = SampleChildren.find(c => c.id === childId);
+    const child = SampleChildren.find(c => String(c.id) === String(childId));
     if (!child) return;
 
     if (!this.catalog) {
@@ -319,6 +331,12 @@ const TeacherDevelopment = {
 
     this.closeAssessment();
     this._assessChild = child;
+
+    // Server children may miss recordType — derive from ageMonths
+    if (child.recordType != 1 && child.recordType != 2) {
+      const am = Number(child.ageMonths);
+      child.recordType = (!isNaN(am) && am >= 37) ? 2 : 1;
+    }
 
     const recordKey = child.recordType === 1 ? 'record1' : 'record2';
     const record = this.catalog.records[recordKey];
@@ -852,7 +870,7 @@ const TeacherDevelopment = {
    * Reads all inputs for that period and persists as finalScores.
    */
   async finalizePeriod(childId, period) {
-    const child = SampleChildren.find(c => c.id === childId);
+    const child = SampleChildren.find(c => String(c.id) === String(childId));
     if (!child) return;
 
     const root = document.querySelector(`.ecc-full-record[data-child="${childId}"]`) || document;

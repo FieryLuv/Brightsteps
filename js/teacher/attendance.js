@@ -47,12 +47,29 @@ const TeacherAttendance = {
   render(container) {
     this._container = container;
     this._applyPendingChild();
-    this._draw();
+    const afterKids = function () {
+      if (typeof AttendanceStore !== 'undefined' && AttendanceStore.hydrateDay &&
+          typeof AttendanceRemote !== 'undefined' && AttendanceRemote.online()) {
+        AttendanceStore.hydrateDay(TeacherAttendance.selectedDate, TeacherAttendance.selectedSection).then(function () {
+          TeacherAttendance._draw();
+        }).catch(function () { TeacherAttendance._draw(); });
+        return;
+      }
+      TeacherAttendance._draw();
+    };
+    if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+      ChildrenRemote.ensureLoaded().then(afterKids).catch(afterKids);
+      return;
+    }
+    if (typeof ChildRegistry !== 'undefined') ChildRegistry.ensureMerged();
+    afterKids();
   },
 
   _children() {
-    return (typeof SampleChildren !== 'undefined' ? SampleChildren : [])
-      .filter(c => c.sectionKey === this.selectedSection);
+    const list = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
+      ? ChildRegistry.activeList()
+      : (typeof SampleChildren !== 'undefined' ? SampleChildren.filter(c => c.archived !== true) : []);
+    return list.filter(c => c.sectionKey === this.selectedSection);
   },
 
   _monthPrefix() {
@@ -74,7 +91,7 @@ const TeacherAttendance = {
     }).join('');
 
     const alertNames = (stats.alerts || []).map(a => {
-      const c = SampleChildren.find(x => x.id === a.childId);
+      const c = SampleChildren.find(x => String(x.id) === String(a.childId));
       return c ? `${c.name} (${a.consecutive} consecutive days)` : '';
     }).filter(Boolean);
 
@@ -195,23 +212,43 @@ const TeacherAttendance = {
 
   selectSection(key) {
     this.selectedSection = key;
+    if (typeof AttendanceStore !== 'undefined' && AttendanceStore.hydrateDay &&
+        typeof AttendanceRemote !== 'undefined' && AttendanceRemote.online()) {
+      AttendanceStore.hydrateDay(this.selectedDate, this.selectedSection).then(function () {
+        TeacherAttendance._draw();
+      }).catch(function () { TeacherAttendance._draw(); });
+      return;
+    }
     this._draw();
   },
 
   onDateChange(val) {
     this.selectedDate = val;
+    if (typeof AttendanceStore !== 'undefined' && AttendanceStore.hydrateDay &&
+        typeof AttendanceRemote !== 'undefined' && AttendanceRemote.online()) {
+      AttendanceStore.hydrateDay(this.selectedDate, this.selectedSection).then(() => this._draw()).catch(() => this._draw());
+      return;
+    }
     this._draw();
   },
 
-  saveSheet() {
+  async saveSheet() {
     const children = this._children();
     const marks = {};
     const remarks = {};
     children.forEach(c => {
-      const checked = document.querySelector(`input[name="att-${c.id}"]:checked`);
+      const checked = document.querySelector('input[name="att-' + c.id + '"]:checked');
       if (checked) marks[c.id] = checked.value;
-      const remark = document.querySelector(`.att-remark[data-child="${c.id}"]`);
+      const remark = document.querySelector('.att-remark[data-child="' + c.id + '"]');
       if (remark && remark.value.trim()) remarks[c.id] = remark.value.trim();
+      // Require note when Absent
+      if (checked && checked.value === 'A') {
+        const note = (remark && remark.value.trim()) || '';
+        if (!note) {
+          alert('Please add a note for absent child: ' + (c.name || c.id));
+          throw new Error('absent-note-required');
+        }
+      }
     });
 
     if (!Object.keys(marks).length) {
@@ -219,14 +256,25 @@ const TeacherAttendance = {
       return;
     }
 
-    AttendanceStore.saveDay({
-      date: this.selectedDate,
-      sectionKey: this.selectedSection,
-      marks,
-      remarks
-    });
-
-    this._toast('Attendance saved for ' + this.selectedDate);
+    try {
+      const result = await AttendanceStore.saveDayAsync({
+        date: this.selectedDate,
+        sectionKey: this.selectedSection,
+        marks,
+        remarks
+      });
+      if (result && result.remoteError) {
+        alert('Saved locally, but server sync failed: ' + result.remoteError);
+      } else {
+        this._toast('Attendance saved for ' + this.selectedDate +
+          (result && result.remoteCount != null ? ' · synced ' + result.remoteCount + ' to server' : ''));
+      }
+    } catch (e) {
+      if (e && e.message === 'absent-note-required') return;
+      console.error(e);
+      alert('Could not save attendance.');
+      return;
+    }
     this._draw();
   },
 
@@ -489,8 +537,10 @@ const TeacherAttendance = {
   },
 
   _childrenInSection(sectionKey) {
-    return (typeof SampleChildren !== 'undefined' ? SampleChildren : [])
-      .filter(c => c.sectionKey === sectionKey);
+    const list = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
+      ? ChildRegistry.activeList()
+      : (typeof SampleChildren !== 'undefined' ? SampleChildren.filter(c => c.archived !== true) : []);
+    return list.filter(c => c.sectionKey === sectionKey);
   },
 
   /**

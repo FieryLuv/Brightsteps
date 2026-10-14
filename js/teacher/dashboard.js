@@ -12,7 +12,9 @@ const TeacherDashboard = {
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
-    const children = (typeof SampleChildren !== 'undefined') ? SampleChildren : [];
+    const children = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
+      ? ChildRegistry.activeList()
+      : ((typeof SampleChildren !== 'undefined') ? SampleChildren.filter(c => c.archived !== true) : []);
     const total = children.length;
 
     /** Live status from approved reports / latest assessment insight — not static sample flags. */
@@ -85,8 +87,8 @@ const TeacherDashboard = {
       feedKnown = bens.length;
       feedYes = bens.length;
     }
-    if (!feedKnown && typeof HealthStore !== 'undefined' && typeof SampleChildren !== 'undefined') {
-      SampleChildren.forEach(c => {
+    if (!feedKnown && typeof HealthStore !== 'undefined') {
+      children.forEach(c => {
         const latest = HealthStore.getLatest(c.id);
         if (!latest) return;
         feedKnown++;

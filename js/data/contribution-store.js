@@ -86,7 +86,28 @@ const ContributionStore = {
     if (idx >= 0) list[idx] = record;
     else list.push(record);
     this._write(list);
+    if (typeof ContributionRemote !== 'undefined' && ContributionRemote.online()) {
+      ContributionRemote.upsert(record).then(function (r) {
+        if (!r.ok) console.error('[ContributionStore] remote failed', r.error);
+        else console.info('[ContributionStore] synced', record.yearMonth);
+      });
+    }
     return { ok: true, record };
+  },
+
+  async hydrateMonth(yearMonth) {
+    if (typeof ContributionRemote === 'undefined' || !ContributionRemote.online()) {
+      return this.listByMonth(yearMonth);
+    }
+    const remote = await ContributionRemote.fetchMonth(yearMonth);
+    if (!remote.ok) {
+      console.warn('[ContributionStore] hydrate', remote.error);
+      return this.listByMonth(yearMonth);
+    }
+    const list = this._read().filter(r => r.yearMonth !== yearMonth);
+    (remote.list || []).forEach(function (r) { list.push(r); });
+    this._write(list);
+    return this.listByMonth(yearMonth);
   },
 
   /** Bulk save for a month grid. */

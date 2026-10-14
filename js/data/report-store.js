@@ -52,6 +52,8 @@ const ReportStore = {
       teacherNote: report.teacherNote || '',
       tips: report.tips || [],
       parentDraft: report.parentDraft || '',
+      strengths: report.strengths || [],
+      needs: report.needs || [],
       teacherComments: report.teacherComments || [],
       focusItems: report.focusItems || [],
       status: report.status || 'draft', // draft | approved
@@ -66,7 +68,33 @@ const ReportStore = {
     else list.push(record);
 
     this._write(list);
+
+    if (typeof ReportRemote !== 'undefined' && ReportRemote.online()) {
+      ReportRemote.upsert(record).then(function (r) {
+        if (!r.ok) {
+          console.error('[ReportStore] remote save failed', r.error);
+          record._remoteError = r.error;
+        } else {
+          console.info('[ReportStore] synced to Supabase', record.period, record.status);
+        }
+      });
+    }
     return record;
+  },
+
+  async hydrateForChild(childId) {
+    if (typeof ReportRemote === 'undefined' || !ReportRemote.online()) {
+      return this.listForChild(childId);
+    }
+    const remote = await ReportRemote.listForChild(childId);
+    if (!remote.ok) {
+      console.warn('[ReportStore] hydrate failed', remote.error);
+      return this.listForChild(childId);
+    }
+    const list = this._read().filter(r => String(r.childId) !== String(childId));
+    remote.list.forEach(function (r) { list.push(r); });
+    this._write(list);
+    return this.listForChild(childId);
   },
 
   listForChild(childId) {

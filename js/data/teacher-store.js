@@ -252,9 +252,38 @@ const TeacherStore = {
   },
 
   isHead() {
+    // Online Supabase session (profile.role / is_head mirrored at login)
+    if (this._remoteSession && this._remoteSession.active) {
+      return !!this._remoteSession.isHead;
+    }
     const state = this._read();
     const cur = state.staff.find(s => s.id === state.currentStaffId);
     return !!(cur && cur.id === state.headStaffId);
+  },
+
+  /**
+   * After Supabase Auth success — drive isHead / greeting from remote profile
+   * without replacing the whole LocalStorage staff roster yet.
+   */
+  applyRemoteProfile(profile) {
+    if (!profile) return;
+    this._remoteSession = {
+      active: true,
+      id: profile.id,
+      fullName: profile.full_name || '',
+      username: profile.username || '',
+      role: profile.role || 'faculty',
+      isHead: profile.is_head === true || profile.role === 'head',
+      facilityId: profile.facility_id || null
+    };
+  },
+
+  clearRemoteSession() {
+    this._remoteSession = null;
+  },
+
+  getRemoteSession() {
+    return this._remoteSession || null;
   },
 
   listStaff() {
@@ -349,27 +378,53 @@ const TeacherStore = {
     return { ok: true, staff };
   },
 
+  listArchivedStaff() {
+    return this._read().staff.filter(s => s.active === false).slice();
+  },
+
   /**
-   * Head only — deactivate / remove faculty (cannot remove self or sole head).
+   * Head only — soft-archive faculty (cannot archive self or current head).
+   * Login is blocked while archived; profile remains restorable.
    */
-  removeStaff(staffId) {
-    if (!this.isHead()) return { ok: false, error: 'Only the Head Teacher can remove staff.' };
+  archiveStaff(staffId) {
+    if (!this.isHead()) return { ok: false, error: 'Only the Head Teacher can archive staff.' };
     const state = this._read();
     if (staffId === state.headStaffId) {
-      return { ok: false, error: 'Transfer the Head Teacher role first before removing this account.' };
+      return { ok: false, error: 'Transfer the Head Teacher role first before archiving this account.' };
     }
     if (staffId === state.currentStaffId) {
-      return { ok: false, error: 'Cannot remove the account you are signed in as.' };
+      return { ok: false, error: 'Cannot archive the account you are signed in as.' };
     }
     const idx = state.staff.findIndex(s => s.id === staffId);
     if (idx < 0) return { ok: false, error: 'Staff not found.' };
-    // Soft-delete
     state.staff[idx] = Object.assign({}, state.staff[idx], {
       active: false,
+      archivedAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     });
     this._write(state);
-    return { ok: true };
+    return { ok: true, staff: state.staff[idx] };
+  },
+
+  /** Head only — restore archived faculty to active roster. */
+  restoreStaff(staffId) {
+    if (!this.isHead()) return { ok: false, error: 'Only the Head Teacher can restore staff.' };
+    const state = this._read();
+    const idx = state.staff.findIndex(s => s.id === staffId);
+    if (idx < 0) return { ok: false, error: 'Staff not found.' };
+    state.staff[idx] = Object.assign({}, state.staff[idx], {
+      active: true,
+      archivedAt: null,
+      restoredAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    });
+    this._write(state);
+    return { ok: true, staff: state.staff[idx] };
+  },
+
+  /** @deprecated Prefer archiveStaff — soft-delete alias. */
+  removeStaff(staffId) {
+    return this.archiveStaff(staffId);
   },
 
   verifyPassword(staffId, password) {
