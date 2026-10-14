@@ -142,8 +142,9 @@ window.ParentRemote = {
           if (!map[key]) {
             map[key] = { date: date, sectionKey: sectionKey, marks: {}, remarks: {}, savedAt: new Date().toISOString() };
           }
-          map[key].marks[row.child_id] = row.mark;
-          if (row.remarks) map[key].remarks[row.child_id] = row.remarks;
+          const cid = String(row.child_id);
+          map[key].marks[cid] = row.mark;
+          if (row.remarks) map[key].remarks[cid] = row.remarks;
         });
         if (AttendanceStore._write) AttendanceStore._write(map);
       } catch (e) { console.warn('[ParentRemote] attendance hydrate', e); }
@@ -199,9 +200,10 @@ window.ParentRemote = {
     }
 
     // SFP beneficiaries
-    if (typeof SfpStore !== 'undefined' && payload.sfp && SfpRemote && SfpRemote.rowToLocalBen) {
+    if (typeof SfpStore !== 'undefined' && payload.sfp && typeof SfpRemote !== 'undefined' && SfpRemote.rowToLocalBen) {
       try {
-        const state = SfpStore._read ? SfpStore._read() : SfpStore.ensureSeed();
+        const state = SfpStore._read ? SfpStore._read() : (SfpStore.ensureSeed ? SfpStore.ensureSeed() : { beneficiaries: {} });
+        if (!state.beneficiaries) state.beneficiaries = {};
         (payload.sfp || []).forEach(function (row) {
           const local = SfpRemote.rowToLocalBen(row);
           if (local && local.childId) state.beneficiaries[String(local.childId)] = local;
@@ -209,5 +211,42 @@ window.ParentRemote = {
         if (SfpStore._write) SfpStore._write(state);
       } catch (e) { console.warn('[ParentRemote] sfp hydrate', e); }
     }
+  },
+
+  SESSION_KEY: 'brightsteps_parent_session_v1',
+
+  saveSession(guardian, childCode, password) {
+    try {
+      localStorage.setItem(this.SESSION_KEY, JSON.stringify({
+        guardian: guardian || '',
+        childCode: childCode || '',
+        password: password || '',
+        at: new Date().toISOString()
+      }));
+    } catch (e) { /* ignore */ }
+  },
+
+  loadSession() {
+    try {
+      const raw = localStorage.getItem(this.SESSION_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (e) { return null; }
+  },
+
+  clearSession() {
+    try { localStorage.removeItem(this.SESSION_KEY); } catch (e) { /* ignore */ }
+  },
+
+  /** Re-fetch family data using stored session credentials */
+  async refresh() {
+    const s = this.loadSession();
+    if (!s || !s.guardian) return { ok: false, error: 'No parent session. Please log in again.' };
+    const remote = await this.login(s.guardian, s.childCode, s.password);
+    if (remote.ok) this.applyHydration(remote);
+    return remote;
   }
 };
+
+if (typeof window !== 'undefined') window.ParentRemote = window.ParentRemote;
+

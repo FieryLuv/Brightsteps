@@ -103,16 +103,19 @@ const AttendanceStore = {
   /** Marks for one child across all saved days */
   listForChild(childId) {
     const map = this._read();
+    const sid = String(childId);
     const out = [];
     Object.values(map).forEach(day => {
-      if (day.marks && day.marks[childId] != null) {
-        out.push({
-          date: day.date,
-          sectionKey: day.sectionKey,
-          status: day.marks[childId],
-          remark: (day.remarks && day.remarks[childId]) || ''
-        });
-      }
+      if (!day.marks) return;
+      const status = day.marks[childId] != null ? day.marks[childId] : day.marks[sid];
+      if (status == null) return;
+      const remark = (day.remarks && (day.remarks[childId] || day.remarks[sid])) || '';
+      out.push({
+        date: day.date,
+        sectionKey: day.sectionKey,
+        status: status,
+        remark: remark
+      });
     });
     return out.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   },

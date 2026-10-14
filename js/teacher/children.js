@@ -99,23 +99,24 @@ const TeacherChildren = {
           onclick="TeacherChildren.setListMode('archived')">📦 Archived (${archivedCount})</button>
       </div>
 
-      <div class="card" style="margin-bottom:1.25rem;">
-        <div class="flex flex-wrap gap-1 items-center" style="justify-content:space-between;">
-          <input
-            id="child-search"
-            type="text"
-            placeholder="Search by name, age, or section..."
-            value="${this.filterText}"
-            style="flex:1; min-width:220px; max-width:420px; padding:12px 18px; border-radius:30px; border:1px solid var(--border); font-size:0.95rem;"
-          />
-          <div class="flex flex-wrap gap-1">
-            ${sections.map(s => `
-              <button
-                class="btn ${this.filterSection === s.key ? 'btn-blue' : ''}"
-                style="${this.filterSection !== s.key ? 'background:#e8e8e8;color:var(--text);' : ''}"
-                onclick="TeacherChildren.setSection('${s.key}')"
-              >${s.label}</button>
-            `).join('')}
+      <div class="card filter-bar-card" style="margin-bottom:1rem;">
+        <div class="filter-bar">
+          <div class="filter-bar-search">
+            <label class="ecc-field-label" for="child-search">Search</label>
+            <input id="child-search" type="search" class="ecc-field-input"
+              placeholder="Name, Child ID, age, or parent..."
+              value="${String(this.filterText || '').replace(/"/g, '&quot;')}" />
+          </div>
+          <div class="filter-bar-class">
+            <label class="ecc-field-label" for="child-section">Class / section</label>
+            <select id="child-section" class="ecc-field-input"
+              onchange="TeacherChildren.setSection(this.value)">
+              ${sections.map(s =>
+                '<option value="' + s.key + '"' +
+                (this.filterSection === s.key ? ' selected' : '') + '>' +
+                s.label + '</option>'
+              ).join('')}
+            </select>
           </div>
         </div>
       </div>

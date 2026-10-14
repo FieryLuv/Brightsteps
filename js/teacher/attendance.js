@@ -100,9 +100,9 @@ const TeacherAttendance = {
     this._container.innerHTML = `
       ${UI.pageHeader('📅 Attendance', 'Daily attendance recording, monthly history, and absence alerts.')}
 
-      <div class="card" style="margin-bottom:1rem;">
-        <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;">
-          <div style="min-width:200px;flex:1;">
+      <div class="card filter-bar-card" style="margin-bottom:1rem;">
+        <div class="filter-bar">
+          <div class="filter-bar-class" style="max-width:320px;">
             <label class="ecc-field-label">Class / section</label>
             <select class="ecc-field-input" onchange="TeacherAttendance.selectSection(this.value)">${sectionOpts}</select>
           </div>

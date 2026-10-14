@@ -123,24 +123,16 @@ const TeacherDevelopment = {
     this.container.innerHTML = `
       ${UI.pageHeader('📈 Development Tracking', 'Select a class, search a child, and encode the ECCD developmental checklist.')}
 
-      <div class="card">
-        <h3 style="margin-top:0;">Find a child</h3>
-        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;align-items:flex-end;">
-          <div style="flex:1;min-width:200px;">
-            <label class="ecc-field-label">Search name, Child ID, or parent</label>
-            <input type="search" id="dev-search" class="ecc-field-input" placeholder="e.g. Amina or NCDC-001"
+      <div class="card filter-bar-card">
+        <div class="filter-bar">
+          <div class="filter-bar-search">
+            <label class="ecc-field-label" for="dev-search">Search</label>
+            <input type="search" id="dev-search" class="ecc-field-input" placeholder="Name, Child ID, or parent"
               value="${String(this.searchQuery || '').replace(/"/g, '&quot;')}"
               oninput="TeacherDevelopment.onSearch(this.value)" />
           </div>
-          ${q ? `<button type="button" class="btn" style="background:#e8e8e8;" onclick="TeacherDevelopment.onSearch('')">Clear search</button>` : ''}
-        </div>
-        ${q ? `<p class="text-muted" style="margin:0.5rem 0 0;font-size:0.85rem;">Showing matches across all classes (${children.length}).</p>` : ''}
-      </div>
-
-      <div class="card" style="padding-bottom:0.75rem;">
-        <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;justify-content:space-between;">
-          <div style="flex:1;min-width:180px;">
-            <label class="ecc-field-label">Class / section</label>
+          <div class="filter-bar-class">
+            <label class="ecc-field-label" for="dev-section">Class / section</label>
             <select id="dev-section" class="ecc-field-input" ${q ? 'disabled' : ''}
               onchange="TeacherDevelopment.setSection(this.value)">
               ${sections.map(s =>
@@ -150,9 +142,13 @@ const TeacherDevelopment = {
               ).join('')}
             </select>
           </div>
-          <p class="text-muted" style="margin:0;font-size:0.85rem;">${q ? 'Search is across all classes' : (children.length + ' children')}</p>
+          ${q ? '<button type="button" class="btn filter-bar-clear" style="background:#e8e8e8;" onclick="TeacherDevelopment.onSearch('')">Clear</button>' : ''}
         </div>
-        <h3 style="margin:1rem 0 0.5rem;">${q ? 'Search results' : 'Children'} (${children.length})</h3>
+        ${q ? `<p class="text-muted" style="margin:0.65rem 0 0;font-size:0.85rem;">Search is across all classes · ${children.length} match(es)</p>` : ''}
+      </div>
+
+      <div class="card" style="padding-bottom:0.75rem;">
+        <h3 style="margin:0 0 0.5rem;">${q ? 'Search results' : 'Children'} (${children.length})</h3>
         ${focusNote}
         ${children.length === 0
           ? `<p class="text-muted">${q ? 'No children match that search.' : 'No children in this section.'}</p>`

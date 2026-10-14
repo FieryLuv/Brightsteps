@@ -61,6 +61,11 @@ const ChildRegistry = {
    */
   ensureMerged() {
     if (typeof SampleChildren === 'undefined') return;
+    // Online session: ChildrenRemote owns the in-memory list (no demo seeds).
+    if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+      this._merged = true;
+      return;
+    }
     const enrolled = this._readEnrolled();
     enrolled.forEach(c => {
       const idx = SampleChildren.findIndex(
@@ -389,7 +394,18 @@ const ChildRegistry = {
       patch.photo = payload.photo && payload.photo.dataUrl ? payload.photo : payload.photo;
     }
 
-    return this.updateChild(id, patch);
+    const result = this.updateChild(id, patch);
+    // Multi-device: push login name / password to Supabase when online
+    if (result && result.ok && typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
+      const child = result.child;
+      if (child && child.id && String(child.id).length > 30) {
+        ChildrenRemote.update(child.id, child).then(function (r) {
+          if (!r.ok) console.warn('[ChildRegistry] parent credentials remote', r.error);
+          else console.info('[ChildRegistry] parent credentials synced');
+        });
+      }
+    }
+    return result;
   },
 
   /**
@@ -680,8 +696,13 @@ const ChildRegistry = {
       delete built.id;
       const remote = await ChildrenRemote.insert(built);
       if (!remote.ok) {
-        console.warn('[ChildRegistry] online enroll failed, falling back local', remote.error);
-        return this.enroll(data, opts);
+        console.error('[ChildRegistry] online enroll failed', remote.error);
+        // Do NOT silently fall back — empty Supabase table was caused by this.
+        return {
+          ok: false,
+          error: 'Could not save to server: ' + (remote.error || 'unknown') +
+            '. Run supabase/003_fix_children_access.sql, confirm your profile has facility_id, then try again.'
+        };
       }
       // Also keep a local copy for offline resilience
       try {

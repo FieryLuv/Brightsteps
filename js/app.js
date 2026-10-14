@@ -403,6 +403,7 @@ const BrightSteps = (() => {
           return;
         }
         ParentRemote.applyHydration(remote);
+        if (ParentRemote.saveSession) ParentRemote.saveSession(guardianName, childCode, password);
         enterParent(remote.children);
         return;
       } catch (e) {
@@ -514,6 +515,11 @@ const BrightSteps = (() => {
   }
 
   function logout() {
+    if (typeof ParentRemote !== 'undefined' && ParentRemote.clearSession) ParentRemote.clearSession();
+    // continued
+    return _bsLogoutBody();
+  }
+  function _bsLogoutBody() {
     currentRole = null;
     currentUser = null;
     if (typeof TeacherStore !== 'undefined' && TeacherStore.clearRemoteSession) {

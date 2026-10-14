@@ -79,9 +79,18 @@ const TeacherHealth = {
   },
 
   _childrenInSection() {
-    const list = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
+    let list = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
       ? ChildRegistry.activeList()
       : (typeof SampleChildren !== 'undefined' ? SampleChildren.filter(c => c.archived !== true) : []);
+    const q = (this.searchQuery || '').trim().toLowerCase();
+    if (q) {
+      list = list.filter(c => {
+        const blob = [c.name, c.childCode, c.parentName, c.section, c.ageLabel]
+          .filter(Boolean).join(' ').toLowerCase();
+        return blob.includes(q);
+      });
+      return list; // search across classes
+    }
     return list.filter(c => c.sectionKey === this.selectedSection);
   },
 
@@ -93,21 +102,36 @@ const TeacherHealth = {
       : { withRecord: 0, normal: 0, under: 0, over: 0, feeding: 0, total: children.length };
 
     const sectionList = this._sectionList();
-    const sectionBtns = sectionList.map(s => {
+    const q = (this.searchQuery || '').trim();
+    const sectionOpts = sectionList.map(s => {
       const active = s.key === this.selectedSection;
-      return `<button class="btn ${active ? 'btn-blue' : ''}"
-        style="${active ? '' : 'background:#e8e8e8;color:var(--text);'}"
-        onclick="TeacherHealth.selectSection('${s.key}')">${s.label}${s.ages ? ' (' + s.ages + ')' : ''}</button>`;
+      return '<option value="' + s.key + '"' + (active ? ' selected' : '') + '>' +
+        s.label + (s.ages ? ' (' + s.ages + ')' : '') + '</option>';
     }).join('');
 
     const cards = children.map(c => this._childCard(c)).join('');
+    const sectionLabel = (sectionList.find(s => s.key === this.selectedSection) || {}).label || this.selectedSection;
 
     this._container.innerHTML = `
       ${UI.pageHeader('❤️ Health Records', 'Height, weight, BMI, SFP beneficiary profile, and medical notes.')}
 
-      <div class="card">
-        <h3 style="margin-top:0;">Select Class / Section</h3>
-        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">${sectionBtns}</div>
+      <div class="card filter-bar-card">
+        <div class="filter-bar">
+          <div class="filter-bar-search">
+            <label class="ecc-field-label" for="health-search">Search</label>
+            <input type="search" id="health-search" class="ecc-field-input"
+              placeholder="Name, Child ID, or parent"
+              value="${String(this.searchQuery || '').replace(/"/g, '&quot;')}"
+              oninput="TeacherHealth.onSearch(this.value)" />
+          </div>
+          <div class="filter-bar-class">
+            <label class="ecc-field-label" for="health-section">Class / section</label>
+            <select id="health-section" class="ecc-field-input" ${q ? 'disabled' : ''}
+              onchange="TeacherHealth.selectSection(this.value)">${sectionOpts}</select>
+          </div>
+          ${q ? '<button type="button" class="btn filter-bar-clear" style="background:#e8e8e8;" onclick="TeacherHealth.onSearch(\'\')">Clear</button>' : ''}
+        </div>
+        ${q ? `<p class="text-muted" style="margin:0.65rem 0 0;font-size:0.85rem;">Search is across all classes · ${children.length} match(es)</p>` : ''}
       </div>
 
       <div class="dashboard-grid" style="margin:1.25rem 0;">
@@ -121,17 +145,22 @@ const TeacherHealth = {
         <div class="card" style="margin:0;">
           <h3 style="margin-top:0;">🍎 SFP / Feeding</h3>
           <p style="margin:0.35rem 0;"><strong>${typeof SfpStore !== 'undefined' ? SfpStore.listBeneficiaries().filter(b => children.some(c => String(c.id) === String(b.childId))).length : stats.feeding}</strong> / ${children.length} SFP beneficiaries in this section</p>
-          <p class="text-muted" style="margin:0;font-size:0.85rem;">Open a child → SFP Beneficiary Profile. Daily feeding logs come in the next phase.</p>
+          <p class="text-muted" style="margin:0;font-size:0.85rem;">Open a child → SFP Beneficiary Profile for full form.</p>
         </div>
       </div>
 
       <div class="card">
-        <h3 style="margin-top:0;">Children — ${(sectionList.find(s => s.key === this.selectedSection) || {}).label || this.selectedSection}</h3>
+        <h3 style="margin-top:0;">${q ? 'Search results' : 'Children — ' + sectionLabel} (${children.length})</h3>
         ${children.length
           ? `<div class="dashboard-grid">${cards}</div>`
-          : `<p class="text-muted">No children in this section.</p>`}
+          : `<p class="text-muted">${q ? 'No children match that search.' : 'No children in this section.'}</p>`}
       </div>
     `;
+  },
+
+  onSearch(q) {
+    this.searchQuery = q || '';
+    this._draw();
   },
 
   selectSection(key) {

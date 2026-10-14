@@ -17,29 +17,38 @@ const ParentDashboard = {
     this._container = container;
     this._user = user;
 
-    // Resolve active child from login (supports multi-child guardians)
-    let child = null;
-    if (user && user.children && user.children.length) {
-      child = user.children.find(c => c.id === user.activeChildId) || user.children[0];
-    } else if (typeof SampleChildren !== 'undefined') {
-      const childName = user.childName || 'Amina Khalid';
-      child = SampleChildren.find(c => c.name === childName) || SampleChildren[0];
+    const paint = function () {
+      let child = null;
+      if (user && user.children && user.children.length) {
+        child = user.children.find(c => c.id === user.activeChildId) || user.children[0];
+      } else if (typeof SampleChildren !== 'undefined') {
+        const childName = user.childName || '';
+        child = SampleChildren.find(c => c.name === childName) || SampleChildren[0];
+      }
+
+      const childName = child ? child.name : (user.childName || 'Child');
+      const ageLabel = child ? child.ageLabel : '';
+      const section = child ? child.section : '';
+      const childCode = child && child.childCode ? child.childCode : '';
+
+      container.innerHTML =
+        ParentDashboard._welcome(user, childName, section, ageLabel, childCode) +
+        ParentDashboard._profileBlock(child, childName, ageLabel, section, childCode) +
+        ParentDashboard._progressCard(child) +
+        ParentDashboard._healthCard(child) +
+        ParentDashboard._sfpCard(child) +
+        ParentDashboard._contribCard(child) +
+        ParentDashboard._attendanceCard(child) +
+        ParentDashboard._upcomingCard();
+    };
+
+    // Load center calendar from Supabase when configured (works for parent/anon)
+    if (typeof CalendarStore !== 'undefined' && CalendarStore.hydrateAll &&
+        typeof CalendarRemote !== 'undefined' && CalendarRemote.online()) {
+      CalendarStore.hydrateAll().then(paint).catch(paint);
+      return;
     }
-
-    const childName = child ? child.name : (user.childName || 'Child');
-    const ageLabel = child ? child.ageLabel : '';
-    const section = child ? child.section : '';
-    const childCode = child && child.childCode ? child.childCode : '';
-
-    container.innerHTML =
-      this._welcome(user, childName, section, ageLabel, childCode) +
-      this._profileBlock(child, childName, ageLabel, section, childCode) +
-      this._progressCard(child) +
-      this._healthCard(child) +
-      this._sfpCard(child) +
-      this._contribCard(child) +
-      this._attendanceCard(child) +
-      this._upcomingCard();
+    paint();
   },
 
   _welcome(user, childName, section, ageLabel, childCode) {
@@ -49,11 +58,68 @@ const ParentDashboard = {
     return (
       '<div style="background:var(--primary-light);padding:1.75rem;border-radius:16px;margin-bottom:1.75rem;text-align:center;">' +
       '<h1 style="margin-bottom:0.35rem;">Welcome, ' + (user.name || 'Parent') + '! 👨‍👧</h1>' +
-      '<p class="text-muted">Viewing <strong>' + childName + '</strong>' +
+      '<p class="text-muted" style="margin-bottom:0.85rem;">Viewing <strong>' + childName + '</strong>' +
       (childCode ? ' · ' + childCode : '') +
       (section ? ' • ' + section : '') +
-      (ageLabel ? ' (' + ageLabel + ')' : '') + multi + '</p></div>'
+      (ageLabel ? ' (' + ageLabel + ')' : '') + multi + '</p>' +
+      '<button type="button" class="btn btn-blue" id="parent-refresh-btn" ' +
+      'onclick="ParentDashboard.refreshFromServer()" style="font-size:0.9rem;">' +
+      '↻ Refresh latest from center</button>' +
+      '<p id="parent-refresh-msg" class="text-muted" style="margin:0.5rem 0 0;font-size:0.8rem;"></p>' +
+      '</div>'
     );
+  },
+
+  async refreshFromServer() {
+    const msg = document.getElementById('parent-refresh-msg');
+    const btn = document.getElementById('parent-refresh-btn');
+    function setMsg(text, isErr) {
+      if (!msg) return;
+      msg.textContent = text || '';
+      msg.style.color = isErr ? '#d32f2f' : 'var(--muted)';
+    }
+    if (typeof ParentRemote === 'undefined' || !ParentRemote.online || !ParentRemote.online()) {
+      setMsg('Not connected to the online database. Check your internet.', true);
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = 'Refreshing…'; }
+    setMsg('Loading reports, attendance, health, SFP, contributions…');
+    try {
+      const remote = await ParentRemote.refresh();
+      if (!remote.ok) {
+        setMsg(remote.error || 'Could not refresh. Try logging in again.', true);
+        if (btn) { btn.disabled = false; btn.textContent = '↻ Refresh latest from center'; }
+        return;
+      }
+      // Keep current user identity; refresh child list from server
+      if (this._user && remote.children && remote.children.length) {
+        const prevId = this._user.activeChildId;
+        this._user.children = remote.children;
+        const still = remote.children.find(c => String(c.id) === String(prevId));
+        this._user.activeChildId = still ? still.id : remote.children[0].id;
+        this._user.childName = (still || remote.children[0]).name;
+        this._user.name = remote.children[0].parentLoginName || remote.children[0].parentName || this._user.name;
+      }
+      if (typeof CalendarStore !== 'undefined' && CalendarStore.hydrateAll) {
+        try { await CalendarStore.hydrateAll(); } catch (e) { /* ignore */ }
+      }
+      if (this._container && this._user) {
+        this.render(this._container, this._user);
+      }
+      // Message after re-render
+      setTimeout(function () {
+        const m2 = document.getElementById('parent-refresh-msg');
+        if (m2) {
+          m2.textContent = 'Updated ' + new Date().toLocaleTimeString() +
+            ' · reports, attendance, health, SFP, contributions, calendar';
+          m2.style.color = 'var(--success, #2e7d32)';
+        }
+      }, 50);
+    } catch (e) {
+      console.error('[ParentDashboard] refresh', e);
+      setMsg((e && e.message) || 'Refresh failed.', true);
+      if (btn) { btn.disabled = false; btn.textContent = '↻ Refresh latest from center'; }
+    }
   },
 
   _profileBlock(child, childName, ageLabel, section, childCode) {
@@ -688,60 +754,117 @@ const ParentDashboard = {
     if (this._container && this._user) this.render(this._container, this._user);
   },
 
+  /** Local YYYY-MM-DD */
+  _todayStr() {
+    const d = new Date();
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  },
+
+  _easterDate(year) {
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31);
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(year, month - 1, day);
+  },
+
+  _holidaysForYear(year) {
+    const easter = this._easterDate(year);
+    const goodFri = new Date(easter); goodFri.setDate(easter.getDate() - 2);
+    const maundy = new Date(easter); maundy.setDate(easter.getDate() - 3);
+    const fmt = (d) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    const heroes = new Date(year, 7, 31);
+    while (heroes.getDay() !== 1) heroes.setDate(heroes.getDate() - 1);
+    return [
+      { date: year + '-01-01', title: "New Year's Day" },
+      { date: fmt(maundy), title: 'Maundy Thursday' },
+      { date: fmt(goodFri), title: 'Good Friday' },
+      { date: year + '-04-09', title: 'Araw ng Kagitingan' },
+      { date: year + '-05-01', title: 'Labor Day' },
+      { date: year + '-06-12', title: 'Independence Day' },
+      { date: year + '-08-21', title: 'Ninoy Aquino Day' },
+      { date: fmt(heroes), title: 'National Heroes Day' },
+      { date: year + '-11-01', title: "All Saints' Day" },
+      { date: year + '-11-30', title: 'Bonifacio Day' },
+      { date: year + '-12-08', title: 'Feast of the Immaculate Conception' },
+      { date: year + '-12-25', title: 'Christmas Day' },
+      { date: year + '-12-30', title: 'Rizal Day' },
+      { date: year + '-12-31', title: "New Year's Eve" }
+    ];
+  },
+
   /**
-   * Parent calendar — same markers as teacher calendar (read-only).
-   * Events come from CalendarStore (what the teacher sets).
+   * Parent calendar — matches teacher markers (read-only).
+   * Events from CalendarStore / Supabase; PH holidays displayed.
    */
   _upcomingCard() {
     if (typeof CalendarStore === 'undefined') {
-      return (
-        '<div class="card" style="text-align:center;">' +
-        '<h3>🗓️ Center Calendar</h3>' +
-        '<p class="text-muted" style="margin:0;">Calendar is not available right now.</p></div>'
-      );
+      return '<div class="card" style="text-align:center;"><h3>🗓️ Center Calendar</h3>' +
+        '<p class="text-muted" style="margin:0;">Calendar is not available right now.</p></div>';
     }
 
     const monthNames = ['January','February','March','April','May','June',
       'July','August','September','October','November','December'];
     const title = monthNames[this.viewMonth] + ' ' + this.viewYear;
     const events = CalendarStore.listForMonth(this.viewYear, this.viewMonth);
+    const prefix = this.viewYear + '-' + String(this.viewMonth + 1).padStart(2, '0');
+    const holidays = this._holidaysForYear(this.viewYear).filter(h => h.date.startsWith(prefix));
+    const holidayByDate = {};
+    holidays.forEach(h => { holidayByDate[h.date] = h; });
     const upcoming = CalendarStore.upcoming(6);
+    const todayStr = this._todayStr();
+
     const first = new Date(this.viewYear, this.viewMonth, 1);
     const startPad = first.getDay();
     const daysInMonth = new Date(this.viewYear, this.viewMonth + 1, 0).getDate();
-    const todayStr = new Date().toISOString().slice(0, 10);
-
     const dow = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
-      .map(function (d) { return '<div class="cal-dow">' + d + '</div>'; }).join('');
+      .map(d => '<div class="cal-dow">' + d + '</div>').join('');
 
     let cells = '';
-    for (let i = 0; i < startPad; i++) {
-      cells += '<div class="cal-cell cal-empty"></div>';
-    }
+    for (let i = 0; i < startPad; i++) cells += '<div class="cal-cell cal-empty"></div>';
     for (let day = 1; day <= daysInMonth; day++) {
-      const dateStr = this.viewYear + '-' +
-        String(this.viewMonth + 1).padStart(2, '0') + '-' +
-        String(day).padStart(2, '0');
-      const dayEvents = events.filter(function (e) { return e.date === dateStr; });
+      const dateStr = this.viewYear + '-' + String(this.viewMonth + 1).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+      const dayEvents = events.filter(e => e.date === dateStr);
+      const holiday = holidayByDate[dateStr];
+      const hasEvent = dayEvents.length > 0;
       const isToday = dateStr === todayStr;
-      const has = dayEvents.length > 0;
-      const titles = dayEvents.map(function (e) { return e.title; }).join(', ').replace(/"/g, '&quot;');
-      const firstTitle = has
-        ? String(dayEvents[0].title || '').replace(/</g, '&lt;')
-        : '';
+      const isPast = dateStr < todayStr;
+      let stateClass = '';
+      if (hasEvent && isToday) stateClass = 'cal-event-today';
+      else if (hasEvent && isPast) stateClass = 'cal-event-past';
+      else if (hasEvent) stateClass = 'cal-has-event';
+      if (isToday && !hasEvent) stateClass += ' cal-today';
+      if (holiday) stateClass += ' cal-holiday';
+
+      const labels = [];
+      if (holiday) labels.push(holiday.title);
+      dayEvents.forEach(e => labels.push(e.title));
+      const firstTitle = labels.length ? String(labels[0]).replace(/</g, '&lt;') : '';
+
       cells +=
-        '<div class="cal-cell ' + (isToday ? 'cal-today ' : '') + (has ? 'cal-has-event' : '') + '" ' +
-        'role="button" tabindex="0" ' +
-        'onclick="ParentDashboard.onDayClick(\'' + dateStr + '\')" ' +
-        'onkeydown="if(event.key===\'Enter\')ParentDashboard.onDayClick(\'' + dateStr + '\')">' +
+        '<div class="cal-cell ' + stateClass.trim() + '" role="button" tabindex="0" ' +
+        "onclick=\"ParentDashboard.onDayClick('" + dateStr + "')\">" +
         '<span class="cal-daynum">' + day + '</span>' +
-        (has ? '<span class="cal-dot" title="' + titles + '"></span>' : '') +
-        (has ? '<span class="cal-event-label">' + firstTitle + '</span>' : '') +
+        (hasEvent || holiday ? '<span class="cal-dot"></span>' : '') +
+        (labels.length ? '<span class="cal-event-label">' + firstTitle +
+          (labels.length > 1 ? ' +' + (labels.length - 1) : '') + '</span>' : '') +
         '</div>';
     }
 
     const upcomingList = upcoming.length
-      ? upcoming.map(function (e) {
+      ? upcoming.map(e => {
           const d = new Date(e.date + 'T00:00:00');
           const label = d.toLocaleDateString('en', { month: 'short', day: 'numeric' });
           return '<li><strong>' + label + '</strong> – ' + e.title +
@@ -749,37 +872,31 @@ const ParentDashboard = {
         }).join('')
       : '<li class="text-muted">No upcoming events posted by the center yet.</li>';
 
-    const monthList = events.length
-      ? events.map(function (e) {
-          return '<li><strong>' + e.date.slice(8) + '</strong> – ' + e.title +
-            (e.type ? ' <span class="text-muted" style="font-size:0.85rem;">' + e.type + '</span>' : '') +
-            '</li>';
-        }).join('')
-      : '<p class="text-muted" style="margin:0;">No events this month.</p>';
-
     return (
       '<div class="card mb-3">' +
       '<h3 style="text-align:center;margin-top:0;">🗓️ Center Calendar</h3>' +
       '<p class="text-muted" style="text-align:center;margin:0 0 1rem;font-size:0.9rem;">' +
-      'Same schedule set by the teacher. Click a highlighted day for details.</p>' +
+      'Same schedule as the teacher portal (read-only). Includes Philippine holidays.</p>' +
       '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.75rem;margin-bottom:1rem;">' +
       '<button class="btn" style="background:#e8e8e8;color:var(--text);" onclick="ParentDashboard.changeMonth(-1)">← Previous</button>' +
       '<h3 style="margin:0;font-size:1.1rem;">' + title + '</h3>' +
       '<button class="btn" style="background:#e8e8e8;color:var(--text);" onclick="ParentDashboard.changeMonth(1)">Next →</button>' +
       '</div>' +
       '<div class="cal-grid">' + dow + cells + '</div>' +
-      '<p class="text-muted" style="margin-top:0.75rem;font-size:0.85rem;">' +
-      'Days with events are highlighted with a blue marker, same as the teacher calendar.</p>' +
-      '</div>' +
+      '<div class="cal-legend" style="display:flex;flex-wrap:wrap;gap:0.75rem;margin-top:0.85rem;font-size:0.8rem;color:var(--muted);">' +
+      '<span><span class="cal-legend-swatch cal-event-today"></span> Today (event)</span>' +
+      '<span><span class="cal-legend-swatch cal-event-past"></span> Past event</span>' +
+      '<span><span class="cal-legend-swatch cal-has-event"></span> Upcoming</span>' +
+      '<span><span class="cal-legend-swatch cal-holiday"></span> Holiday</span>' +
+      '</div></div>' +
       '<div class="dashboard-grid">' +
-      '<div class="card" style="margin:0;">' +
-      '<h3 style="margin-top:0;">Upcoming events</h3>' +
+      '<div class="card" style="margin:0;"><h3 style="margin-top:0;">Upcoming events</h3>' +
       '<ul style="line-height:2;padding-left:1.2rem;margin:0;">' + upcomingList + '</ul></div>' +
-      '<div class="card" style="margin:0;">' +
-      '<h3 style="margin-top:0;">This month (' + events.length + ')</h3>' +
+      '<div class="card" style="margin:0;"><h3 style="margin-top:0;">This month</h3>' +
       (events.length
-        ? '<ul style="line-height:1.9;padding-left:1.2rem;margin:0;">' + monthList + '</ul>'
-        : monthList) +
+        ? '<ul style="line-height:1.9;padding-left:1.2rem;margin:0;">' + events.map(e =>
+            '<li><strong>' + e.date.slice(8) + '</strong> – ' + e.title + '</li>').join('') + '</ul>'
+        : '<p class="text-muted" style="margin:0;">No center events this month.</p>') +
       '</div></div>'
     );
   },
@@ -788,41 +905,42 @@ const ParentDashboard = {
     this.viewMonth += delta;
     if (this.viewMonth > 11) { this.viewMonth = 0; this.viewYear++; }
     if (this.viewMonth < 0) { this.viewMonth = 11; this.viewYear--; }
-    if (this._container && this._user) {
-      this.render(this._container, this._user);
-    }
+    if (this._container && this._user) this.render(this._container, this._user);
   },
 
   onDayClick(dateStr) {
     if (typeof CalendarStore === 'undefined') return;
     const events = CalendarStore.getByDate(dateStr);
-    if (!events.length) {
+    const year = Number(dateStr.slice(0, 4));
+    const holidays = this._holidaysForYear(year).filter(h => h.date === dateStr);
+    if (!events.length && !holidays.length) {
       this._toast('No events on this day.');
       return;
     }
-    const blocks = events.map(function (e) {
-      return (
-        '<div class="card" style="margin-bottom:0.75rem;">' +
-        '<h3 style="margin:0 0 0.5rem;color:var(--primary-dark);">' + e.title + '</h3>' +
-        '<p style="margin:0.25rem 0;"><strong>Date:</strong> ' + e.date + '</p>' +
-        '<p style="margin:0.25rem 0;"><strong>Time:</strong> ' + (e.time || '—') + '</p>' +
-        '<p style="margin:0.25rem 0;"><strong>Type:</strong> ' + (e.type || '—') + '</p>' +
-        '<p style="margin:0.25rem 0;"><strong>Audience:</strong> ' + (e.audience || '—') + '</p>' +
-        (e.notes
-          ? '<div style="margin-top:0.75rem;padding:0.75rem;background:#f8f9fa;border-radius:8px;"><strong>Notes:</strong><br>' +
-            e.notes + '</div>'
-          : '') +
-        '</div>'
-      );
-    }).join('');
-
+    const past = dateStr < this._todayStr();
+    const holBlocks = holidays.map(h =>
+      '<div class="card" style="margin-bottom:0.75rem;border-left:4px solid #c62828;">' +
+      '<h3 style="margin:0 0 0.35rem;color:#b71c1c;">🇵🇭 ' + h.title + '</h3>' +
+      '<p style="margin:0;" class="text-muted">Official holiday · ' + dateStr + '</p></div>'
+    ).join('');
+    const blocks = events.map(e =>
+      '<div class="card" style="margin-bottom:0.75rem;' + (past ? 'border-left:4px solid #f9a825;' : '') + '">' +
+      '<h3 style="margin:0 0 0.5rem;color:var(--primary-dark);">' + e.title +
+      (past ? ' <span style="font-size:0.8rem;color:#f57f17;">(past)</span>' : '') + '</h3>' +
+      '<p style="margin:0.25rem 0;"><strong>Date:</strong> ' + e.date + '</p>' +
+      '<p style="margin:0.25rem 0;"><strong>Time:</strong> ' + (e.time || '—') + '</p>' +
+      '<p style="margin:0.25rem 0;"><strong>Type:</strong> ' + (e.type || '—') + '</p>' +
+      '<p style="margin:0.25rem 0;"><strong>Audience:</strong> ' + (e.audience || '—') + '</p>' +
+      (e.notes ? '<div style="margin-top:0.75rem;padding:0.75rem;background:#f8f9fa;border-radius:8px;"><strong>Notes:</strong><br>' + e.notes + '</div>' : '') +
+      '</div>'
+    ).join('');
     const html =
       '<div id="parent-cal-modal" class="bs-overlay">' +
       '<div class="bs-modal-panel" style="max-width:520px;">' +
       '<div class="bs-modal-header">' +
-      '<h2 style="margin:0;font-size:1.2rem;color:white;">Events — ' + dateStr + '</h2>' +
+      '<h2 style="margin:0;font-size:1.2rem;color:white;">' + dateStr + '</h2>' +
       '<button class="bs-modal-close" onclick="ParentDashboard.closeDayModal()">×</button></div>' +
-      '<div class="bs-modal-body">' + blocks + '</div>' +
+      '<div class="bs-modal-body">' + holBlocks + blocks + '</div>' +
       '<div class="bs-modal-footer">' +
       '<button class="btn btn-blue" onclick="ParentDashboard.closeDayModal()">Close</button>' +
       '</div></div></div>';
