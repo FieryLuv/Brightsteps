@@ -137,21 +137,22 @@ const TeacherDevelopment = {
         ${q ? `<p class="text-muted" style="margin:0.5rem 0 0;font-size:0.85rem;">Showing matches across all classes (${children.length}).</p>` : ''}
       </div>
 
-      <div class="card">
-        <h3>Select Class / Section</h3>
-        <div class="flex flex-wrap gap-1 mt-2">
-          ${sections.map(s => `
-            <button
-              class="btn ${this.selectedSection === s.key && !q ? 'btn-blue' : ''}"
-              style="${this.selectedSection !== s.key || q ? 'background:#e8e8e8;color:var(--text);' : ''}"
-              onclick="TeacherDevelopment.setSection('${s.key}')"
-            >${s.label}</button>
-          `).join('')}
+      <div class="card" style="padding-bottom:0.75rem;">
+        <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;justify-content:space-between;">
+          <div style="flex:1;min-width:180px;">
+            <label class="ecc-field-label">Class / section</label>
+            <select id="dev-section" class="ecc-field-input" ${q ? 'disabled' : ''}
+              onchange="TeacherDevelopment.setSection(this.value)">
+              ${sections.map(s =>
+                '<option value="' + s.key + '"' +
+                (this.selectedSection === s.key ? ' selected' : '') + '>' +
+                s.label + (s.ages ? ' (' + s.ages + ')' : '') + '</option>'
+              ).join('')}
+            </select>
+          </div>
+          <p class="text-muted" style="margin:0;font-size:0.85rem;">${q ? 'Search is across all classes' : (children.length + ' children')}</p>
         </div>
-      </div>
-
-      <div class="card">
-        <h3>${q ? 'Search results' : 'Children in this section'} (${children.length})</h3>
+        <h3 style="margin:1rem 0 0.5rem;">${q ? 'Search results' : 'Children'} (${children.length})</h3>
         ${focusNote}
         ${children.length === 0
           ? `<p class="text-muted">${q ? 'No children match that search.' : 'No children in this section.'}</p>`
@@ -417,6 +418,7 @@ const TeacherDevelopment = {
 
     document.body.insertAdjacentHTML('beforeend', html);
     this._bindAssessmentDismiss();
+    this._bindDomainSpy();
   },
 
   /** One domain section: header + table matching paper layout */
@@ -1040,5 +1042,38 @@ const TeacherDevelopment = {
       if (overlay) overlay.removeEventListener('click', this._onOverlayClick);
       this._onOverlayClick = null;
     }
+    if (this._domainObserver) {
+      try { this._domainObserver.disconnect(); } catch (e) {}
+      this._domainObserver = null;
+    }
+  },
+
+  /** Highlight domain jump link for the section currently in view */
+  _bindDomainSpy() {
+    const jumps = document.querySelectorAll('.eccd-jump');
+    const blocks = document.querySelectorAll('.eccd-domain-block');
+    if (!jumps.length || !blocks.length) return;
+    const byId = {};
+    jumps.forEach(function (a) {
+      const id = (a.getAttribute('href') || '').replace('#', '');
+      if (id) byId[id] = a;
+    });
+    if (this._domainObserver) {
+      try { this._domainObserver.disconnect(); } catch (e) {}
+    }
+    const root = document.querySelector('.eccd-form-scroll');
+    this._domainObserver = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (!en.isIntersecting) return;
+        const id = en.target.id;
+        jumps.forEach(function (a) { a.classList.remove('eccd-jump-active'); });
+        if (byId[id]) byId[id].classList.add('eccd-jump-active');
+        en.target.classList.add('eccd-domain-active');
+        blocks.forEach(function (b) {
+          if (b.id !== id) b.classList.remove('eccd-domain-active');
+        });
+      });
+    }, { root: root || null, rootMargin: '-15% 0px -50% 0px', threshold: 0.05 });
+    blocks.forEach(function (b) { TeacherDevelopment._domainObserver.observe(b); });
   }
 };

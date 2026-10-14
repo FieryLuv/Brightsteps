@@ -3023,3 +3023,82 @@ body:has(.parent-child-switcher) .parent-main {
 .cal-legend-swatch.cal-has-event { background: #e3f2fd; border-color: #90caf9; }
 .cal-legend-swatch.cal-holiday { background: #ffebee; border-color: #ef9a9a; }
 .cal-list-past { color: var(--muted); }
+
+
+/* —— UI polish: domain highlight, tabs, mobile checklist —— */
+.eccd-jump-active {
+  background: var(--primary) !important;
+  color: #fff !important;
+  border-radius: 6px;
+  font-weight: 700;
+  padding: 0.2rem 0.45rem;
+}
+.eccd-domain-active {
+  box-shadow: 0 0 0 2px var(--primary), var(--shadow);
+}
+.eccd-domain-active .eccd-domain-title {
+  color: var(--primary-dark);
+}
+
+/* Sticky domain title under jump nav — avoid overlapping item rows on mobile */
+@media (max-width: 768px) {
+  .eccd-toolbar-sticky {
+    top: 0;
+    z-index: 8;
+  }
+  .eccd-domain-block {
+    scroll-margin-top: 4.5rem;
+    padding-top: 0.75rem;
+  }
+  .eccd-domain-title {
+    position: sticky;
+    top: 2.75rem;
+    z-index: 4;
+    background: #fff;
+    padding: 0.5rem 0.35rem 0.45rem;
+    margin: 0 0 0.5rem;
+  }
+  .eccd-theme-record1 .eccd-domain-title { background: #fff; }
+  .eccd-theme-record2 .eccd-domain-title { background: #fff; }
+  /* Questions/items stay below sticky domain title */
+  .eccd-table thead th {
+    position: sticky;
+    top: 5.25rem;
+    z-index: 3;
+    background: #f5f5f5;
+  }
+}
+
+/* Sidebar nav — clearer selected tab */
+.nav-item {
+  border-radius: 10px;
+  margin: 0.15rem 0.5rem;
+  padding: 0.65rem 0.85rem;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.nav-item.active {
+  background: var(--primary);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(33, 150, 243, 0.35);
+}
+.nav-item:not(.active):hover {
+  background: var(--primary-light);
+}
+
+/* Reduce excessive nested card density */
+.card + .card {
+  margin-top: 0.85rem;
+}
+.dashboard-grid .card {
+  margin-bottom: 0;
+}
+.dash-hero {
+  margin-bottom: 1rem;
+}
+
+/* Absent remark emphasis */
+.att-remark.is-required {
+  border-color: #e53935 !important;
+  background: #fff8f8;
+}

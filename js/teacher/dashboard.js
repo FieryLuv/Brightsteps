@@ -152,17 +152,6 @@ const TeacherDashboard = {
         </div>
       </div>
 
-      <div class="dash-quick no-print">
-        <span class="dash-quick-label">Quick actions</span>
-        <div class="dash-quick-btns">
-          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('children')">Children</button>
-          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('attendance')">Attendance</button>
-          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('development')">Development</button>
-          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('feeding')">SFP Feeding</button>
-          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('reports')">Reports</button>
-          <button type="button" class="btn btn-outline" onclick="BrightSteps.navigate('calendar')">Calendar</button>
-        </div>
-      </div>
 
       <div class="dashboard-grid dash-stats">
         <div class="card dash-card">

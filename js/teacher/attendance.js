@@ -83,11 +83,9 @@ const TeacherAttendance = {
       ? AttendanceStore.sectionStats(this.selectedSection, ids, this._monthPrefix())
       : { present: 0, absent: 0, total: 0, rate: null, daysRecorded: 0, alerts: [] };
 
-    const sectionBtns = this.sections.map(s => {
+    const sectionOpts = this.sections.map(s => {
       const active = s.key === this.selectedSection;
-      return `<button class="btn ${active ? 'btn-blue' : ''}"
-        style="${active ? '' : 'background:#e8e8e8;color:var(--text);'}"
-        onclick="TeacherAttendance.selectSection('${s.key}')">${s.label}</button>`;
+      return '<option value="' + s.key + '"' + (active ? ' selected' : '') + '>' + s.label + '</option>';
     }).join('');
 
     const alertNames = (stats.alerts || []).map(a => {
@@ -102,9 +100,13 @@ const TeacherAttendance = {
     this._container.innerHTML = `
       ${UI.pageHeader('📅 Attendance', 'Daily attendance recording, monthly history, and absence alerts.')}
 
-      <div class="card">
-        <h3 style="margin-top:0;">Select Class / Section</h3>
-        <div style="display:flex;gap:0.75rem;flex-wrap:wrap;">${sectionBtns}</div>
+      <div class="card" style="margin-bottom:1rem;">
+        <div style="display:flex;flex-wrap:wrap;gap:1rem;align-items:flex-end;">
+          <div style="min-width:200px;flex:1;">
+            <label class="ecc-field-label">Class / section</label>
+            <select class="ecc-field-input" onchange="TeacherAttendance.selectSection(this.value)">${sectionOpts}</select>
+          </div>
+        </div>
       </div>
 
       <div class="dashboard-grid" style="margin:1.25rem 0;">
@@ -194,6 +196,7 @@ const TeacherAttendance = {
         const p = document.querySelector(`input[name="att-${c.id}"][value="P"]`);
         if (p) p.checked = true;
       });
+      this._wireAbsentNotes();
       return;
     }
     children.forEach(c => {
@@ -208,6 +211,7 @@ const TeacherAttendance = {
       const remark = document.querySelector(`.att-remark[data-child="${c.id}"]`);
       if (remark && day.remarks && day.remarks[c.id]) remark.value = day.remarks[c.id];
     });
+    this._wireAbsentNotes();
   },
 
   selectSection(key) {
@@ -232,6 +236,26 @@ const TeacherAttendance = {
     this._draw();
   },
 
+
+  _wireAbsentNotes() {
+    const rows = document.querySelectorAll('input[type="radio"][name^="att-"]');
+    rows.forEach(function (radio) {
+      radio.addEventListener('change', function () {
+        const name = radio.name;
+        const childId = name.replace(/^att-/, '');
+        const remark = document.querySelector('.att-remark[data-child="' + childId + '"]');
+        if (!remark) return;
+        const abs = document.querySelector('input[name="' + name + '"][value="A"]:checked');
+        if (abs) {
+          remark.classList.add('is-required');
+          remark.placeholder = 'Required: reason for absence';
+        } else {
+          remark.classList.remove('is-required');
+          remark.placeholder = 'Reason / remarks';
+        }
+      });
+    });
+  },
   async saveSheet() {
     const children = this._children();
     const marks = {};
