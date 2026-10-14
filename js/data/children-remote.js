@@ -61,6 +61,7 @@ window.ChildrenRemote = {
       enrollmentSource: row.enrollment_source || 'walk_in',
       applicationId: row.application_id || null,
       parentLoginName: row.parent_login_name || '',
+      parentPassword: row.parent_password || '',
       status: row.status || 'on_track',
       statusLabel: row.status_label || 'On Track',
       focusArea: row.focus_area || null,
@@ -109,6 +110,7 @@ window.ChildrenRemote = {
       enrollment_health: child.enrollmentHealth || {},
       enrollment_source: child.enrollmentSource || 'walk_in',
       parent_login_name: child.parentLoginName || child.parentName || '',
+      parent_password: child.parentPassword || '',
       status: child.status || 'on_track',
       status_label: child.statusLabel || 'On Track',
       focus_area: child.focusArea || null

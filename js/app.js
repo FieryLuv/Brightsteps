@@ -357,7 +357,7 @@ const BrightSteps = (() => {
     return { error: null, children: matches };
   }
 
-  function submitParentLogin() {
+  async function submitParentLogin() {
     const nameEl = document.getElementById('parent-guardian-name');
     const codeEl = document.getElementById('parent-child-code');
     const passEl = document.getElementById('parent-password');
@@ -366,50 +366,67 @@ const BrightSteps = (() => {
     const childCode = (codeEl && codeEl.value || '').trim();
     const password = (passEl && passEl.value || '');
 
+    function showErr(msg) {
+      if (errEl) { errEl.style.display = 'block'; errEl.textContent = msg; }
+    }
+
     if (!guardianName) {
-      if (errEl) {
-        errEl.style.display = 'block';
-        errEl.textContent = 'Please enter the parent or guardian name.';
-      }
+      showErr('Please enter the parent or guardian name.');
       return;
     }
 
+    function enterParent(children) {
+      if (!children || !children.length) {
+        showErr('No enrolled children found for those credentials.');
+        return;
+      }
+      const displayName = (children[0].parentLoginName || children[0].parentName || guardianName || '').trim();
+      currentRole = 'parent';
+      currentUser = {
+        name: displayName || guardianName,
+        role: 'parent',
+        center: 'NCDC Medina',
+        children: children,
+        activeChildId: children[0].id,
+        childName: children[0].name
+      };
+      ParentLayout.render(currentUser);
+    }
+
+    // Prefer server login so other devices get the same children + reports
+    if (typeof ParentRemote !== 'undefined' && ParentRemote.online()) {
+      try {
+        if (errEl) { errEl.style.display = 'none'; }
+        const remote = await ParentRemote.login(guardianName, childCode, password);
+        if (!remote.ok) {
+          showErr(remote.error || 'Could not sign in.');
+          return;
+        }
+        ParentRemote.applyHydration(remote);
+        enterParent(remote.children);
+        return;
+      } catch (e) {
+        console.warn('[parent login] remote failed, trying local', e);
+      }
+    }
+
+    // LocalStorage fallback (same browser as teacher)
     const result = findChildrenForGuardian(guardianName, childCode);
     if (result.error) {
-      if (errEl) {
-        errEl.style.display = 'block';
-        errEl.textContent = result.error;
-      }
+      showErr(result.error);
       return;
     }
-
     const children = result.children;
-    // If any matched child has a password set, require it (same password shared across siblings under this guardian)
     const requiredPass = children.map(c => c.parentPassword).find(p => p && String(p).length);
     if (requiredPass) {
       if (password !== String(requiredPass)) {
-        if (errEl) {
-          errEl.style.display = 'block';
-          errEl.textContent = password
-            ? 'Incorrect password. Use the password you set in Settings, or ask the teacher to reset it.'
-            : 'A password is set for this account. Enter it to continue.';
-        }
+        showErr(password
+          ? 'Incorrect password. Use the password you set in Settings, or ask the teacher to reset it.'
+          : 'A password is set for this account. Enter it to continue.');
         return;
       }
     }
-
-    const displayName = (children[0].parentLoginName || children[0].parentName || guardianName || '').trim();
-    currentRole = 'parent';
-    currentUser = {
-      name: displayName || guardianName,
-      role: 'parent',
-      center: 'NCDC Medina',
-      children,
-      activeChildId: children[0].id,
-      childName: children[0].name
-    };
-
-    ParentLayout.render(currentUser);
+    enterParent(children);
   }
 
   function openParentSettings() {
