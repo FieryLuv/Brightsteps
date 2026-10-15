@@ -4,7 +4,7 @@
  */
 
 const TeacherHealth = {
-  selectedSection: 'explorers',
+  selectedSection: 'all',
   pendingChildId: null,
   pendingOpenProfile: false,
 
@@ -91,7 +91,10 @@ const TeacherHealth = {
       });
       return list; // search across classes
     }
-    return list.filter(c => c.sectionKey === this.selectedSection);
+    if (this.selectedSection && this.selectedSection !== 'all') {
+      list = list.filter(c => c.sectionKey === this.selectedSection);
+    }
+    return list;
   },
 
   _draw() {
@@ -103,14 +106,18 @@ const TeacherHealth = {
 
     const sectionList = this._sectionList();
     const q = (this.searchQuery || '').trim();
-    const sectionOpts = sectionList.map(s => {
-      const active = s.key === this.selectedSection;
-      return '<option value="' + s.key + '"' + (active ? ' selected' : '') + '>' +
-        s.label + (s.ages ? ' (' + s.ages + ')' : '') + '</option>';
-    }).join('');
+    const sectionOpts =
+      '<option value="all"' + (this.selectedSection === 'all' ? ' selected' : '') + '>All classes</option>' +
+      sectionList.map(s => {
+        const active = s.key === this.selectedSection;
+        return '<option value="' + s.key + '"' + (active ? ' selected' : '') + '>' +
+          s.label + (s.ages ? ' (' + s.ages + ')' : '') + '</option>';
+      }).join('');
 
     const cards = children.map(c => this._childCard(c)).join('');
-    const sectionLabel = (sectionList.find(s => s.key === this.selectedSection) || {}).label || this.selectedSection;
+    const sectionLabel = this.selectedSection === 'all'
+      ? 'All classes'
+      : ((sectionList.find(s => s.key === this.selectedSection) || {}).label || this.selectedSection);
 
     this._container.innerHTML = `
       ${UI.pageHeader('❤️ Health Records', 'Height, weight, BMI, SFP beneficiary profile, and medical notes.')}
@@ -126,7 +133,7 @@ const TeacherHealth = {
           </div>
           <div class="filter-bar-class">
             <label class="ecc-field-label" for="health-section">Class / section</label>
-            <select id="health-section" class="ecc-field-input" ${q ? 'disabled' : ''}
+            <select id="health-section" class="ecc-field-input"
               onchange="TeacherHealth.selectSection(this.value)">${sectionOpts}</select>
           </div>
           ${q ? `<button type="button" class="btn filter-bar-clear" style="background:#e8e8e8;" onclick="TeacherHealth.onSearch('')">Clear</button>` : ''}

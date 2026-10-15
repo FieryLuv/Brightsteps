@@ -444,25 +444,49 @@ p {
 }
 
 /* ---------- Child profile modal ---------- */
+/* Browser-style tabs (child profile, feeding modules, etc.) */
+.browser-tabs,
+.child-tabs-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.2rem;
+  padding: 0.35rem 0.5rem 0;
+  background: #dce3ea;
+  border-bottom: 1px solid #b0bec5;
+  margin: 0;
+}
+.browser-tab,
 .child-tab {
-  padding: 0.85rem 1.1rem;
-  border: none;
-  background: transparent;
+  position: relative;
+  padding: 0.55rem 1rem 0.5rem;
+  margin: 0;
+  border: 1px solid #b0bec5;
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  background: #cfd8dc;
+  color: #455a64;
   cursor: pointer;
   font-weight: 600;
-  color: var(--muted);
-  border-bottom: 3px solid transparent;
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   white-space: nowrap;
+  line-height: 1.2;
+  transition: background 0.12s, color 0.12s;
 }
-
+.browser-tab:hover,
 .child-tab:hover {
-  color: var(--primary-dark);
+  background: #e8eef2;
+  color: #263238;
 }
-
+.browser-tab.active,
 .child-tab.active {
-  color: var(--primary-dark);
-  border-bottom-color: var(--primary);
+  background: #fff;
+  color: #1565c0;
+  border-color: #b0bec5;
+  z-index: 1;
+  padding-bottom: 0.6rem;
+  margin-bottom: -1px; /* sit on content edge */
+  box-shadow: none;
 }
 
 .profile-grid {
@@ -1626,11 +1650,42 @@ body:has(.parent-child-switcher) .parent-main {
     padding: 1rem 0.85rem 1.5rem;
   }
 
-  .dashboard-grid,
-  .dashboard-grid.dash-stats,
+  .dashboard-grid.dash-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
   .dashboard-grid.dash-secondary {
     grid-template-columns: 1fr;
-    gap: 0.9rem;
+    gap: 0.75rem;
+  }
+  .dashboard-grid:not(.dash-stats):not(.dash-secondary) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.65rem;
+  }
+  .dash-card {
+    min-height: 0;
+  }
+  .dash-card-body {
+    padding: 0;
+  }
+  .dash-card h3 {
+    font-size: 0.92rem;
+    margin-bottom: 0.35rem;
+  }
+  .dash-metric {
+    font-size: 1.25rem !important;
+  }
+  .dash-card-desc,
+  .dash-stat-list {
+    font-size: 0.78rem;
+  }
+  .dash-card-actions .btn {
+    width: 100%;
+    padding: 0.45rem 0.5rem;
+    font-size: 0.78rem;
+  }
+  .dash-card-icon {
+    font-size: 1.15rem;
   }
   .children-grid {
     grid-template-columns: 1fr;
@@ -3291,4 +3346,70 @@ th.eccd-period-head-active {
   body.printing-ecc-scores .no-print {
     display: none !important;
   }
+}
+
+
+/* compact containers — less nested card chrome */
+#main-content {
+  padding: 1rem 1.15rem 1.5rem;
+}
+.filter-bar-card {
+  padding: 0.75rem 1rem !important;
+  box-shadow: none;
+  border: 1px solid var(--border);
+}
+.filter-bar-card .filter-bar {
+  margin: 0;
+}
+.page-header, .ui-page-header {
+  margin-bottom: 0.85rem !important;
+}
+.dashboard-grid {
+  gap: 0.85rem !important;
+}
+.card {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.card > h3:first-child {
+  margin-top: 0;
+}
+
+/* Report fill-in values */
+.report-fill {
+  font-weight: 700;
+  color: #111;
+}
+.report-blank {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #333;
+}
+
+
+/* Phone: keep dashboard shortcuts as screen-fitting blocks */
+@media (max-width: 480px) {
+  .dashboard-grid.dash-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .dash-stats .card {
+    padding: 0.75rem 0.65rem;
+    margin-bottom: 0;
+  }
+  .dash-stat-list li {
+    padding: 0.15rem 0;
+  }
+}
+
+.browser-tab-panel {
+  background: #fff;
+  border: 1px solid #b0bec5;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 1rem;
+}
+.browser-tab-panel > .card {
+  border: none;
+  box-shadow: none;
+  padding: 0;
 }

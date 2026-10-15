@@ -6,7 +6,7 @@
  */
 
 const TeacherDevelopment = {
-  selectedSection: 'sunshine',
+  selectedSection: 'all',
   catalog: null,
   _responses: {}, // key: `${childId}:${item_id}` -> true/false
   searchQuery: '',
@@ -95,11 +95,12 @@ const TeacherDevelopment = {
     const baseList = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
       ? ChildRegistry.activeList()
       : (typeof SampleChildren !== 'undefined' ? SampleChildren.filter(c => c.archived !== true) : []);
-    let children = baseList.filter(c => c.sectionKey === this.selectedSection);
-
+    let children = baseList;
+    if (this.selectedSection && this.selectedSection !== 'all') {
+      children = baseList.filter(c => c.sectionKey === this.selectedSection);
+    }
     if (q) {
-      // Search across all classes when query is present (active only)
-      children = baseList.filter(c => {
+      children = children.filter(c => {
         const hay = [
           c.name, c.childCode, c.parentName, c.motherName, c.fatherName, c.section
         ].map(x => String(x || '').toLowerCase()).join(' ');
@@ -133,8 +134,9 @@ const TeacherDevelopment = {
           </div>
           <div class="filter-bar-class">
             <label class="ecc-field-label" for="dev-section">Class / section</label>
-            <select id="dev-section" class="ecc-field-input" ${q ? 'disabled' : ''}
+            <select id="dev-section" class="ecc-field-input"
               onchange="TeacherDevelopment.setSection(this.value)">
+              <option value="all"${this.selectedSection === 'all' ? ' selected' : ''}>All classes</option>
               ${sections.map(s =>
                 '<option value="' + s.key + '"' +
                 (this.selectedSection === s.key ? ' selected' : '') + '>' +

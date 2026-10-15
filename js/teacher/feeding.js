@@ -51,8 +51,7 @@ const TeacherFeeding = {
       { key: 'alt', label: '🧃 NUTRICombo (-C)' }
     ].map(t => {
       const active = this.tab === t.key;
-      return `<button class="btn ${active ? 'btn-blue' : ''}"
-        style="${active ? '' : 'background:#e8e8e8;color:var(--text);'}"
+      return `<button type="button" class="browser-tab${active ? ' active' : ''}"
         onclick="TeacherFeeding.setTab('${t.key}')">${t.label}</button>`;
     }).join('');
 
@@ -70,8 +69,8 @@ const TeacherFeeding = {
           ${cycle && cycle.startDate ? ' · Feeding started: ' + cycle.startDate : ' · Set start date under cycle settings later'}
         </p>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">${tabs}</div>
-      ${body}
+      <div class="browser-tabs">${tabs}</div>
+      <div class="browser-tab-panel">${body}</div>
     `;
   },
 

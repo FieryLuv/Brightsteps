@@ -1526,7 +1526,7 @@ const TeacherChildren = {
             <button onclick="TeacherChildren.closeModal()" style="font-size:28px;background:none;border:none;color:white;cursor:pointer;line-height:1;">×</button>
           </div>
 
-          <div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:#fafafa;flex-shrink:0;padding:0 1rem;overflow-x:auto;">
+          <div class="child-tabs-bar" style="flex-shrink:0;overflow-x:auto;">
             <button class="child-tab active" data-tab="overview" onclick="TeacherChildren.switchTab(this,'overview')">Overview</button>
             <button class="child-tab" data-tab="profile" onclick="TeacherChildren.switchTab(this,'profile')">ECCD Profile</button>
             <button class="child-tab" data-tab="development" onclick="TeacherChildren.switchTab(this,'development')">Development</button>

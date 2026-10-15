@@ -98,8 +98,8 @@ const ScoreProfile = {
           ? `<div class="ecc-final-badge">✓ Scores saved</div>`
           : '';
         return `<th colspan="2" class="ecc-eval-head">${p} Evaluation
-          <div class="ecc-eval-sub">Date: ${date || '________'}</div>
-          <div class="ecc-eval-sub">Child’s Age: ${age || '________'}</div>
+          <div class="ecc-eval-sub">Date: ${date ? '<strong class="report-fill">' + date + '</strong>' : '<strong class="report-blank">________</strong>'}</div>
+          <div class="ecc-eval-sub">Child’s Age: ${age ? '<strong class="report-fill">' + age + '</strong>' : '<strong class="report-blank">________</strong>'}</div>
           ${approved}
         </th>`;
       }).join('');

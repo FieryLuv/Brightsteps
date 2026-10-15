@@ -3,6 +3,14 @@
  * Teacher reviews the draft, edits notes/tips, then approves for the Parent Portal.
  */
 
+function reportFill(val, blank) {
+  blank = blank || '______________';
+  if (val != null && String(val).trim() !== '' && String(val) !== blank && !/^_+$/.test(String(val).trim())) {
+    return '<strong class="report-fill">' + String(val) + '</strong>';
+  }
+  return '<strong class="report-blank">' + blank + '</strong>';
+}
+
 const TeacherReports = {
   tab: 'eccd', // eccd | sfp
 
@@ -517,12 +525,12 @@ const TeacherReports = {
       <table class="sfp-meta-table">
         <tr><td><strong>Province:</strong> ${meta.province}</td>
             <td><strong>City/Municipality:</strong> ${meta.municipality}</td></tr>
-        <tr><td><strong>Location/Barangay:</strong> ${meta.barangay || '______________'}</td>
-            <td><strong>Number of Children beneficiaries:</strong> ${n || '____'}</td></tr>
+        <tr><td><strong>Location/Barangay:</strong> ${reportFill(meta.barangay , '______________')}</td>
+            <td><strong>Number of Children beneficiaries:</strong> ${reportFill(n , '____')}</td></tr>
         <tr><td colspan="2"><strong>Name of Child Development Center:</strong> ${meta.facility}</td></tr>
         <tr><td><strong>Class / Section:</strong> ${classLine}</td>
-            <td><strong>Date started the feeding:</strong> ${meta.startDate || '______________'}</td></tr>
-        <tr><td colspan="2"><strong>Name of Child Development Worker:</strong> ${meta.worker || '______________'}</td></tr>
+            <td><strong>Date started the feeding:</strong> ${reportFill(meta.startDate , '______________')}</td></tr>
+        <tr><td colspan="2"><strong>Name of Child Development Worker:</strong> ${reportFill(meta.worker , '______________')}</td></tr>
       </table>
       <table class="sfp-matrix-table">
         <thead>
@@ -636,13 +644,13 @@ const TeacherReports = {
       <table class="sfp-meta-table">
         <tr><td><strong>Province:</strong> ${meta.province}</td>
             <td><strong>City/Municipality:</strong> ${meta.municipality}</td></tr>
-        <tr><td><strong>Location/Barangay:</strong> ${meta.barangay || '______________'}</td>
-            <td><strong>Number of Children beneficiaries:</strong> ${nBen || '____'}</td></tr>
+        <tr><td><strong>Location/Barangay:</strong> ${reportFill(meta.barangay , '______________')}</td>
+            <td><strong>Number of Children beneficiaries:</strong> ${reportFill(nBen , '____')}</td></tr>
         <tr><td colspan="2"><strong>Name of Child Development Center:</strong> ${meta.facility}</td></tr>
         <tr><td><strong>Class / Section:</strong> ${classLine}</td>
             <td><strong>Date of actual feeding:</strong> ${delDate}</td></tr>
-        <tr><td><strong>Name of Child Development Worker:</strong> ${meta.worker || '______________'}</td>
-            <td><strong>Date started (${meta.cycleLabel} cycle):</strong> ${meta.startDate || '______________'}</td></tr>
+        <tr><td><strong>Name of Child Development Worker:</strong> ${reportFill(meta.worker , '______________')}</td>
+            <td><strong>Date started (${meta.cycleLabel} cycle):</strong> ${reportFill(meta.startDate , '______________')}</td></tr>
       </table>
       <table class="sfp-matrix-table">
         <thead>
@@ -969,7 +977,7 @@ const TeacherReports = {
               ${sfp.consentName || '&nbsp;'}
             </div>
             <div style="font-size:10px;">Signature over Printed Name</div>
-            <div style="font-size:10px;margin-top:4px;">Date: ${sfp.consentDate || '____________'}</div>
+            <div style="font-size:10px;margin-top:4px;">Date: ${reportFill(sfp.consentDate, '____________')}</div>
           </div>
         </div>
       </div>`;

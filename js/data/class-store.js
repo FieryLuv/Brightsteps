@@ -101,7 +101,7 @@ const ClassStore = {
       ageLabel: c.ageLabel || ''
     }));
     if (includeAll) {
-      return [{ key: 'all', label: 'All', name: 'All', ageLabel: '' }, ...opts];
+      return [{ key: 'all', label: 'All classes', name: 'All classes', ageLabel: '' }, ...opts];
     }
     return opts;
   },

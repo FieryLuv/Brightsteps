@@ -3,7 +3,7 @@
  */
 
 const TeacherAttendance = {
-  selectedSection: 'explorers',
+  selectedSection: 'all',
   selectedDate: new Date().toISOString().slice(0, 10),
   histYear: new Date().getFullYear(),
   histMonth: new Date().getMonth(), // 0-11 for monthly history sheet
@@ -69,7 +69,10 @@ const TeacherAttendance = {
     const list = (typeof ChildRegistry !== 'undefined' && ChildRegistry.activeList)
       ? ChildRegistry.activeList()
       : (typeof SampleChildren !== 'undefined' ? SampleChildren.filter(c => c.archived !== true) : []);
-    return list.filter(c => c.sectionKey === this.selectedSection);
+    if (this.selectedSection && this.selectedSection !== 'all') {
+      return list.filter(c => c.sectionKey === this.selectedSection);
+    }
+    return list;
   },
 
   _monthPrefix() {
@@ -83,10 +86,12 @@ const TeacherAttendance = {
       ? AttendanceStore.sectionStats(this.selectedSection, ids, this._monthPrefix())
       : { present: 0, absent: 0, total: 0, rate: null, daysRecorded: 0, alerts: [] };
 
-    const sectionOpts = this.sections.map(s => {
-      const active = s.key === this.selectedSection;
-      return '<option value="' + s.key + '"' + (active ? ' selected' : '') + '>' + s.label + '</option>';
-    }).join('');
+    const sectionOpts =
+      '<option value="all"' + (this.selectedSection === 'all' ? ' selected' : '') + '>All classes</option>' +
+      this.sections.map(s => {
+        const active = s.key === this.selectedSection;
+        return '<option value="' + s.key + '"' + (active ? ' selected' : '') + '>' + s.label + '</option>';
+      }).join('');
 
     const alertNames = (stats.alerts || []).map(a => {
       const c = SampleChildren.find(x => String(x.id) === String(a.childId));
