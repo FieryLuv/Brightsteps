@@ -1091,18 +1091,104 @@ const TeacherDevelopment = {
     }, 500);
   },
 
-  /** Print ECCD checklist form only (items, Present columns, comments) — no insight summaries */
+  /**
+   * Print paper-style ECCD checklist (Record 1 / Record 2 layout):
+   * child header + domain tables with Item, Material/Procedure, Present columns, Comments.
+   * No cover, no insight summaries, no UI chrome.
+   */
   printChecklist() {
-    const overlay = document.getElementById('dev-modal-overlay');
-    if (!overlay) {
+    const child = this._assessChild;
+    if (!child || !this.catalog) {
       alert('Open a checklist first.');
       return;
     }
+    // Sync DOM → memory
+    document.querySelectorAll('#dev-modal-overlay input[type="checkbox"][data-key]').forEach(cb => {
+      this._responses[cb.getAttribute('data-key')] = cb.checked;
+    });
+    document.querySelectorAll('#dev-modal-overlay input.eccd-comment-input[data-key]').forEach(inp => {
+      this._responses[inp.getAttribute('data-key')] = inp.value;
+    });
+
+    const recordKey = child.recordType === 1 ? 'record1' : 'record2';
+    const record = this.catalog.records[recordKey];
+    const periods = this._periods || (child.recordType === 1
+      ? ['1st', '2nd', '3rd', '4th', '5th', '6th']
+      : ['1st', '2nd', '3rd']);
+    const formTitle = child.recordType === 1
+      ? "Early Childhood Care and Development (ECCD) Checklist, Child's Record 1"
+      : "Early Childhood Care and Development (ECCD) Checklist, Child's Record 2";
+    const ageBand = child.recordType === 1
+      ? 'Ages 0 month to 3 years'
+      : 'Age 3 years 1 month to 5 years 11 months';
+
+    const addr = child.address || {};
+    const addressLine = [addr.barangay, addr.municipality || 'Medina', addr.province || 'Misamis Oriental', addr.region]
+      .filter(Boolean).join(', ') || '—';
+
+    const periodHeads = periods.map(p => '<th class="eccd-p-col">' + p + '</th>').join('');
+
+    const domainsHtml = (this.catalog.domains || []).map(d => {
+      const items = (record.domains && record.domains[d.code]) || [];
+      if (!items.length) return '';
+      const rows = items.map(it => {
+        const checks = periods.map(p => {
+          const key = child.id + ':' + it.item_id + ':' + p;
+          const on = !!this._responses[key];
+          return '<td class="eccd-p-col eccd-check-cell">' + (on ? '✓' : '') + '</td>';
+        }).join('');
+        const commentKey = child.id + ':' + it.item_id + ':comment';
+        const comment = this._responses[commentKey] != null ? String(this._responses[commentKey]) : '';
+        const proc = (it.procedure || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        return '<tr>' +
+          '<td class="eccd-num">' + (it.number != null ? it.number : '') + '</td>' +
+          '<td class="eccd-item-print"><div class="eccd-item-title">' + (it.title || '') + '</div>' +
+          (proc ? '<div class="eccd-item-proc">' + proc + '</div>' : '') +
+          '</td>' + checks +
+          '<td class="eccd-comment-print">' + comment.replace(/</g, '&lt;') + '</td></tr>';
+      }).join('');
+
+      return '<section class="eccd-print-domain">' +
+        '<h2 class="eccd-print-domain-title">' + d.name + ' Domain</h2>' +
+        '<table class="eccd-print-table">' +
+        '<thead><tr>' +
+        '<th class="eccd-num">#</th>' +
+        '<th>' + d.name + ' / Material/Procedure</th>' +
+        '<th colspan="' + periods.length + '" class="eccd-present-group">Present</th>' +
+        '<th>Comments</th></tr>' +
+        '<tr class="eccd-subhead"><th></th><th></th>' + periodHeads + '<th></th></tr>' +
+        '</thead><tbody>' + rows + '</tbody></table></section>';
+    }).join('');
+
+    const html =
+      '<div id="eccd-print-root" class="eccd-print-root">' +
+      '<header class="eccd-print-header">' +
+      '<div class="eccd-print-form-title">' + formTitle + '</div>' +
+      '<div class="eccd-print-form-sub">' + ageBand + '</div>' +
+      '<table class="eccd-print-meta">' +
+      '<tr><td><strong>Child\'s Name:</strong> ' + (child.name || '') + '</td>' +
+      '<td><strong>Sex:</strong> ' + (child.sex || '') + '</td>' +
+      '<td><strong>Date of Birth:</strong> ' + (child.birthDate || '') + '</td></tr>' +
+      '<tr><td colspan="2"><strong>Address:</strong> ' + addressLine + '</td>' +
+      '<td><strong>Age:</strong> ' + (child.ageLabel || '') +
+      (child.ageMonths != null ? ' (' + child.ageMonths + ' mo)' : '') + '</td></tr>' +
+      '<tr><td><strong>Section / Class:</strong> ' + (child.section || child.sectionKey || '') + '</td>' +
+      '<td><strong>Child ID:</strong> ' + (child.childCode || '') + '</td>' +
+      '<td><strong>Guardian:</strong> ' + (child.parentName || child.parentLoginName || '') + '</td></tr>' +
+      '</table></header>' +
+      domainsHtml +
+      '<footer class="eccd-print-footer">' + formTitle + '</footer></div>';
+
+    const prev = document.getElementById('eccd-print-root');
+    if (prev) prev.remove();
+    document.body.insertAdjacentHTML('beforeend', html);
     document.body.classList.add('printing-eccd-checklist');
     window.print();
     setTimeout(function () {
       document.body.classList.remove('printing-eccd-checklist');
-    }, 500);
+      const el = document.getElementById('eccd-print-root');
+      if (el) el.remove();
+    }, 600);
   },
 
   closeResult() {
