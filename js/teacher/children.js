@@ -1486,6 +1486,26 @@ const TeacherChildren = {
     }
     this.closeModal();
 
+    const paint = function () {
+      TeacherChildren._renderProfileModal(child);
+    };
+    const jobs = [];
+    if (String(child.id).length > 20) {
+      if (typeof HealthStore !== 'undefined' && HealthStore.hydrateForChild) {
+        jobs.push(HealthStore.hydrateForChild(child.id).catch(function () {}));
+      }
+      if (typeof AttendanceStore !== 'undefined' && AttendanceStore.hydrateForChild) {
+        jobs.push(AttendanceStore.hydrateForChild(child.id).catch(function () {}));
+      }
+    }
+    if (jobs.length) {
+      Promise.all(jobs).then(paint).catch(paint);
+      return;
+    }
+    paint();
+  },
+
+  _renderProfileModal(child) {
     const statusColor = child.status === 'needs_support' ? 'var(--orange)' : 'var(--success)';
     const statusText = child.status === 'needs_support'
       ? `${child.focusArea || 'Area'}: Needs Support`
@@ -1799,45 +1819,87 @@ const TeacherChildren = {
   },
 
   _tabAttendance(child) {
+    const now = new Date();
+    const monthPrefix = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    const monthLabel = now.toLocaleString('en', { month: 'long', year: 'numeric' });
+    let present = 0, absent = 0, total = 0;
+    let recent = [];
+    if (typeof AttendanceStore !== 'undefined' && AttendanceStore.listForChild) {
+      const rows = AttendanceStore.listForChild(child.id) || [];
+      rows.forEach(function (r) {
+        if (!(r.date || '').startsWith(monthPrefix)) return;
+        total++;
+        if (r.status === 'P') present++;
+        else if (r.status === 'A') absent++;
+      });
+      recent = rows.slice(0, 8);
+    }
+    const rate = total > 0 ? Math.round((present / total) * 100) : null;
+    const recentHtml = recent.length
+      ? '<ul style="margin:0.5rem 0 0;padding-left:1.2rem;line-height:1.7;font-size:0.9rem;">' +
+        recent.map(function (r) {
+          const label = r.status === 'P' ? 'Present' : (r.status === 'A' ? 'Absent' : r.status);
+          const color = r.status === 'P' ? 'var(--success)' : (r.status === 'A' ? '#d32f2f' : 'inherit');
+          return '<li><strong>' + (r.date || '') + '</strong> — <span style="color:' + color + ';">' + label + '</span>' +
+            (r.remark ? ' <span class="text-muted">(' + r.remark + ')</span>' : '') + '</li>';
+        }).join('') + '</ul>'
+      : '<p class="text-muted" style="margin:0.5rem 0 0;font-size:0.9rem;">No attendance records yet for this child.</p>';
+
     return `
       <div class="card" style="margin-bottom:0;">
         <h3>Attendance Overview</h3>
-        <p class="text-muted" style="margin-bottom:1rem;">Recent attendance for <strong>${child.name}</strong></p>
+        <p class="text-muted" style="margin-bottom:1rem;">${monthLabel} for <strong>${child.name}</strong></p>
         <div class="dashboard-grid" style="margin-bottom:1rem;">
           <div style="text-align:center;background:var(--primary-light);padding:1rem;border-radius:12px;">
-            <div style="font-size:1.6rem;font-weight:700;color:var(--primary-dark);">22 / 24</div>
+            <div style="font-size:1.6rem;font-weight:700;color:var(--primary-dark);">${present} / ${total || '—'}</div>
             <div style="font-size:0.85rem;">Days present this month</div>
           </div>
           <div style="text-align:center;background:var(--light-green);padding:1rem;border-radius:12px;">
-            <div style="font-size:1.6rem;font-weight:700;color:var(--success);">92%</div>
+            <div style="font-size:1.6rem;font-weight:700;color:var(--success);">${rate != null ? rate + '%' : '—'}</div>
             <div style="font-size:0.85rem;">Attendance rate</div>
           </div>
         </div>
-        <p class="text-muted" style="font-size:0.9rem;">Full monthly sheet and history will be available in the Attendance module.</p>
+        <h4 style="margin:0 0 0.25rem;font-size:0.95rem;">Recent days</h4>
+        ${recentHtml}
         <button class="btn btn-blue mt-2" onclick="TeacherChildren.goModule('attendance', '${child.id}')">Open Attendance</button>
       </div>
     `;
   },
 
   _tabHealth(child) {
+    let latest = null;
+    if (typeof HealthStore !== 'undefined' && HealthStore.getLatest) {
+      latest = HealthStore.getLatest(child.id);
+    }
+    const h = latest && latest.heightCm != null ? latest.heightCm + ' cm' : '—';
+    const w = latest && latest.weightKg != null ? latest.weightKg + ' kg' : '—';
+    const bmi = latest && latest.bmi != null ? latest.bmi : null;
+    const status = (latest && (latest.status || latest.nutritionStatus || '')).trim() || '—';
+    const statusLower = status.toLowerCase();
+    const statusColor = statusLower.includes('normal') ? 'var(--success)'
+      : (statusLower.includes('under') || statusLower.includes('severe')) ? 'var(--orange)'
+      : (statusLower.includes('over') || statusLower.includes('obese')) ? '#d32f2f'
+      : 'var(--muted)';
+    const measured = latest && latest.date ? ('Last measured: ' + latest.date) : 'No measurement on file yet.';
+
     return `
       <div class="card" style="margin-bottom:0;">
         <h3>Health Snapshot</h3>
         <div class="dashboard-grid" style="margin-bottom:1rem;">
           <div style="text-align:center;background:var(--soft-green);padding:1rem;border-radius:12px;">
-            <div style="font-size:1.5rem;font-weight:700;color:var(--success);">—</div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--success);">${h}</div>
             <div style="font-size:0.85rem;">Height</div>
           </div>
           <div style="text-align:center;background:var(--primary-light);padding:1rem;border-radius:12px;">
-            <div style="font-size:1.5rem;font-weight:700;color:var(--primary-dark);">—</div>
+            <div style="font-size:1.5rem;font-weight:700;color:var(--primary-dark);">${w}</div>
             <div style="font-size:0.85rem;">Weight</div>
           </div>
           <div style="text-align:center;background:#fefce8;padding:1rem;border-radius:12px;">
-            <div style="font-size:1.5rem;font-weight:700;color:var(--orange);">Normal</div>
-            <div style="font-size:0.85rem;">BMI Status</div>
+            <div style="font-size:1.5rem;font-weight:700;color:${statusColor};">${bmi != null ? bmi : '—'}</div>
+            <div style="font-size:0.85rem;">BMI${status !== '—' ? ' · ' + status : ''}</div>
           </div>
         </div>
-        <p class="text-muted" style="font-size:0.9rem;">Detailed growth charts, nutrition and medical records will be managed in Health Records.</p>
+        <p class="text-muted" style="font-size:0.9rem;margin:0 0 0.75rem;">${measured}</p>
         <button class="btn btn-blue mt-2" onclick="TeacherChildren.goModule('health', '${child.id}', true)">Open Health Records</button>
       </div>
     `;

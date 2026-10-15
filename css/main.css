@@ -3136,3 +3136,17 @@ body:has(.parent-child-switcher) .parent-main {
 .filter-bar .ecc-field-input {
   width: 100%;
 }
+
+
+/* Checklist: only active evaluation period is editable */
+.eccd-period-locked input[type="checkbox"] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.eccd-period-active {
+  background: rgba(33, 150, 243, 0.08);
+}
+th.eccd-period-head-active {
+  background: var(--primary) !important;
+  color: #fff !important;
+}

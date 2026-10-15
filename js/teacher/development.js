@@ -355,6 +355,21 @@ const TeacherDevelopment = {
       });
     }
 
+    // Active evaluation column (only this period is clickable)
+    const order = this._periods || ['1st'];
+    let defaultPeriod = order[0];
+    // Prefer next empty period after last with marks; else last with marks; else 1st
+    if (typeof AssessmentStore !== 'undefined') {
+      const hist = AssessmentStore.listForChild(child.id) || [];
+      const withMarks = order.filter(p => hist.some(h => h.period === p));
+      if (withMarks.length) {
+        const last = withMarks[withMarks.length - 1];
+        const idx = order.indexOf(last);
+        defaultPeriod = (idx >= 0 && idx < order.length - 1) ? order[idx + 1] : last;
+      }
+    }
+    this._activePeriod = defaultPeriod;
+
     const jumpLinks = this.catalog.domains.map(d =>
       `<a href="#domain-${d.code}" class="eccd-jump">${d.name}</a>`
     ).join('');
@@ -394,12 +409,20 @@ const TeacherDevelopment = {
               <img src="${coverSrc}" alt="${coverAlt}" class="eccd-cover-img" />
             </div>
             <div class="eccd-toolbar eccd-toolbar-sticky">
+              <div class="eccd-period-picker" style="display:flex;flex-wrap:wrap;align-items:center;gap:0.65rem;margin-bottom:0.65rem;padding:0.55rem 0.75rem;background:#fff;border-radius:8px;border:1px solid var(--border);">
+                <label for="eccd-active-period" class="ecc-field-label" style="margin:0;font-weight:600;">Editing evaluation</label>
+                <select id="eccd-active-period" class="ecc-field-input" style="max-width:140px;margin:0;"
+                  onchange="TeacherDevelopment.setActivePeriod(this.value)">
+                  ${order.map(p => '<option value="' + p + '"' + (p === this._activePeriod ? ' selected' : '') + '>' + p + '</option>').join('')}
+                </select>
+                <span class="text-muted" style="font-size:0.82rem;">Other columns stay visible but locked. Switching keeps all marks.</span>
+              </div>
               <div class="eccd-jump-nav">${jumpLinks}</div>
             </div>
             <p class="eccd-form-note">
-              Mark the <strong>Present</strong> checkbox under the evaluation column (${periodHint}) when the skill is observed.
-              Each column is one evaluation — same as the paper form. Previously saved marks are restored when you reopen.
-              Use Comments for observations. Domains are listed top-to-bottom as on the official checklist.
+              Mark <strong>Present</strong> only under the selected evaluation column.
+              Other period columns show saved marks but cannot be changed until you select that period.
+              Switching periods does not clear checks. Save stores every column that has marks.
             </p>
             ${allDomainsHtml}
           </div>
@@ -415,6 +438,7 @@ const TeacherDevelopment = {
     document.body.insertAdjacentHTML('beforeend', html);
     this._bindAssessmentDismiss();
     this._bindDomainSpy();
+    this.setActivePeriod(this._activePeriod);
   },
 
   /** One domain section: header + table matching paper layout */
@@ -433,14 +457,17 @@ const TeacherDevelopment = {
     }
 
     const rows = items.map(it => {
+      const activeP = this._activePeriod || this._periods[0];
       const checks = this._periods.map(p => {
         const key = `${child.id}:${it.item_id}:${p}`;
         const checked = this._responses[key] ? 'checked' : '';
+        const locked = p !== activeP;
         return `
-          <td class="eccd-period-col">
-            <input type="checkbox" data-key="${key}" ${checked}
+          <td class="eccd-period-col${locked ? ' eccd-period-locked' : ' eccd-period-active'}">
+            <input type="checkbox" data-key="${key}" data-period="${p}" ${checked}
+              ${locked ? 'disabled' : ''}
               onchange="TeacherDevelopment.toggleItem(this)"
-              title="${p} — Present" />
+              title="${p} — Present${locked ? ' (select this period to edit)' : ''}" />
           </td>`;
       }).join('');
 
@@ -492,7 +519,37 @@ const TeacherDevelopment = {
       </section>`;
   },
 
+  /**
+   * Switch which evaluation column is editable. Marks in other columns stay in memory.
+   */
+  setActivePeriod(period) {
+    if (!period || !this._periods || this._periods.indexOf(period) < 0) return;
+    this._activePeriod = period;
+    const root = document.getElementById('dev-modal-overlay');
+    if (!root) return;
+    root.querySelectorAll('input[type="checkbox"][data-period]').forEach(function (cb) {
+      const p = cb.getAttribute('data-period');
+      const locked = p !== period;
+      cb.disabled = locked;
+      const td = cb.closest('td');
+      if (td) {
+        td.classList.toggle('eccd-period-locked', locked);
+        td.classList.toggle('eccd-period-active', !locked);
+      }
+      cb.title = p + ' — Present' + (locked ? ' (select this period to edit)' : '');
+    });
+    // Highlight header
+    root.querySelectorAll('.eccd-period-col').forEach(function (th) {
+      // period headers are th.eccd-period-col with text
+    });
+    root.querySelectorAll('th.eccd-period-col').forEach(function (th) {
+      const label = (th.textContent || '').trim();
+      th.classList.toggle('eccd-period-head-active', label === period);
+    });
+  },
+
   toggleItem(checkbox) {
+    if (checkbox.disabled) return;
     const key = checkbox.getAttribute('data-key');
     this._responses[key] = checkbox.checked;
   },
