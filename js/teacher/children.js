@@ -394,7 +394,7 @@ const TeacherChildren = {
    *   (from online enrollment approval via ChildRegistry.mapApplicationToForm)
    */
   openEditChild(id) {
-    const child = SampleChildren.find(c => c.id === id || String(c.id) === String(id));
+    const child = SampleChildren.find(c => String(c.id) === String(id));
     if (!child) {
       alert('Child not found.');
       return;
@@ -1274,23 +1274,23 @@ const TeacherChildren = {
 
     const actions = archived
       ? `<button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#e8f5e9;color:#2e7d32;"
-            onclick="TeacherChildren.confirmRestore([${c.id}])">↩ Restore</button>`
+            onclick="TeacherChildren.confirmRestore(['${c.id}'])">↩ Restore</button>`
       : `<button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#e8f5e9;color:#2e7d32;"
-            onclick="TeacherChildren.openEditChild(${c.id})">Edit</button>
+            onclick="TeacherChildren.openEditChild('${c.id}')">Edit</button>
           <button class="btn" style="padding:4px 10px;font-size:0.78rem;"
-            onclick="TeacherChildren.openTransfer([${c.id}])">Transfer</button>
+            onclick="TeacherChildren.openTransfer(['${c.id}'])">Transfer</button>
           <button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#fff3e0;color:#e65100;"
-            onclick="TeacherChildren.confirmArchive([${c.id}])">📦 Archive</button>`;
+            onclick="TeacherChildren.confirmArchive(['${c.id}'])">📦 Archive</button>`;
 
     return `
       <div class="card child-card" style="position:relative;${archived ? 'opacity:0.92;border-style:dashed;' : ''}">
         <label style="position:absolute;top:10px;left:10px;z-index:2;cursor:pointer;"
           onclick="event.stopPropagation();">
           <input type="checkbox" ${checked}
-            onchange="TeacherChildren.toggleSelect(${c.id}, this.checked)"
+            onchange="TeacherChildren.toggleSelect('${c.id}', this.checked)"
             title="Select for bulk actions" />
         </label>
-        <div onclick="TeacherChildren.openProfile(${c.id})" style="cursor:pointer;padding-left:1.4rem;">
+        <div onclick="TeacherChildren.openProfile('${c.id}')" style="cursor:pointer;padding-left:1.4rem;">
           <div class="child-card-avatar-row">
             ${(typeof FileAttach !== 'undefined' ? FileAttach.avatarHtml(c, 44) : (c.sex === 'Female' ? '👧' : '👦'))}
             <div style="min-width:0;flex:1;">
@@ -1479,8 +1479,11 @@ const TeacherChildren = {
   /* ---------- Profile modal ---------- */
 
   openProfile(id) {
-    const child = SampleChildren.find(c => c.id === id);
-    if (!child) return;
+    const child = SampleChildren.find(c => String(c.id) === String(id));
+    if (!child) {
+      console.warn('[Children] openProfile: child not found', id);
+      return;
+    }
     this.closeModal();
 
     const statusColor = child.status === 'needs_support' ? 'var(--orange)' : 'var(--success)';
@@ -1517,10 +1520,10 @@ const TeacherChildren = {
 
           <div class="no-print" style="padding:1rem 1.5rem;border-top:1px solid var(--border);background:#fafafa;display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;flex-shrink:0;">
             ${child.archived
-              ? `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.confirmRestore([${child.id}])">↩ Restore to active</button>`
-              : `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.closeModal();TeacherChildren.openEditChild(${child.id})">✏️ Edit profile</button>
-            <button class="btn" style="background:#e3f2fd;color:#1565c0;" onclick="TeacherChildren.closeModal();TeacherChildren.openTransfer([${child.id}])">⇄ Transfer class</button>
-            <button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.confirmArchive([${child.id}])">📦 Archive</button>`}
+              ? `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.confirmRestore(['${child.id}'])">↩ Restore to active</button>`
+              : `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.closeModal();TeacherChildren.openEditChild('${child.id}')">✏️ Edit profile</button>
+            <button class="btn" style="background:#e3f2fd;color:#1565c0;" onclick="TeacherChildren.closeModal();TeacherChildren.openTransfer(['${child.id}'])">⇄ Transfer class</button>
+            <button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.confirmArchive(['${child.id}'])">📦 Archive</button>`}
             <button class="btn" style="background:#fff8e1;color:#f57f17;" onclick="TeacherChildren.printEccdForms()">🖨 Print ECCD forms</button>
             <button class="btn btn-blue" onclick="TeacherChildren.closeModal()">Close</button>
           </div>
@@ -1595,9 +1598,9 @@ const TeacherChildren = {
       <div class="card" style="margin-top:1.25rem;">
         <h3>Quick Actions</h3>
         <div class="flex flex-wrap gap-1 mt-2">
-          <button class="btn btn-blue" onclick="TeacherChildren.goModule('development', ${child.id}, true)">📈 Open Development Tracking</button>
-          <button class="btn" onclick="TeacherChildren.goModule('attendance', ${child.id})">📅 Attendance</button>
-          <button class="btn" onclick="TeacherChildren.goModule('health', ${child.id}, true)">❤️ Health Records</button>
+          <button class="btn btn-blue" onclick="TeacherChildren.goModule('development', '${child.id}', true)">📈 Open Development Tracking</button>
+          <button class="btn" onclick="TeacherChildren.goModule('attendance', '${child.id}')">📅 Attendance</button>
+          <button class="btn" onclick="TeacherChildren.goModule('health', '${child.id}', true)">❤️ Health Records</button>
         </div>
       </div>
     `;
@@ -1776,7 +1779,7 @@ const TeacherChildren = {
         <p class="text-muted" style="margin-top:0.75rem;font-size:0.9rem;">
           Domain rings use the child’s latest saved ECCD evaluation (Present items ÷ domain total).
         </p>
-        <button class="btn btn-blue mt-2" onclick="TeacherChildren.goModule('development', ${child.id}, true)">
+        <button class="btn btn-blue mt-2" onclick="TeacherChildren.goModule('development', '${child.id}', true)">
           Open Development Tracking
         </button>
       </div>
@@ -1811,7 +1814,7 @@ const TeacherChildren = {
           </div>
         </div>
         <p class="text-muted" style="font-size:0.9rem;">Full monthly sheet and history will be available in the Attendance module.</p>
-        <button class="btn btn-blue mt-2" onclick="TeacherChildren.goModule('attendance', ${child.id})">Open Attendance</button>
+        <button class="btn btn-blue mt-2" onclick="TeacherChildren.goModule('attendance', '${child.id}')">Open Attendance</button>
       </div>
     `;
   },
@@ -1835,7 +1838,7 @@ const TeacherChildren = {
           </div>
         </div>
         <p class="text-muted" style="font-size:0.9rem;">Detailed growth charts, nutrition and medical records will be managed in Health Records.</p>
-        <button class="btn btn-blue mt-2" onclick="TeacherChildren.goModule('health', ${child.id}, true)">Open Health Records</button>
+        <button class="btn btn-blue mt-2" onclick="TeacherChildren.goModule('health', '${child.id}', true)">Open Health Records</button>
       </div>
     `;
   },
