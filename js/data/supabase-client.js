@@ -7,9 +7,29 @@ window.BsSupabase = {
   ready: false,
   lastError: null,
 
+  _apiKey() {
+    const cfg = window.BRIGHTSTEPS_SUPABASE || {};
+    // Prefer legacy anon JWT (eyJ...) if provided — most reliable with supabase-js CDN.
+    // Else use publishable key (sb_publishable_...).
+    return (cfg.anonKey || cfg.publishableKey || '').trim();
+  },
+
+  _projectUrl() {
+    const cfg = window.BRIGHTSTEPS_SUPABASE || {};
+    let u = String(cfg.url || '').trim().replace(/\/+$/, '');
+    // Must be origin only: https://xxxx.supabase.co  (no /rest/v1, no path)
+    try {
+      if (u) {
+        const parsed = new URL(u);
+        u = parsed.origin;
+      }
+    } catch (e) { /* keep as-is */ }
+    return u;
+  },
+
   isConfigured() {
     const cfg = window.BRIGHTSTEPS_SUPABASE || {};
-    return !!(cfg.enabled && cfg.url && cfg.publishableKey);
+    return !!(cfg.enabled && this._projectUrl() && this._apiKey());
   },
 
   /**
@@ -29,9 +49,10 @@ window.BsSupabase = {
       console.error(this.lastError);
       return null;
     }
-    const cfg = window.BRIGHTSTEPS_SUPABASE;
+    const url = this._projectUrl();
+    const key = this._apiKey();
     try {
-      this.client = window.supabase.createClient(cfg.url, cfg.publishableKey, {
+      this.client = window.supabase.createClient(url, key, {
         auth: {
           persistSession: true,
           autoRefreshToken: true,
@@ -40,7 +61,7 @@ window.BsSupabase = {
       });
       this.ready = true;
       this.lastError = null;
-      console.info('[BrightSteps] Supabase client ready');
+      console.info('[BrightSteps] Supabase client ready', url);
       return this.client;
     } catch (e) {
       this.ready = false;
@@ -85,16 +106,42 @@ window.BsSupabase = {
    */
   async signIn(email, password) {
     const sb = this.get();
-    if (!sb) return { ok: false, error: 'Supabase offline — configure URL + publishable key.' };
+    if (!sb) return { ok: false, error: 'Supabase offline — configure URL + API key.' };
     const { data, error } = await sb.auth.signInWithPassword({
       email: String(email || '').trim(),
       password: String(password || '')
     });
-    if (error) return { ok: false, error: error.message };
-    const profile = await this.getProfile();
+    if (error) {
+      const msg = error.message || 'Login failed';
+      // Common misconfig hints
+      if (/invalid path|requested path is invalid/i.test(msg)) {
+        return {
+          ok: false,
+          error: msg + ' — Check Project URL is only https://YOUR-REF.supabase.co (no extra path), and prefer the legacy anon key (eyJ…) if publishable key fails.'
+        };
+      }
+      return { ok: false, error: msg };
+    }
+    let profile = null;
+    try {
+      profile = await this.getProfile();
+    } catch (e) {
+      console.warn('[BrightSteps] profile fetch failed after login', e);
+    }
+    // Profile may be missing if RLS/Data API not exposed yet — still allow session
     if (profile && profile.active === false) {
       await sb.auth.signOut();
       return { ok: false, error: 'This staff account is archived.' };
+    }
+    if (!profile && data.user) {
+      const meta = data.user.user_metadata || {};
+      profile = {
+        id: data.user.id,
+        full_name: meta.full_name || data.user.email || '',
+        role: meta.role || 'faculty',
+        is_head: meta.role === 'head',
+        active: true
+      };
     }
     return { ok: true, user: data.user, session: data.session, profile };
   },
@@ -106,9 +153,18 @@ window.BsSupabase = {
   },
 
   statusLabel() {
-    if (!this.isConfigured()) return 'LocalStorage only';
+    const cfg = window.BRIGHTSTEPS_SUPABASE || {};
+    if (!cfg.enabled) return 'Supabase disabled in config';
+    if (!this._projectUrl()) return 'LocalStorage only (missing project url)';
+    if (!this._apiKey()) return 'LocalStorage only (missing anonKey or publishableKey)';
+    if (!this.ready) {
+      try { this.init(); } catch (e) { /* ignore */ }
+    }
     if (!this.ready) return 'Supabase not ready: ' + (this.lastError || 'init failed');
-    return 'Supabase connected';
+    const keyKind = (cfg.anonKey && String(cfg.anonKey).trim())
+      ? 'anon'
+      : 'publishable';
+    return 'Supabase connected (' + keyKind + ' key)';
   }
 };
 

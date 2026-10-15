@@ -78,8 +78,18 @@ const ParentDashboard = {
       msg.textContent = text || '';
       msg.style.color = isErr ? '#d32f2f' : 'var(--muted)';
     }
-    if (typeof ParentRemote === 'undefined' || !ParentRemote.online || !ParentRemote.online()) {
-      setMsg('Not connected to the online database. Check your internet.', true);
+    if (typeof ParentRemote === 'undefined') {
+      setMsg('Parent sync script missing. Push latest code and hard-refresh.', true);
+      return;
+    }
+    // Force client init before checking
+    if (typeof BsSupabase !== 'undefined') {
+      try { BsSupabase.get(); } catch (e) { /* ignore */ }
+    }
+    if (!ParentRemote.online()) {
+      const why = (ParentRemote.offlineReason && ParentRemote.offlineReason()) ||
+        (typeof BsSupabase !== 'undefined' ? (BsSupabase.lastError || BsSupabase.statusLabel()) : 'unknown');
+      setMsg('Not connected: ' + why, true);
       return;
     }
     if (btn) { btn.disabled = true; btn.textContent = 'Refreshing…'; }
@@ -446,11 +456,18 @@ const ParentDashboard = {
       );
     }
 
-    const statusColor = latest && (latest.status || '').toLowerCase().includes('normal')
+    const statusText = (latest && (latest.status || latest.nutritionStatus || '')).trim() || '—';
+    const statusLower = statusText.toLowerCase();
+    const statusColor = statusLower.includes('normal')
       ? 'var(--success)'
-      : latest && (latest.status || '').toLowerCase().includes('under')
+      : (statusLower.includes('under') || statusLower.includes('severe'))
         ? 'var(--orange)'
-        : latest ? '#d32f2f' : 'var(--muted)';
+        : (statusLower.includes('over') || statusLower.includes('obese'))
+          ? '#d32f2f'
+          : 'var(--muted)';
+    const bmiDisplay = (latest && latest.bmi != null && !isNaN(Number(latest.bmi)))
+      ? Number(latest.bmi)
+      : null;
 
     const metrics = latest
       ? '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:0.85rem;margin:1rem 0;">' +
@@ -464,9 +481,9 @@ const ParentDashboard = {
         '<div class="text-muted">Weight</div></div>' +
         '<div style="text-align:center;background:#f8f9fa;padding:1rem;border-radius:12px;">' +
         '<div style="font-size:1.5rem;font-weight:700;color:' + statusColor + ';">' +
-        (latest.status || '—') + '</div>' +
-        '<div class="text-muted">BMI Status' +
-        (latest.bmi != null ? ' (' + latest.bmi + ')' : '') + '</div></div>' +
+        (bmiDisplay != null ? bmiDisplay : '—') + '</div>' +
+        '<div class="text-muted">BMI' +
+        (statusText !== '—' ? ' · ' + statusText : '') + '</div></div>' +
         '<div style="text-align:center;background:#f8f9fa;padding:1rem;border-radius:12px;">' +
         '<div style="font-size:1.5rem;font-weight:700;color:#7b1fa2;">' +
         (function() {

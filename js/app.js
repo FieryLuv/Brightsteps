@@ -63,7 +63,7 @@ const BrightSteps = (() => {
           <div style="text-align:left;">
             <label class="ecc-field-label">Email or username</label>
             <input type="text" id="teacher-username" class="ecc-field-input"
-              placeholder="Online: email used in Supabase · Offline: irish / maria"
+              placeholder="Email or username"
               autocomplete="username" />
             <label class="ecc-field-label" style="margin-top:1rem;">Password</label>
             <input type="password" id="teacher-password" class="ecc-field-input" placeholder="Password"
@@ -76,10 +76,9 @@ const BrightSteps = (() => {
             <button class="btn btn-blue" style="width:100%;" id="teacher-login-btn" onclick="BrightSteps.submitTeacherLogin()">Sign in</button>
             <button class="btn" style="width:100%;background:#e8e8e8;color:var(--text);" onclick="BrightSteps.showLogin()">← Back</button>
           </div>
-          <div style="margin-top:1.25rem;padding:0.85rem;background:#f5f9fc;border-radius:10px;text-align:left;font-size:0.82rem;color:var(--muted);">
-            <strong>Online (Supabase):</strong> use the <em>email</em> + password you created under Authentication → Users.<br>
-            <strong>Offline demo:</strong> Irish · <code>irish</code> / <code>Abordo2026</code> · Maria · <code>maria</code> / <code>Santos2026</code>
-          </div>
+          <p class="text-muted" style="font-size:0.82rem;margin:1rem 0 0;text-align:left;line-height:1.45;">
+            Use the email and password assigned by the Head Teacher (or center administrator).
+          </p>
         </div>
       </div>
     `;
@@ -89,8 +88,8 @@ const BrightSteps = (() => {
       const modeEl = document.getElementById('teacher-login-mode');
       if (modeEl && typeof BsSupabase !== 'undefined') {
         modeEl.textContent = BsSupabase.isConfigured()
-          ? ('Mode: ' + BsSupabase.statusLabel())
-          : 'Mode: LocalStorage only (fill supabase-config.js for online login)';
+          ? BsSupabase.statusLabel()
+          : '';
       }
     }, 50);
   }
@@ -157,7 +156,7 @@ const BrightSteps = (() => {
         // or ask them to use the Auth email from step 3.
         let email = username;
         if (!username.includes('@')) {
-          // Optional local alias map for demo usernames → Auth emails (edit if needed)
+          // Optional username → Auth email aliases (supabase-config usernameEmailMap)
           const aliases = (window.BRIGHTSTEPS_SUPABASE && window.BRIGHTSTEPS_SUPABASE.usernameEmailMap) || {};
           email = aliases[username.toLowerCase()] || username;
           if (!email.includes('@')) {
@@ -167,7 +166,7 @@ const BrightSteps = (() => {
         }
         const result = await BsSupabase.signIn(email, password);
         if (!result.ok) {
-          // Fall back to offline demo usernames if online fails
+          // Fall back to local TeacherStore login if online auth fails
           if (!username.includes('@') && typeof TeacherStore !== 'undefined' && TeacherStore.authenticate) {
             const local = TeacherStore.authenticate(username, password);
             if (local.ok) {
@@ -245,13 +244,13 @@ const BrightSteps = (() => {
           </p>
           <div style="text-align:left;">
             <label class="ecc-field-label">Parent / Guardian name</label>
-            <input type="text" id="parent-guardian-name" class="ecc-field-input" placeholder="e.g. Mr. Khalid or Fatima Khalid"
+            <input type="text" id="parent-guardian-name" class="ecc-field-input" placeholder="Guardian name from enrollment"
               autocomplete="username" />
             <label class="ecc-field-label" style="margin-top:1rem;">Child ID <span class="text-muted">(recommended)</span></label>
-            <input type="text" id="parent-child-code" class="ecc-field-input" placeholder="e.g. NCDC-001"
+            <input type="text" id="parent-child-code" class="ecc-field-input" placeholder="Child ID from enrollment"
               autocomplete="off" />
             <label class="ecc-field-label" style="margin-top:1rem;">Password <span class="text-muted">(only if you set one)</span></label>
-            <input type="password" id="parent-password" class="ecc-field-input" placeholder="Leave blank if not set"
+            <input type="password" id="parent-password" class="ecc-field-input" placeholder="Optional"
               autocomplete="current-password" />
             <p id="parent-login-error" style="color:#d32f2f;font-size:0.85rem;margin:0.75rem 0 0;display:none;"></p>
           </div>
@@ -259,11 +258,9 @@ const BrightSteps = (() => {
             <button class="btn btn-blue" style="width:100%;" onclick="BrightSteps.submitParentLogin()">Continue</button>
             <button class="btn" style="width:100%;background:#e8e8e8;color:var(--text);" onclick="BrightSteps.showLogin()">← Back</button>
           </div>
-          <div style="margin-top:1.25rem;padding:0.85rem;background:#f5f9fc;border-radius:10px;text-align:left;font-size:0.82rem;color:var(--muted);">
-            <strong>Demo:</strong><br>
-            Guardian <code>Mr. Khalid</code> or <code>Khalid</code> → Amina (NCDC-001) &amp; Rayan (NCDC-009)<br>
-            Guardian <code>Mrs. Ahmed</code> + Child ID <code>NCDC-002</code> → Omar only
-          </div>
+          <p class="text-muted" style="font-size:0.82rem;margin:1rem 0 0;text-align:left;line-height:1.45;">
+            Ask the teacher if you need your Child ID or help resetting a password.
+          </p>
         </div>
       </div>
     `;

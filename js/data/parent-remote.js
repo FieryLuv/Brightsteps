@@ -99,18 +99,23 @@ window.ParentRemote = {
       } catch (e) { /* ignore */ }
     }
 
-    // Assessments
+    // Assessments — include domainScores for parent domain snapshot donuts
     if (typeof AssessmentStore !== 'undefined' && payload.assessments) {
       try {
         const local = payload.assessments.map(function (a) {
+          if (typeof AssessmentRemote !== 'undefined' && AssessmentRemote.rowToLocal) {
+            return AssessmentRemote.rowToLocal(a);
+          }
           return {
             childId: a.child_id,
             period: a.period,
             recordType: a.record_type,
             ageMonths: a.age_months,
-            domains: a.domains || {},
-            marks: a.marks || {},
-            comments: a.comments || {},
+            domainScores: a.domain_scores || {},
+            responses: a.responses || {},
+            itemResults: a.item_results || [],
+            insight: a.insight || {},
+            finalScores: a.final_scores || null,
             finalized: a.finalized,
             savedAt: a.saved_at || a.created_at
           };
@@ -125,19 +130,32 @@ window.ParentRemote = {
       } catch (e) { console.warn('[ParentRemote] assessments hydrate', e); }
     }
 
-    // Reports
+    // Reports — full row (domain scores, tips, strengths, needs) for parent snapshot
     if (typeof ReportStore !== 'undefined' && payload.reports) {
       try {
         const local = payload.reports.map(function (r) {
+          if (typeof ReportRemote !== 'undefined' && ReportRemote.rowToLocal) {
+            return ReportRemote.rowToLocal(r);
+          }
           return {
             childId: r.child_id,
             period: r.period,
-            status: r.status || 'approved',
-            parentDraft: r.parent_draft || '',
+            recordType: r.record_type,
+            ageMonths: r.age_months,
+            domainScores: r.domain_scores || [],
+            standardScore: r.standard_score,
+            sumOfScaledScores: r.sum_of_scaled,
+            overallLabel: r.overall_label || '',
             teacherNote: r.teacher_note || '',
+            parentDraft: r.parent_draft || '',
             tips: r.tips || [],
-            domains: r.domains || {},
+            strengths: r.strengths || [],
+            needs: r.needs || [],
+            teacherComments: r.teacher_comments || [],
+            focusItems: r.focus_items || [],
+            status: r.status || 'approved',
             approvedAt: r.approved_at,
+            updatedAt: r.updated_at,
             savedAt: r.updated_at || r.created_at
           };
         });
@@ -173,14 +191,16 @@ window.ParentRemote = {
       try {
         const data = HealthStore._read ? HealthStore._read() : { measurements: [], profiles: {} };
         (payload.health || []).forEach(function (row) {
+          const payload = row.payload && typeof row.payload === 'object' ? row.payload : {};
           const m = {
             id: row.id,
             childId: row.child_id,
-            date: row.recorded_at,
-            heightCm: row.height_cm,
-            weightKg: row.weight_kg,
-            bmi: row.bmi,
-            nutritionStatus: row.nutrition_status || '',
+            date: row.recorded_at || row.date || '',
+            heightCm: row.height_cm != null ? Number(row.height_cm) : null,
+            weightKg: row.weight_kg != null ? Number(row.weight_kg) : null,
+            bmi: row.bmi != null ? Number(row.bmi) : null,
+            status: payload.status || row.nutrition_status || '',
+            nutritionStatus: row.nutrition_status || payload.status || '',
             notes: row.notes || '',
             feedingParticipating: row.feeding_participating !== false,
             savedAt: row.created_at,

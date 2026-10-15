@@ -4,7 +4,7 @@
  * - Head Teacher (admin): only one. Can add/remove faculty, transfer head role.
  * - Faculty (CDW / teacher): operate the system; cannot manage staff roster.
  * Facility fields feed SFP Beneficiary Profile Part I.
- * Login credentials are sample until database auth.
+ * Staff accounts: prefer Supabase Auth; local TeacherStore is offline fallback.
  */
 const TeacherStore = {
   KEY: 'brightsteps_teacher_state_v3',

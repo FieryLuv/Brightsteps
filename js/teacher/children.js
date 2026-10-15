@@ -297,7 +297,7 @@ const TeacherChildren = {
             <div class="card" style="margin-bottom:1rem;">
               <h3 style="margin-top:0;">+ Create class</h3>
               <p class="text-muted" style="font-size:0.85rem;margin-top:0;">
-                Sample classes are built-in. Add your own for custom groups (e.g. afternoon session, mixed ages).
+                Create classes for each group (age range and description help teachers filter the list).
               </p>
               <div class="profile-grid">
                 <div style="grid-column:1 / -1;">
@@ -550,7 +550,7 @@ const TeacherChildren = {
               <div class="profile-grid">
                 <div>
                   <label class="ecc-field-label">Primary parent / guardian *</label>
-                  <input type="text" id="enroll-parent" class="ecc-field-input" value="${this._escAttr(p.parentName)}" placeholder="e.g. Mr. Khalid" />
+                  <input type="text" id="enroll-parent" class="ecc-field-input" value="${this._escAttr(p.parentName)}" placeholder="Guardian full name" />
                 </div>
                 <div>
                   <label class="ecc-field-label">Mother’s name</label>
@@ -907,7 +907,7 @@ const TeacherChildren = {
           </div>
           <div class="bs-modal-footer" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;">
             <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherChildren.closeModal()">Cancel</button>
-            ${isEdit ? '' : '<button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.demoAutofillOnline()">Demo: autofill online app</button>'}
+            
             <button class="btn btn-blue" onclick="TeacherChildren.saveEnrollment()">${isEdit ? '💾 Save changes' : '💾 Save enrollment'}</button>
           </div>
         </div>
@@ -1018,6 +1018,7 @@ const TeacherChildren = {
   /**
    * Simulate approving an online application → autofill the form (future flow).
    */
+  /** @deprecated Demo helper — not shown in UI. Kept for local dev only. */
   demoAutofillOnline() {
     const sampleApp = {
       id: 'APP-2026-0142',
