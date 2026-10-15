@@ -3150,3 +3150,102 @@ th.eccd-period-head-active {
   background: var(--primary) !important;
   color: #fff !important;
 }
+
+
+/* —— Print: ECCD checklist form only (paper-style) —— */
+@media print {
+  body.printing-eccd-checklist header,
+  body.printing-eccd-checklist .sidebar,
+  body.printing-eccd-checklist .sidebar-backdrop,
+  body.printing-eccd-checklist .app-header,
+  body.printing-eccd-checklist .parent-header,
+  body.printing-eccd-checklist #main-content,
+  body.printing-eccd-checklist .dash-hero,
+  body.printing-eccd-checklist .no-print {
+    display: none !important;
+  }
+  body.printing-eccd-checklist #dev-modal-overlay {
+    position: static !important;
+    background: none !important;
+    display: block !important;
+    padding: 0 !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  body.printing-eccd-checklist .bs-modal-panel,
+  body.printing-eccd-checklist .eccd-checklist-panel {
+    max-width: none !important;
+    width: 100% !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+  }
+  body.printing-eccd-checklist .bs-modal-header,
+  body.printing-eccd-checklist .eccd-checklist-header {
+    background: #fff !important;
+    color: #000 !important;
+    border-bottom: 2px solid #000;
+    padding: 0.35rem 0 !important;
+  }
+  body.printing-eccd-checklist .bs-modal-header h2,
+  body.printing-eccd-checklist .eccd-checklist-header h2 {
+    color: #000 !important;
+    font-size: 14pt !important;
+  }
+  body.printing-eccd-checklist .bs-modal-close,
+  body.printing-eccd-checklist .eccd-toolbar,
+  body.printing-eccd-checklist .eccd-period-picker,
+  body.printing-eccd-checklist .eccd-form-note,
+  body.printing-eccd-checklist .eccd-cover-wrap,
+  body.printing-eccd-checklist .bs-modal-footer {
+    display: none !important;
+  }
+  body.printing-eccd-checklist .eccd-form-scroll,
+  body.printing-eccd-checklist .bs-modal-body {
+    overflow: visible !important;
+    max-height: none !important;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+  body.printing-eccd-checklist .eccd-domain-block {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    box-shadow: none !important;
+    border: 1px solid #333 !important;
+    margin: 0.4rem 0 !important;
+    padding: 0.35rem !important;
+  }
+  body.printing-eccd-checklist .eccd-domain-title {
+    font-size: 11pt !important;
+    color: #000 !important;
+    border-bottom: 1px solid #333 !important;
+  }
+  body.printing-eccd-checklist .eccd-table {
+    font-size: 9pt !important;
+  }
+  body.printing-eccd-checklist .eccd-table th,
+  body.printing-eccd-checklist .eccd-table td {
+    border: 1px solid #333 !important;
+    padding: 0.2rem 0.25rem !important;
+  }
+  body.printing-eccd-checklist input[type="checkbox"] {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  body.printing-eccd-checklist .eccd-comment-input {
+    border: none !important;
+    background: transparent !important;
+    font-size: 9pt !important;
+  }
+  body.printing-eccd-checklist .eccd-period-locked input {
+    opacity: 1 !important;
+  }
+
+  /* Score sheets print: hide insight summary chips / parent tips */
+  body.printing-ecc-scores .insight-summary-card,
+  body.printing-ecc-scores .insight-split,
+  body.printing-ecc-scores .insight-chip,
+  body.printing-ecc-scores .no-print {
+    display: none !important;
+  }
+}

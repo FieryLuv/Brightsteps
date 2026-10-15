@@ -73,8 +73,8 @@ const ScoreProfile = {
       <p class="ecc-summary-note">
         Transfer the raw score for each domain. Convert using the Scaled Score table for the child’s age.
         Add Scaled Scores for the Sum, then look up the Standard Score.
-        <strong>Teachers may edit any cell</strong> to correct or finalize the assessment, then click
-        <em>Save final assessment</em> for that evaluation.
+        <strong>You can edit any cell</strong> and click <em>Save scores</em> for that evaluation.
+        Saved scores stay editable — change them anytime and save again.
       </p>`;
 
     const input = (val, attrs) => {
@@ -94,8 +94,8 @@ const ScoreProfile = {
         const date = a && a.savedAt
           ? new Date(a.savedAt).toLocaleDateString()
           : '';
-        const approved = a && a.finalized
-          ? `<div class="ecc-final-badge">✓ Final</div>`
+        const approved = a && (a.finalScores || a.finalized)
+          ? `<div class="ecc-final-badge">✓ Scores saved</div>`
           : '';
         return `<th colspan="2" class="ecc-eval-head">${p} Evaluation
           <div class="ecc-eval-sub">Date: ${date || '________'}</div>
@@ -122,8 +122,8 @@ const ScoreProfile = {
             raw = d.raw;
             scaled = d.scaled;
           }
-          return `<td class="ecc-sum-num">${input(raw, `data-role="raw" data-period="${p}" data-domain="${code}" data-child="${childId}" inputmode="numeric"`)}</td>
-            <td class="ecc-sum-num">${input(scaled, `data-role="scaled" data-period="${p}" data-domain="${code}" data-child="${childId}" inputmode="numeric" oninput="TeacherDevelopment.onScaledEdit(this)"`)}</td>`;
+          return `<td class="ecc-sum-num">${input(raw, `data-role="raw" data-period="${p}" data-domain="${code}" data-child="${childId}" inputmode="numeric" maxlength="2" oninput="TeacherDevelopment.clampScoreInput(this,'raw')"`)}</td>
+            <td class="ecc-sum-num">${input(scaled, `data-role="scaled" data-period="${p}" data-domain="${code}" data-child="${childId}" inputmode="numeric" maxlength="2" oninput="TeacherDevelopment.clampScoreInput(this,'scaled');TeacherDevelopment.onScaledEdit(this)"`)}</td>`;
         }).join('');
         return `<tr>
           <td class="ecc-sum-domain">${this.DOMAIN_NAMES[code]}</td>
@@ -140,7 +140,7 @@ const ScoreProfile = {
           sum = a.insight.sumOfScaledScores;
         }
         return `<td class="ecc-sum-shaded"></td>
-          <td class="ecc-sum-num">${input(sum, `data-role="sum" data-period="${p}" data-child="${childId}" id="ecc-sum-${childId}-${p}" inputmode="numeric"`)}</td>`;
+          <td class="ecc-sum-num">${input(sum, `data-role="sum" data-period="${p}" data-child="${childId}" id="ecc-sum-${childId}-${p}" inputmode="numeric" maxlength="3" oninput="TeacherDevelopment.clampScoreInput(this,'sum')"`)}</td>`;
       }).join('');
 
       const stdCells = chunk.map(p => {
@@ -152,7 +152,7 @@ const ScoreProfile = {
           std = a.insight.standardScore;
         }
         return `<td class="ecc-sum-shaded"></td>
-          <td class="ecc-sum-num">${input(std, `data-role="standard" data-period="${p}" data-child="${childId}" id="ecc-std-${childId}-${p}" inputmode="numeric"`)}</td>`;
+          <td class="ecc-sum-num">${input(std, `data-role="standard" data-period="${p}" data-child="${childId}" id="ecc-std-${childId}-${p}" inputmode="numeric" maxlength="3" oninput="TeacherDevelopment.clampScoreInput(this,'standard')"`)}</td>`;
       }).join('');
 
       const interpCells = chunk.map(p => {
@@ -178,8 +178,8 @@ const ScoreProfile = {
         ? `<tr class="ecc-action-row"><td></td>${chunk.map(p => `
             <td colspan="2" style="text-align:center;padding:0.5rem;">
               <button type="button" class="btn btn-blue ecc-finalize-btn"
-                onclick="TeacherDevelopment.finalizePeriod(${childId}, '${p}')">
-                💾 Save final · ${p}
+                onclick="TeacherDevelopment.finalizePeriod('${childId}', '${p}')">
+                💾 Save scores · ${p}
               </button>
             </td>`).join('')}</tr>`
         : '';

@@ -427,8 +427,9 @@ const TeacherDevelopment = {
             ${allDomainsHtml}
           </div>
 
-          <div class="bs-modal-footer">
+          <div class="bs-modal-footer no-print">
             <button class="btn" onclick="TeacherDevelopment.closeAssessment()">Cancel</button>
+            <button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherDevelopment.printChecklist()">🖨 Print checklist</button>
             <button class="btn btn-blue" onclick="TeacherDevelopment.saveAssessment()">💾 Save checklist</button>
           </div>
         </div>
@@ -899,6 +900,25 @@ const TeacherDevelopment = {
   /**
    * When teacher edits a scaled score, recompute Sum of Scaled for that period.
    */
+  /**
+   * Limit score digits to official ranges:
+   * raw 0–99 (2 digits), scaled 1–19 (2 digits), sum 0–999, standard 0–999.
+   */
+  clampScoreInput(input, role) {
+    if (!input) return;
+    let v = String(input.value || '').replace(/[^0-9]/g, '');
+    const maxLen = role === 'sum' || role === 'standard' ? 3 : 2;
+    if (v.length > maxLen) v = v.slice(0, maxLen);
+    if (v !== '') {
+      let n = parseInt(v, 10);
+      if (role === 'scaled' && n > 19) n = 19;
+      if (role === 'raw' && n > 99) n = 99;
+      if ((role === 'sum' || role === 'standard') && n > 999) n = 999;
+      v = String(n);
+    }
+    input.value = v;
+  },
+
   onScaledEdit(input) {
     const period = input.getAttribute('data-period');
     const childId = input.getAttribute('data-child');
@@ -921,8 +941,8 @@ const TeacherDevelopment = {
   },
 
   /**
-   * Teacher finalizes one evaluation period from the editable score sheet.
-   * Reads all inputs for that period and persists as finalScores.
+   * Save teacher-adjusted scores for one evaluation period.
+   * Scores remain editable; saving again overwrites the previous values.
    */
   async finalizePeriod(childId, period) {
     const child = SampleChildren.find(c => String(c.id) === String(childId));
@@ -1038,19 +1058,19 @@ const TeacherDevelopment = {
         domainScores: existing && existing.domainScores ? existing.domainScores : {},
         insight,
         finalScores,
-        finalized: true,
-        finalizedAt: new Date().toISOString()
+        // Keep editable — flag only means scores were saved (not locked)
+        finalized: false,
+        scoresSavedAt: new Date().toISOString()
       });
     }
 
-    // Refresh the result/trends panel so charts pick up final scores
+    // Refresh the result/trends panel so charts pick up saved scores
     this.closeResult();
     this.showTrends(childId);
 
-    // Brief confirmation
     const toast = document.createElement('div');
     toast.className = 'ecc-toast';
-    toast.textContent = `Final assessment saved for ${period} evaluation.`;
+    toast.textContent = `Scores saved for ${period} evaluation (still editable).`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2500);
   },
@@ -1063,7 +1083,26 @@ const TeacherDevelopment = {
   },
 
   printResult() {
+    // Score/trends view: print only official score tables (hide insight summaries)
+    document.body.classList.add('printing-ecc-scores');
     window.print();
+    setTimeout(function () {
+      document.body.classList.remove('printing-ecc-scores');
+    }, 500);
+  },
+
+  /** Print ECCD checklist form only (items, Present columns, comments) — no insight summaries */
+  printChecklist() {
+    const overlay = document.getElementById('dev-modal-overlay');
+    if (!overlay) {
+      alert('Open a checklist first.');
+      return;
+    }
+    document.body.classList.add('printing-eccd-checklist');
+    window.print();
+    setTimeout(function () {
+      document.body.classList.remove('printing-eccd-checklist');
+    }, 500);
   },
 
   closeResult() {
