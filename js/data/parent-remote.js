@@ -4,11 +4,29 @@
  */
 window.ParentRemote = {
   online() {
-    if (typeof BsSupabase === 'undefined' || !BsSupabase.isConfigured()) return false;
-    if (!BsSupabase.ready) {
-      try { BsSupabase.init(); } catch (e) { /* ignore */ }
+    if (typeof BsSupabase === 'undefined') return false;
+    if (!BsSupabase.isConfigured()) return false;
+    try {
+      const client = BsSupabase.get();
+      return !!client;
+    } catch (e) {
+      return false;
     }
-    return !!BsSupabase.ready;
+  },
+
+  /** Human-readable reason when online() is false */
+  offlineReason() {
+    if (typeof BsSupabase === 'undefined') return 'Supabase client script not loaded.';
+    if (!BsSupabase.isConfigured()) {
+      return 'Supabase is not configured on this site (empty url/key in supabase-config.js).';
+    }
+    try {
+      const c = BsSupabase.get();
+      if (!c) return BsSupabase.lastError || 'Supabase init failed.';
+    } catch (e) {
+      return (e && e.message) || 'Supabase init error.';
+    }
+    return '';
   },
 
   dbChildToLocal(row) {
@@ -250,3 +268,4 @@ window.ParentRemote = {
 
 if (typeof window !== 'undefined') window.ParentRemote = window.ParentRemote;
 
+console.info('[BrightSteps] ParentRemote ready');
