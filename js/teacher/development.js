@@ -304,7 +304,6 @@ const TeacherDevelopment = {
             </div>
           </div>
           <div class="bs-modal-footer">
-            <button class="btn no-print" style="background:#fff3e0;color:#e65100;" onclick="TeacherDevelopment.printResult()">🖨 Print</button>
             <button class="btn btn-blue no-print" onclick="TeacherDevelopment.closeResult()">Close</button>
           </div>
         </div>
@@ -888,7 +887,6 @@ const TeacherDevelopment = {
             ${draft}
           </div>
           <div class="bs-modal-footer">
-            <button class="btn no-print" style="background:#fff3e0;color:#e65100;" onclick="TeacherDevelopment.printResult()">🖨 Print</button>
             <button class="btn btn-blue no-print" onclick="TeacherDevelopment.closeResult()">Done</button>
           </div>
         </div>
@@ -1151,6 +1149,12 @@ const TeacherDevelopment = {
       return '<section class="eccd-print-domain">' +
         '<h2 class="eccd-print-domain-title">' + d.name + ' Domain</h2>' +
         '<table class="eccd-print-table">' +
+        '<colgroup>' +
+        '<col class="col-num" />' +
+        '<col class="col-item" />' +
+        periods.map(function () { return '<col class="col-present" />'; }).join('') +
+        '<col class="col-comment" />' +
+        '</colgroup>' +
         '<thead><tr>' +
         '<th class="eccd-num">#</th>' +
         '<th>' + d.name + ' / Material/Procedure</th>' +

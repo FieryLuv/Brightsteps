@@ -102,7 +102,7 @@ const TeacherAttendance = {
 
       <div class="card filter-bar-card" style="margin-bottom:1rem;">
         <div class="filter-bar">
-          <div class="filter-bar-class" style="max-width:320px;">
+          <div class="filter-bar-class">
             <label class="ecc-field-label">Class / section</label>
             <select class="ecc-field-input" onchange="TeacherAttendance.selectSection(this.value)">${sectionOpts}</select>
           </div>
