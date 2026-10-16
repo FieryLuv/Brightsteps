@@ -238,8 +238,9 @@ const TeacherApplications = {
               After first login, the parent can set an optional password under <strong>Settings (⋮)</strong>.
             </p>
             <p style="margin-top:0.75rem;font-size:0.9rem;line-height:1.55;">
-              <strong>Suggested delivery:</strong> SMS to <strong>${phone}</strong>
-              (most reliable for local parents). Optional: printed slip at the center, or email if provided.
+              <strong>Suggested delivery:</strong> Facebook Messenger to the guardian
+              ${phone && phone !== '—' ? '(contact on file: <strong>' + phone + '</strong>)' : ''}.
+              Automated Messenger is not free — copy the message and send manually.
             </p>
             <p class="text-muted" style="font-size:0.85rem;">
               Message template:<br>

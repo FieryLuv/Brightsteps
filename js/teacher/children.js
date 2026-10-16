@@ -59,22 +59,33 @@ const TeacherChildren = {
       ? ChildRegistry.activeList().length
       : SampleChildren.filter(c => c.archived !== true).length;
 
-    const listHtml = children.length
-      ? `<div class="children-grid">${children.map(c => this._card(c)).join('')}</div>`
-      : `<div class="card children-empty">
-           <div style="font-size:2rem; margin-bottom:0.5rem;">${this.listMode === 'archived' ? '📦' : '🔍'}</div>
-           <p style="margin:0 0 0.35rem; font-weight:600; color:var(--text);">
-             ${this.listMode === 'archived' ? 'No archived children' : 'No children found'}
-           </p>
-           <p class="text-muted" style="margin:0 0 1rem; font-size:0.9rem;">
+    let listHtml;
+    if (this.listMode === 'credentials') {
+      listHtml = children.length
+        ? this._credentialsTable(children)
+        : `<div class="card children-empty">
+             <div style="font-size:2rem; margin-bottom:0.5rem;">🔑</div>
+             <p style="margin:0 0 0.35rem; font-weight:600;">No parent accounts found</p>
+             <p class="text-muted" style="margin:0 0 1rem; font-size:0.9rem;">Enroll a child first, then share credentials via Messenger manually.</p>
+           </div>`;
+    } else {
+      listHtml = children.length
+        ? `<div class="children-grid">${children.map(c => this._card(c)).join('')}</div>`
+        : `<div class="card children-empty">
+             <div style="font-size:2rem; margin-bottom:0.5rem;">${this.listMode === 'archived' ? '📦' : '🔍'}</div>
+             <p style="margin:0 0 0.35rem; font-weight:600; color:var(--text);">
+               ${this.listMode === 'archived' ? 'No archived children' : 'No children found'}
+             </p>
+             <p class="text-muted" style="margin:0 0 1rem; font-size:0.9rem;">
+               ${this.listMode === 'archived'
+                 ? 'Archived children are inactive but their records stay available to restore.'
+                 : 'Try a different name, age, or section filter.'}
+             </p>
              ${this.listMode === 'archived'
-               ? 'Archived children are inactive but their records stay available to restore.'
-               : 'Try a different name, age, or section filter.'}
-           </p>
-           ${this.listMode === 'archived'
-             ? `<button class="btn btn-blue" onclick="TeacherChildren.setListMode('active')">← Back to active</button>`
-             : `<button class="btn" onclick="TeacherChildren.clearFilters()">Clear filters</button>`}
-         </div>`;
+               ? `<button class="btn btn-blue" onclick="TeacherChildren.setListMode('active')">← Back to active</button>`
+               : `<button class="btn" onclick="TeacherChildren.clearFilters()">Clear filters</button>`}
+           </div>`;
+    }
 
     this.container.innerHTML = `
       <div class="flex justify-between items-center mb-3" style="flex-wrap:wrap; gap:1rem;">
@@ -97,6 +108,9 @@ const TeacherChildren = {
         <button class="btn ${this.listMode === 'archived' ? 'btn-blue' : ''}"
           style="${this.listMode !== 'archived' ? 'background:#e8e8e8;color:var(--text);' : ''}"
           onclick="TeacherChildren.setListMode('archived')">📦 Archived (${archivedCount})</button>
+        <button class="btn ${this.listMode === 'credentials' ? 'btn-blue' : ''}"
+          style="${this.listMode !== 'credentials' ? 'background:#e8e8e8;color:var(--text);' : ''}"
+          onclick="TeacherChildren.setListMode('credentials')">🔑 Parent accounts</button>
       </div>
 
       <div class="card filter-bar-card" style="margin-bottom:1rem;">
@@ -121,13 +135,20 @@ const TeacherChildren = {
         </div>
       </div>
 
-      ${this._bulkBarHtml(children)}
+      ${this.listMode === 'credentials' ? '' : this._bulkBarHtml(children)}
 
       <p class="text-muted mb-2" style="font-size:0.9rem;">
-        Showing <strong>${children.length}</strong>
-        ${this.listMode === 'archived' ? 'archived' : 'active'} child(ren)
-        · ${activeCount} active · ${archivedCount} archived
+        ${this.listMode === 'credentials'
+          ? `Parent portal accounts · <strong>${children.length}</strong> record(s) · share login via Messenger manually`
+          : `Showing <strong>${children.length}</strong> ${this.listMode === 'archived' ? 'archived' : 'active'} child(ren) · ${activeCount} active · ${archivedCount} archived`}
       </p>
+      ${this.listMode === 'credentials' ? `
+        <div class="card" style="margin-bottom:1rem;padding:0.85rem 1rem;background:#e3f2fd;border:1px solid #90caf9;">
+          <p style="margin:0;font-size:0.9rem;line-height:1.5;">
+            <strong>How to share:</strong> Open a row → <em>View / copy</em> → paste the message in
+            <strong>Facebook Messenger</strong> to the guardian. Automated Messenger sending is not free; teachers send manually.
+          </p>
+        </div>` : ''}
 
       ${listHtml}
     `;
@@ -147,23 +168,25 @@ const TeacherChildren = {
   },
 
   _filtered() {
-    const q = this.filterText.trim().toLowerCase();
-    const wantArchived = this.listMode === 'archived';
+    const q = (this.filterText || '').trim().toLowerCase();
+    const mode = this.listMode;
     return SampleChildren.filter(c => {
       const isArchived = c.archived === true;
-      if (wantArchived !== isArchived) return false;
+      if (mode === 'active' && isArchived) return false;
+      if (mode === 'archived' && !isArchived) return false;
       const matchSection = this.filterSection === 'all' || c.sectionKey === this.filterSection;
-      const matchText = !q ||
-        (c.name && c.name.toLowerCase().includes(q)) ||
-        (c.ageLabel && c.ageLabel.toLowerCase().includes(q)) ||
-        (c.section && c.section.toLowerCase().includes(q)) ||
-        (c.focusArea && c.focusArea.toLowerCase().includes(q));
-      return matchSection && matchText;
+      const hay = [
+        c.name, c.childCode, c.parentName, c.parentLoginName, c.motherName, c.fatherName,
+        c.ageLabel, c.section, c.focusArea, c.contactPhone, c.phone
+      ].map(x => String(x || '').toLowerCase()).join(' ');
+      return matchSection && (!q || hay.includes(q));
     });
   },
 
   setListMode(mode) {
-    this.listMode = mode === 'archived' ? 'archived' : 'active';
+    if (mode === 'archived') this.listMode = 'archived';
+    else if (mode === 'credentials') this.listMode = 'credentials';
+    else this.listMode = 'active';
     this.selectedIds = [];
     this._draw();
   },
@@ -1475,6 +1498,104 @@ const TeacherChildren = {
     this.confirmArchive(ids);
   },
 
+
+
+  _credentialsTable(children) {
+    const rows = children.map(c => {
+      const guardian = c.parentLoginName || c.parentName || '—';
+      const code = c.childCode || '—';
+      const phone = c.contactPhone || c.phone || c.motherContact || c.fatherContact || '—';
+      const hasPass = !!(c.parentPassword && String(c.parentPassword).length);
+      const status = c.archived ? '<span style="color:#757575;">Archived</span>' : '<span class="success-text">Active</span>';
+      const idAttr = String(c.id).replace(/'/g, "\\'");
+      return '<tr>' +
+        '<td><strong>' + (c.name || '—') + '</strong>' +
+        '<div class="text-muted" style="font-size:0.8rem;">' + (c.section || c.sectionKey || '') + '</div></td>' +
+        '<td><code>' + code + '</code></td>' +
+        '<td>' + guardian + '</td>' +
+        '<td>' + (hasPass ? 'Set by parent' : 'None (name + Child ID only)') + '</td>' +
+        '<td>' + phone + '</td>' +
+        '<td>' + status + '</td>' +
+        '<td style="white-space:nowrap;">' +
+        '<button type="button" class="btn" style="padding:4px 10px;font-size:0.78rem;background:#e3f2fd;color:#1565c0;" ' +
+        'onclick="TeacherChildren.showCredentialSlip(\'' + idAttr + '\')">View / copy</button></td></tr>';
+    }).join('');
+    return (
+      '<div class="card" style="padding:0;overflow:auto;">' +
+      '<table class="eccd-table" style="margin:0;font-size:0.9rem;">' +
+      '<thead><tr><th>Child</th><th>Child ID</th><th>Guardian login name</th><th>Password</th><th>Contact</th><th>Status</th><th></th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table></div>'
+    );
+  },
+
+  showCredentialSlip(childId) {
+    const child = (typeof SampleChildren !== 'undefined')
+      ? SampleChildren.find(c => String(c.id) === String(childId))
+      : null;
+    if (!child) {
+      alert('Child not found.');
+      return;
+    }
+    const guardian = child.parentLoginName || child.parentName || '—';
+    const code = child.childCode || '—';
+    const phone = child.contactPhone || child.phone || '—';
+    const portalUrl = (typeof location !== 'undefined' && location.origin) ? location.origin : 'BrightSteps';
+    const msg = 'NCDC Medina BrightSteps: ' + (child.name || 'Your child') +
+      ' is enrolled. Parent portal — Guardian name: ' + guardian +
+      ', Child ID: ' + code +
+      '. Open ' + portalUrl + ' → Parent / Guardian. Optional password can be set later in Settings.';
+    const prev = document.getElementById('child-cred-overlay');
+    if (prev) prev.remove();
+    const html =
+      '<div id="child-cred-overlay" class="bs-overlay">' +
+      '<div class="bs-modal-panel" style="max-width:540px;">' +
+      '<div class="bs-modal-header">' +
+      '<h2 style="margin:0;font-size:1.2rem;color:white;">Parent login details</h2>' +
+      '<button class="bs-modal-close" onclick="document.getElementById(\'child-cred-overlay\').remove()">×</button>' +
+      '</div><div class="bs-modal-body">' +
+      '<p style="margin-top:0;">Share with the guardian via <strong>Facebook Messenger</strong> (manual send).</p>' +
+      '<div class="card" style="background:var(--primary-light);margin:0;">' +
+      '<p style="margin:0.35rem 0;"><strong>Child:</strong> ' + (child.name || '—') + '</p>' +
+      '<p style="margin:0.35rem 0;"><strong>Guardian login name:</strong> ' + guardian + '</p>' +
+      '<p style="margin:0.35rem 0;"><strong>Child ID:</strong> ' + code + '</p>' +
+      '<p style="margin:0.35rem 0;"><strong>Password:</strong> ' +
+      (child.parentPassword ? '(set by parent — do not re-share from teacher screen)' : 'None by default') + '</p>' +
+      '<p style="margin:0.35rem 0;"><strong>Contact on file:</strong> ' + phone + '</p>' +
+      '<p style="margin:0.35rem 0;"><strong>Status:</strong> ' + (child.archived ? 'Archived' : 'Active') + '</p>' +
+      '</div>' +
+      '<p style="margin-top:1rem;font-size:0.88rem;" class="text-muted">Message template:</p>' +
+      '<textarea id="child-cred-msg" class="ecc-field-input" rows="4" readonly style="font-size:0.88rem;">' +
+      msg.replace(/</g, '&lt;') + '</textarea></div>' +
+      '<div class="bs-modal-footer" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;">' +
+      '<button type="button" class="btn" style="background:#e8e8e8;" onclick="document.getElementById(\'child-cred-overlay\').remove()">Close</button>' +
+      '<button type="button" class="btn btn-blue" onclick="TeacherChildren.copyCredentialMessage()">📋 Copy message</button>' +
+      '</div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+  },
+
+  copyCredentialMessage() {
+    const el = document.getElementById('child-cred-msg');
+    if (!el) return;
+    const text = el.value || '';
+    const done = function () {
+      const toast = document.createElement('div');
+      toast.className = 'ecc-toast';
+      toast.textContent = 'Copied — paste into Messenger.';
+      document.body.appendChild(toast);
+      setTimeout(function () { toast.remove(); }, 2200);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () {
+        el.select();
+        try { document.execCommand('copy'); } catch (e) {}
+        done();
+      });
+    } else {
+      el.select();
+      try { document.execCommand('copy'); } catch (e) {}
+      done();
+    }
+  },
 
   /* ---------- Profile modal ---------- */
 
