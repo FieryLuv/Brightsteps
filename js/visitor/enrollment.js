@@ -40,7 +40,7 @@ const VisitorEnrollment = {
             </div>
             <div>
               <label class="ecc-field-label">Middle initial</label>
-              <input type="text" id="v-child-middle" class="ecc-field-input" maxlength="5" />
+              <input type="text" id="v-child-middle" class="ecc-field-input" maxlength="1" oninput="this.value=this.value.replace(/[^A-Za-z]/g,\'\').slice(0,1).toUpperCase()" />
             </div>
             <div>
               <label class="ecc-field-label">Sex *</label>
@@ -137,7 +137,7 @@ const VisitorEnrollment = {
             </div>
             <div>
               <label class="ecc-field-label">Middle initial</label>
-              <input type="text" id="v-mother-middle" class="ecc-field-input" maxlength="5" />
+              <input type="text" id="v-mother-middle" class="ecc-field-input" maxlength="1" oninput="this.value=this.value.replace(/[^A-Za-z]/g,\'\').slice(0,1).toUpperCase()" />
             </div>
             <div>
               <label class="ecc-field-label">Date of birth</label>
@@ -217,7 +217,7 @@ const VisitorEnrollment = {
             </div>
             <div>
               <label class="ecc-field-label">Middle initial</label>
-              <input type="text" id="v-father-middle" class="ecc-field-input" maxlength="5" />
+              <input type="text" id="v-father-middle" class="ecc-field-input" maxlength="1" oninput="this.value=this.value.replace(/[^A-Za-z]/g,\'\').slice(0,1).toUpperCase()" />
             </div>
             <div>
               <label class="ecc-field-label">Date of birth</label>
