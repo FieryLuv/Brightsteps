@@ -16,6 +16,7 @@ const TeacherLayout = {
             onclick="TeacherLayout.toggleNav()">☰</button>
           <div class="logo">🌱 BrightSteps</div>
         </div>
+        <button type="button" class="header-refresh-btn no-print" title="Refresh data" onclick="TeacherLayout.refreshNow()">🔄</button>
         <div class="user-info" style="position:relative;">
           <span class="user-info-text">${displayName} · ${roleTag}</span>
           <button type="button" class="btn-header-menu no-print" aria-label="Menu"
@@ -33,8 +34,8 @@ const TeacherLayout = {
         <div class="sidebar-backdrop no-print" onclick="TeacherLayout.closeNav()"></div>
         <aside class="sidebar" id="teacher-sidebar">
           <div class="sidebar-mobile-title no-print">Menu</div>
-          <div class="nav-item active" data-nav="dashboard" onclick="TeacherLayout.nav('dashboard')">🏠 Dashboard</div>
-          <div class="nav-item" data-nav="children" onclick="TeacherLayout.nav('children')">👦 Children</div>
+          <div class="nav-item active" data-nav="dashboard" onclick="TeacherLayout.nav('dashboard')">🏠 Dashboard <span class="nav-badge" data-badge="dashboard" hidden></span></div>
+          <div class="nav-item" data-nav="children" onclick="TeacherLayout.nav('children')">👦 Children <span class="nav-badge" data-badge="children" hidden></span></div>
           <div class="nav-item" data-nav="development" onclick="TeacherLayout.nav('development')">📈 Development</div>
           <div class="nav-item" data-nav="health" onclick="TeacherLayout.nav('health')">❤️ Health Records</div>
           <div class="nav-item" data-nav="feeding" onclick="TeacherLayout.nav('feeding')">🍎 SFP Feeding</div>
@@ -48,6 +49,8 @@ const TeacherLayout = {
     `;
     document.addEventListener('click', this._onDocClick);
     this._showPendingTransferBanner();
+    this.startLiveRefresh();
+    this.updateBadges();
   },
 
   _showPendingTransferBanner() {
@@ -461,59 +464,77 @@ const TeacherLayout = {
   proposeTransfer(staffId) {
     const staff = TeacherStore.listStaff().find(s => s.id === staffId);
     const name = staff ? staff.fullName : 'this person';
-    const pwd = prompt(
-      'Propose Head Teacher role to ' + name + '?\n\n' +
-      'They must Accept or Decline.\n\n' +
-      'Enter YOUR Head Teacher password to confirm:'
-    );
-    if (pwd == null) return;
-    const result = TeacherStore.proposeHeadTransfer(staffId, pwd);
-    if (!result.ok) {
-      alert(result.error || 'Could not propose transfer.');
-      return;
-    }
-    this._toast('Transfer proposed to ' + (result.appointeeName || name) + ' — waiting for accept/decline');
-    this._renderStaffManager();
+    this.promptPassword({
+      title: 'Propose Head transfer',
+      message: 'Propose Head Teacher role to <strong>' + name + '</strong>?<br><br>They must Accept or Decline. Enter <strong>your</strong> Head Teacher password to confirm.',
+      submitLabel: 'Propose transfer',
+      onSubmit: function (pwd) {
+        const result = TeacherStore.proposeHeadTransfer(staffId, pwd);
+        if (!result.ok) {
+          alert(result.error || 'Could not propose transfer.');
+          return;
+        }
+        TeacherLayout._toast('Transfer proposed to ' + (result.appointeeName || name) + ' — waiting for accept/decline');
+        TeacherLayout._renderStaffManager();
+        TeacherLayout.updateBadges();
+      }
+    });
   },
 
   cancelPendingTransfer() {
-    const pwd = prompt('Enter Head Teacher password to cancel the pending transfer:');
-    if (pwd == null) return;
-    const result = TeacherStore.cancelHeadTransfer(pwd);
-    if (!result.ok) {
-      alert(result.error || 'Could not cancel.');
-      return;
-    }
-    this._toast('Pending transfer cancelled');
-    this._renderStaffManager();
+    this.promptPassword({
+      title: 'Cancel transfer',
+      message: 'Enter Head Teacher password to cancel the pending transfer.',
+      submitLabel: 'Cancel transfer',
+      onSubmit: function (pwd) {
+        const result = TeacherStore.cancelHeadTransfer(pwd);
+        if (!result.ok) {
+          alert(result.error || 'Could not cancel.');
+          return;
+        }
+        TeacherLayout._toast('Pending transfer cancelled');
+        TeacherLayout._renderStaffManager();
+        TeacherLayout.updateBadges();
+      }
+    });
   },
 
   acceptPendingTransfer() {
-    const pwd = prompt('Enter YOUR password to accept Head Teacher role:');
-    if (pwd == null) return;
-    const result = TeacherStore.acceptHeadTransfer(pwd);
-    if (!result.ok) {
-      alert(result.error || 'Could not accept.');
-      return;
-    }
-    this._toast('You are now Head Teacher / Admin');
-    const b = document.getElementById('head-transfer-banner');
-    if (b) b.remove();
-    // Full shell rebuild so ⋮ menu gains Staff management
-    this._rebuildShellAfterRoleChange();
+    this.promptPassword({
+      title: 'Accept Head role',
+      message: 'Enter <strong>your</strong> password to accept the Head Teacher / Admin role. Your login username stays the same.',
+      submitLabel: 'Accept',
+      onSubmit: function (pwd) {
+        const result = TeacherStore.acceptHeadTransfer(pwd);
+        if (!result.ok) {
+          alert(result.error || 'Could not accept.');
+          return;
+        }
+        TeacherLayout._toast('You are now Head Teacher / Admin');
+        const b = document.getElementById('head-transfer-banner');
+        if (b) b.remove();
+        TeacherLayout._rebuildShellAfterRoleChange();
+      }
+    });
   },
 
   declinePendingTransfer() {
-    const pwd = prompt('Enter YOUR password to decline the Head Teacher appointment:');
-    if (pwd == null) return;
-    const result = TeacherStore.declineHeadTransfer(pwd);
-    if (!result.ok) {
-      alert(result.error || 'Could not decline.');
-      return;
-    }
-    this._toast('Head transfer declined');
-    const b = document.getElementById('head-transfer-banner');
-    if (b) b.remove();
+    this.promptPassword({
+      title: 'Decline Head role',
+      message: 'Enter <strong>your</strong> password to decline the Head Teacher appointment.',
+      submitLabel: 'Decline',
+      onSubmit: function (pwd) {
+        const result = TeacherStore.declineHeadTransfer(pwd);
+        if (!result.ok) {
+          alert(result.error || 'Could not decline.');
+          return;
+        }
+        TeacherLayout._toast('Head transfer declined');
+        const b = document.getElementById('head-transfer-banner');
+        if (b) b.remove();
+        TeacherLayout.updateBadges();
+      }
+    });
   },
 
   /** Rebuild header/sidebar after head role changes (menu is rendered once at login). */
@@ -578,6 +599,12 @@ const TeacherLayout = {
   },
 
   nav(route) {
+    if (route === 'children' && typeof ActivityStore !== 'undefined') {
+      ActivityStore.markSeen('children');
+    }
+    if (route === 'dashboard' && typeof ActivityStore !== 'undefined') {
+      ActivityStore.markSeen('dashboard');
+    }
     this.closeNav();
     this.closeSettingsMenu();
     if (typeof BrightSteps !== 'undefined') BrightSteps.navigate(route);
@@ -591,7 +618,149 @@ const TeacherLayout = {
     document.body.classList.remove('nav-open');
   },
 
+
+  updateBadges() {
+    const badges = (typeof ActivityStore !== 'undefined' && ActivityStore.badges)
+      ? ActivityStore.badges()
+      : { children: 0, transfer: 0 };
+    const setBadge = function (key, n) {
+      const el = document.querySelector('.nav-badge[data-badge="' + key + '"]');
+      if (!el) return;
+      if (n > 0) {
+        el.hidden = false;
+        el.textContent = n > 9 ? '9+' : String(n);
+      } else {
+        el.hidden = true;
+        el.textContent = '';
+      }
+    };
+    setBadge('children', badges.children || 0);
+    setBadge('dashboard', (badges.children || 0) + (badges.transfer || 0));
+    // Header dot for pending transfer
+    const headDot = document.getElementById('teacher-notify-dot');
+    if (headDot) {
+      headDot.hidden = !(badges.transfer || badges.children);
+    }
+  },
+
+  /** Soft reload current teacher page data from server. */
+  async refreshNow(opts) {
+    opts = opts || {};
+    const silent = !!opts.silent;
+    try {
+      if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online() && ChildrenRemote.ensureLoaded) {
+        await ChildrenRemote.ensureLoaded(true);
+      }
+      if (typeof ApplicationStore !== 'undefined' && ApplicationStore.hydrateFromRemote) {
+        await ApplicationStore.hydrateFromRemote();
+      } else if (typeof ApplicationsRemote !== 'undefined' && ApplicationsRemote.online) {
+        /* optional */
+      }
+      if (typeof ApplicationRemote !== 'undefined' && ApplicationRemote.pull) {
+        await ApplicationRemote.pull();
+      }
+    } catch (e) {
+      console.warn('[TeacherLayout] refresh', e);
+    }
+    this.updateBadges();
+    if (!silent && typeof BrightSteps !== 'undefined' && BrightSteps.getCurrentPage) {
+      /* re-navigate current */
+    }
+    const page = this._currentRoute || (typeof BrightSteps !== 'undefined' && BrightSteps.currentPage) || null;
+    if (page && typeof BrightSteps !== 'undefined' && BrightSteps.navigate) {
+      BrightSteps.navigate(page);
+    }
+    if (!silent) this._toast('Refreshed');
+  },
+
+  startLiveRefresh() {
+    if (this._refreshTimer) return;
+    this.updateBadges();
+    setTimeout(function () { TeacherLayout._softPoll(); }, 2000);
+    this._refreshTimer = setInterval(function () {
+      if (document.hidden) return;
+      TeacherLayout._softPoll();
+    }, 45000);
+  },
+
+  async _softPoll() {
+    try {
+      if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online() && ChildrenRemote.ensureLoaded) {
+        await ChildrenRemote.ensureLoaded(true);
+      }
+      if (typeof ApplicationRemote !== 'undefined' && ApplicationRemote.listPending) {
+        await ApplicationRemote.listPending();
+      }
+    } catch (e) { /* ignore */ }
+    const prev = this._lastPendingCount;
+    const next = (typeof ActivityStore !== 'undefined') ? ActivityStore.pendingApplications() : 0;
+    this._lastPendingCount = next;
+    this.updateBadges();
+    // Auto-reload list modules when counts change
+    const route = this._currentRoute;
+    if (route && prev != null && prev !== next && (route === 'children' || route === 'dashboard')) {
+      if (typeof BrightSteps !== 'undefined' && BrightSteps.navigate) {
+        BrightSteps.navigate(route);
+      }
+    }
+  },
+
+  /**
+   * In-app password confirmation (replaces browser prompt).
+   * onSubmit(password) called when confirmed.
+   */
+  promptPassword(opts) {
+    opts = opts || {};
+    const title = opts.title || 'Confirm';
+    const message = opts.message || 'Enter your password to continue.';
+    const submitLabel = opts.submitLabel || 'Confirm';
+    const prev = document.getElementById('bs-pwd-overlay');
+    if (prev) prev.remove();
+    const html =
+      '<div id="bs-pwd-overlay" class="bs-overlay" style="z-index:3000;">' +
+      '<div class="bs-modal-panel" style="max-width:420px;">' +
+      '<div class="bs-modal-header"><h2 style="margin:0;font-size:1.15rem;color:#fff;">' + title + '</h2>' +
+      '<button type="button" class="bs-modal-close" id="bs-pwd-close">×</button></div>' +
+      '<div class="bs-modal-body">' +
+      '<p style="margin-top:0;line-height:1.5;">' + message + '</p>' +
+      '<label class="ecc-field-label">Password</label>' +
+      '<input type="password" id="bs-pwd-input" class="ecc-field-input" autocomplete="current-password" />' +
+      '<p id="bs-pwd-err" style="color:#d32f2f;font-size:0.85rem;display:none;margin:0.5rem 0 0;"></p>' +
+      '</div>' +
+      '<div class="bs-modal-footer" style="display:flex;gap:0.5rem;justify-content:flex-end;">' +
+      '<button type="button" class="btn" style="background:#e8e8e8;" id="bs-pwd-cancel">Cancel</button>' +
+      '<button type="button" class="btn btn-blue" id="bs-pwd-ok">' + submitLabel + '</button>' +
+      '</div></div></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+    const input = document.getElementById('bs-pwd-input');
+    const err = document.getElementById('bs-pwd-err');
+    const close = function () {
+      const el = document.getElementById('bs-pwd-overlay');
+      if (el) el.remove();
+    };
+    document.getElementById('bs-pwd-close').onclick = close;
+    document.getElementById('bs-pwd-cancel').onclick = close;
+    const submit = function () {
+      const pwd = (input && input.value) || '';
+      if (!pwd.trim()) {
+        if (err) { err.style.display = 'block'; err.textContent = 'Password is required.'; }
+        return;
+      }
+      close();
+      if (typeof opts.onSubmit === 'function') opts.onSubmit(pwd);
+    };
+    document.getElementById('bs-pwd-ok').onclick = submit;
+    if (input) {
+      input.focus();
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') submit();
+      });
+    }
+  },
+
+
   setActive(route) {
+    this._currentRoute = route;
     document.querySelectorAll('.sidebar .nav-item').forEach(el => {
       el.classList.toggle('active', el.getAttribute('data-nav') === route);
     });

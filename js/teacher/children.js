@@ -493,7 +493,7 @@ const TeacherChildren = {
                 </div>
                 <div>
                   <label class="ecc-field-label">Middle initial</label>
-                  <input type="text" id="enroll-middle" class="ecc-field-input" value="${this._escAttr(p.middleInitial)}" maxlength="5" />
+                  <input type="text" id="enroll-middle" class="ecc-field-input" value="${this._escAttr(p.middleInitial)}" maxlength="1" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'').slice(0,1).toUpperCase()" />
                 </div>
                 <div>
                   <label class="ecc-field-label">Full name (display) *</label>
@@ -509,7 +509,7 @@ const TeacherChildren = {
                 <div>
                   <label class="ecc-field-label">Date of birth *</label>
                   <input type="date" id="enroll-birth" class="ecc-field-input" value="${this._escAttr(p.birthDate)}"
-                    onchange="TeacherChildren._onBirthChange()" />
+                    onchange="TeacherChildren._onBirthChange()" oninput="TeacherChildren._onBirthChange()" />
                 </div>
                 <div>
                   <label class="ecc-field-label">Age (auto)</label>
@@ -619,7 +619,7 @@ const TeacherChildren = {
                 </div>
                 <div>
                   <label class="ecc-field-label">Middle initial</label>
-                  <input type="text" id="m-middle" class="ecc-field-input" value="${this._escAttr((p.motherProfile && p.motherProfile.middleInitial) || '')}" maxlength="5" />
+                  <input type="text" id="m-middle" class="ecc-field-input" value="${this._escAttr((p.motherProfile && p.motherProfile.middleInitial) || '')}" maxlength="1" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'').slice(0,1).toUpperCase()" />
                 </div>
                 <div>
                   <label class="ecc-field-label">Date of birth</label>
@@ -707,7 +707,7 @@ const TeacherChildren = {
                 </div>
                 <div>
                   <label class="ecc-field-label">Middle initial</label>
-                  <input type="text" id="f-middle" class="ecc-field-input" value="${this._escAttr((p.fatherProfile && p.fatherProfile.middleInitial) || '')}" maxlength="5" />
+                  <input type="text" id="f-middle" class="ecc-field-input" value="${this._escAttr((p.fatherProfile && p.fatherProfile.middleInitial) || '')}" maxlength="1" oninput="this.value=this.value.replace(/[^A-Za-z]/g,'').slice(0,1).toUpperCase()" />
                 </div>
                 <div>
                   <label class="ecc-field-label">Date of birth</label>
@@ -939,6 +939,8 @@ const TeacherChildren = {
     document.body.insertAdjacentHTML('beforeend', html);
     this._bindModalDismiss();
     this._onBirthChange();
+    // Edit profile: recompute age from stored DOB immediately
+    if (isEdit) setTimeout(function () { TeacherChildren._onBirthChange(); }, 0);
   },
 
   _escAttr(s) {
@@ -1177,6 +1179,17 @@ const TeacherChildren = {
     if (!data.birthDate) {
       showErr('Date of birth is required.');
       return;
+    }
+    if (typeof ChildRegistry !== 'undefined' && ChildRegistry.ageFromBirthDate) {
+      const age = ChildRegistry.ageFromBirthDate(data.birthDate);
+      data.ageMonths = age.ageMonths;
+      data.ageLabel = age.ageLabel || data.ageLabel;
+      if (ChildRegistry.recordTypeFromAgeMonths) {
+        data.recordType = ChildRegistry.recordTypeFromAgeMonths(age.ageMonths);
+      }
+    }
+    if (data.middleInitial != null) {
+      data.middleInitial = String(data.middleInitial).replace(/[^A-Za-z]/g, '').slice(0, 1).toUpperCase();
     }
     if (!data.parentName && !data.motherName && !data.fatherName) {
       showErr('Enter at least one parent / guardian name.');
