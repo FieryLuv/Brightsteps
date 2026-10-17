@@ -237,4 +237,13 @@ window.ChildrenRemote = {
     }
     return { ok: true, child: mapped };
   }
+,
+
+  async hardDelete(id) {
+    if (!this.online()) return { ok: false, error: 'offline' };
+    const sb = BsSupabase.get();
+    const { error } = await sb.from('children').delete().eq('id', id);
+    if (error) return { ok: false, error: error.message };
+    return { ok: true };
+  }
 };

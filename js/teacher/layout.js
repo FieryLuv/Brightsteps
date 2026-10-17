@@ -310,7 +310,7 @@ const TeacherLayout = {
         </td>
         <td style="text-align:right;">
           <button type="button" class="btn" style="font-size:0.78rem;padding:0.25rem 0.5rem;background:#e8f5e9;color:#2e7d32;"
-            onclick="TeacherLayout.restoreStaff('${s.id}')">↩ Restore</button>
+            onclick="TeacherLayout.restoreStaff('${s.id}')">↩ Restore</button> <button class="btn" style="padding:4px 8px;font-size:0.75rem;background:#ffebee;color:#c62828;" onclick="TeacherLayout.permanentDeleteStaff('${s.id}')">🗑 Delete</button>
         </td>
       </tr>`).join('');
 
@@ -438,6 +438,24 @@ const TeacherLayout = {
 
   removeStaff(staffId) {
     this.archiveStaff(staffId);
+  },
+
+  permanentDeleteStaff(staffId) {
+    if (!confirm(
+      '⚠ PERMANENT DELETE — staff\n\n' +
+      'This faculty record will be removed and cannot be restored from the app.\n' +
+      'Prefer Archive if they might return.\n\nContinue?'
+    )) return;
+    if (!confirm('Final confirmation: permanently delete this staff member?')) return;
+    const result = TeacherStore.permanentDeleteStaff
+      ? TeacherStore.permanentDeleteStaff(staffId)
+      : { ok: false, error: 'Not available' };
+    if (!result.ok) {
+      alert(result.error || 'Could not delete staff.');
+      return;
+    }
+    this._toast('Staff permanently deleted');
+    this.openStaffManagement();
   },
 
   proposeTransfer(staffId) {

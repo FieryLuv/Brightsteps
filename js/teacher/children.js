@@ -1297,7 +1297,9 @@ const TeacherChildren = {
 
     const actions = archived
       ? `<button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#e8f5e9;color:#2e7d32;"
-            onclick="TeacherChildren.confirmRestore(['${c.id}'])">↩ Restore</button>`
+            onclick="TeacherChildren.confirmRestore(['${c.id}'])">↩ Restore</button>
+          <button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#ffebee;color:#c62828;"
+            onclick="TeacherChildren.confirmPermanentDelete(['${c.id}'])">🗑 Delete permanently</button>`
       : `<button class="btn" style="padding:4px 10px;font-size:0.78rem;background:#e8f5e9;color:#2e7d32;"
             onclick="TeacherChildren.openEditChild('${c.id}')">Edit</button>
           <button class="btn" style="padding:4px 10px;font-size:0.78rem;"
@@ -1355,7 +1357,8 @@ const TeacherChildren = {
           <strong>${n} selected</strong>
           <div style="display:flex;flex-wrap:wrap;gap:0.4rem;">
             ${archivedMode
-              ? `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.confirmRestore(TeacherChildren.selectedIds.slice())">↩ Restore</button>`
+              ? `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.confirmRestore(TeacherChildren.selectedIds.slice())">↩ Restore</button>
+                 <button class="btn" style="background:#ffebee;color:#c62828;" onclick="TeacherChildren.confirmPermanentDelete(TeacherChildren.selectedIds.slice())">🗑 Delete permanently</button>`
               : `<button class="btn btn-blue" onclick="TeacherChildren.openTransfer(TeacherChildren.selectedIds.slice())">⇄ Transfer class</button>
                  <button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.confirmArchive(TeacherChildren.selectedIds.slice())">📦 Archive</button>`}
             <button class="btn" style="background:#e8e8e8;color:#333;" onclick="TeacherChildren.clearSelection()">Clear</button>
@@ -1452,9 +1455,10 @@ const TeacherChildren = {
       return c ? c.name : id;
     });
     if (!confirm(
-      `Archive ${ids.length} child(ren)?\n\n${names.join(', ')}\n\n` +
-      `They become inactive and leave Active lists (attendance, development, feeding).\n` +
-      `Records stay under Archived and can be restored anytime.`
+      'Archive ' + ids.length + ' child(ren)?\n\n' + names.join(', ') + '\n\n' +
+      'They leave Active lists (attendance, development, health, feeding).\n' +
+      'Profile and history (checklist, attendance, health) are KEPT.\n' +
+      'You can restore them later from Archived.'
     )) {
       return;
     }
@@ -1464,7 +1468,7 @@ const TeacherChildren = {
     this._draw();
     const toast = document.createElement('div');
     toast.className = 'ecc-toast';
-    toast.textContent = `Archived ${result.count} child(ren)`;
+    toast.textContent = 'Archived ' + result.count + ' child(ren)';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2800);
   },
@@ -1478,7 +1482,10 @@ const TeacherChildren = {
       const c = SampleChildren.find(x => x.id === id || String(x.id) === String(id));
       return c ? c.name : id;
     });
-    if (!confirm(`Restore ${ids.length} child(ren) to the active list?\n\n${names.join(', ')}`)) {
+    if (!confirm(
+      'Restore ' + ids.length + ' child(ren) to Active?\n\n' + names.join(', ') + '\n\n' +
+      'Their profile and past records stay the same as before archiving.'
+    )) {
       return;
     }
     const result = ChildRegistry.restoreChildren(ids);
@@ -1488,14 +1495,50 @@ const TeacherChildren = {
     this._draw();
     const toast = document.createElement('div');
     toast.className = 'ecc-toast';
-    toast.textContent = `Restored ${result.count} child(ren)`;
+    toast.textContent = 'Restored ' + result.count + ' child(ren)';
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 2800);
   },
 
-  /** @deprecated Use confirmArchive — kept for any leftover callers */
-  confirmDelete(ids) {
-    this.confirmArchive(ids);
+  /**
+   * Permanent delete — double confirmation. Irreversible.
+   */
+  confirmPermanentDelete(ids) {
+    if (!ids || !ids.length) {
+      alert('Select at least one child.');
+      return;
+    }
+    const names = ids.map(id => {
+      const c = SampleChildren.find(x => x.id === id || String(x.id) === String(id));
+      return c ? c.name : String(id);
+    });
+    if (!confirm(
+      '⚠ PERMANENT DELETE\n\n' +
+      'You are about to permanently remove:\n' + names.join(', ') + '\n\n' +
+      'This cannot be undone.\n' +
+      'The child record and related data in the database will be deleted.\n\n' +
+      'Prefer Archive if you only need them inactive.'
+    )) {
+      return;
+    }
+    if (!confirm(
+      'Final confirmation\n\n' +
+      'Type OK in the next step is not required, but this is your last chance.\n\n' +
+      'Delete permanently: ' + names.join(', ') + '?'
+    )) {
+      return;
+    }
+    const result = ChildRegistry.permanentDeleteChildren
+      ? ChildRegistry.permanentDeleteChildren(ids)
+      : ChildRegistry.removeChildren(ids);
+    this.selectedIds = this.selectedIds.filter(id => !ids.map(String).includes(String(id)));
+    this.closeModal();
+    this._draw();
+    const toast = document.createElement('div');
+    toast.className = 'ecc-toast';
+    toast.textContent = 'Permanently deleted ' + result.count + ' child(ren)';
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
   },
 
 
@@ -1661,7 +1704,8 @@ const TeacherChildren = {
 
           <div class="no-print" style="padding:1rem 1.5rem;border-top:1px solid var(--border);background:#fafafa;display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;flex-shrink:0;">
             ${child.archived
-              ? `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.confirmRestore(['${child.id}'])">↩ Restore to active</button>`
+              ? `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.confirmRestore(['${child.id}'])">↩ Restore to active</button>
+                 <button class="btn" style="background:#ffebee;color:#c62828;" onclick="TeacherChildren.confirmPermanentDelete(['${child.id}'])">🗑 Delete permanently</button>`
               : `<button class="btn" style="background:#e8f5e9;color:#2e7d32;" onclick="TeacherChildren.closeModal();TeacherChildren.openEditChild('${child.id}')">✏️ Edit profile</button>
             <button class="btn" style="background:#e3f2fd;color:#1565c0;" onclick="TeacherChildren.closeModal();TeacherChildren.openTransfer(['${child.id}'])">⇄ Transfer class</button>
             <button class="btn" style="background:#fff3e0;color:#e65100;" onclick="TeacherChildren.confirmArchive(['${child.id}'])">📦 Archive</button>`}

@@ -647,6 +647,43 @@ const ChildRegistry = {
     return { ok: out.every(r => r.ok), results: out, count: out.filter(r => r.ok).length };
   },
 
+  /**
+   * Permanent delete: remove child from lists/LocalStorage and Supabase.
+   * Related DB rows cascade. Local related stores may retain orphan keys (harmless).
+   */
+  permanentDeleteChild(id) {
+    const removed = this.removeChild(id);
+    if (!removed.ok) return removed;
+    if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online() && ChildrenRemote.hardDelete) {
+      ChildrenRemote.hardDelete(id).then(function (r) {
+        if (!r.ok) console.warn('[ChildRegistry] remote hardDelete failed', r.error);
+      });
+    }
+    // Best-effort local related cleanup
+    try {
+      if (typeof AssessmentStore !== 'undefined' && AssessmentStore.removeForChild) {
+        AssessmentStore.removeForChild(id);
+      }
+    } catch (e) {}
+    try {
+      if (typeof HealthStore !== 'undefined' && HealthStore.removeForChild) {
+        HealthStore.removeForChild(id);
+      }
+    } catch (e) {}
+    try {
+      if (typeof AttendanceStore !== 'undefined' && AttendanceStore.removeForChild) {
+        AttendanceStore.removeForChild(id);
+      }
+    } catch (e) {}
+    return removed;
+  },
+
+  permanentDeleteChildren(ids) {
+    const out = [];
+    (ids || []).forEach(id => out.push(this.permanentDeleteChild(id)));
+    return { ok: out.every(r => r.ok), results: out, count: out.filter(r => r.ok).length };
+  },
+
   /** Filter out previously deleted IDs after merge */
   applyDeletions() {
     if (typeof SampleChildren === 'undefined') return;

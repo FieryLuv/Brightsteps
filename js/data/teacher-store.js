@@ -427,6 +427,20 @@ const TeacherStore = {
     return this.archiveStaff(staffId);
   },
 
+  /** Head only — permanent remove of archived (or any non-head) faculty. Irreversible locally. */
+  permanentDeleteStaff(staffId) {
+    if (!this.isHead()) return { ok: false, error: 'Only the Head Teacher can permanently delete staff.' };
+    const list = this.listAll();
+    const s = list.find(x => String(x.id) === String(staffId));
+    if (!s) return { ok: false, error: 'Staff not found.' };
+    if (s.role === 'head' || s.isHead) return { ok: false, error: 'Cannot delete the Head Teacher account. Transfer head first.' };
+    const me = this.currentStaff && this.currentStaff();
+    if (me && String(me.id) === String(staffId)) return { ok: false, error: 'Cannot delete the account you are signed in as.' };
+    const next = list.filter(x => String(x.id) !== String(staffId));
+    this._writeAll(next);
+    return { ok: true, removed: s };
+  },
+
   verifyPassword(staffId, password) {
     const state = this._read();
     const s = state.staff.find(x => x.id === staffId);
