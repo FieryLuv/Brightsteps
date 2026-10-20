@@ -16,39 +16,57 @@ const ParentDashboard = {
   render(container, user) {
     this._container = container;
     this._user = user;
+    const renderToken = (this._renderToken = (this._renderToken || 0) + 1);
 
     const paint = function () {
-      let child = null;
-      if (user && user.children && user.children.length) {
-        child = user.children.find(c => String(c.id) === String(user.activeChildId)) || user.children[0];
-      } else if (typeof SampleChildren !== 'undefined') {
-        const childName = user.childName || '';
-        child = SampleChildren.find(c => c.name === childName) || SampleChildren[0];
+      // Ignore stale async paints from a previous child switch
+      if (ParentDashboard._renderToken !== renderToken) return;
+      if (!container || !container.isConnected) return;
+      try {
+        let child = null;
+        if (user && user.children && user.children.length) {
+          child = user.children.find(c => String(c.id) === String(user.activeChildId)) || user.children[0];
+        } else if (user && typeof SampleChildren !== 'undefined') {
+          const childName = user.childName || '';
+          child = SampleChildren.find(c => c.name === childName) || SampleChildren[0];
+        }
+
+        const childName = child ? (child.name || user.childName || 'Child') : (user.childName || 'Child');
+        const ageLabel = child ? (child.ageLabel || '') : '';
+        const section = child ? (child.section || child.sectionKey || '') : '';
+        const childCode = child && child.childCode ? child.childCode : '';
+
+        container.innerHTML =
+          ParentDashboard._welcome(user, childName, section, ageLabel, childCode) +
+          ParentDashboard._profileBlock(child, childName, ageLabel, section, childCode) +
+          ParentDashboard._progressCard(child) +
+          ParentDashboard._healthCard(child) +
+          ParentDashboard._sfpCard(child) +
+          ParentDashboard._contribCard(child) +
+          ParentDashboard._attendanceCard(child) +
+          ParentDashboard._upcomingCard();
+      } catch (err) {
+        console.error('[ParentDashboard] paint failed', err);
+        const name = (user && user.childName) || 'Child';
+        container.innerHTML =
+          '<div class="card" style="margin:1rem;">' +
+          '<h2>Could not load this child\'s dashboard</h2>' +
+          '<p class="text-muted">Viewing <strong>' + name + '</strong>. Try Refresh or switch children again.</p>' +
+          '<p class="text-muted" style="font-size:0.85rem;">' +
+          ((err && err.message) ? err.message : 'Unknown error') + '</p>' +
+          '<button type="button" class="btn btn-blue" onclick="ParentDashboard.refreshFromServer()">↻ Refresh</button>' +
+          '</div>';
       }
-
-      const childName = child ? child.name : (user.childName || 'Child');
-      const ageLabel = child ? child.ageLabel : '';
-      const section = child ? child.section : '';
-      const childCode = child && child.childCode ? child.childCode : '';
-
-      container.innerHTML =
-        ParentDashboard._welcome(user, childName, section, ageLabel, childCode) +
-        ParentDashboard._profileBlock(child, childName, ageLabel, section, childCode) +
-        ParentDashboard._progressCard(child) +
-        ParentDashboard._healthCard(child) +
-        ParentDashboard._sfpCard(child) +
-        ParentDashboard._contribCard(child) +
-        ParentDashboard._attendanceCard(child) +
-        ParentDashboard._upcomingCard();
     };
 
-    // Load center calendar from Supabase when configured (works for parent/anon)
+    // Always paint immediately so switching never shows a blank page
+    paint();
+
+    // Then refresh calendar in background and repaint only if still on this child
     if (typeof CalendarStore !== 'undefined' && CalendarStore.hydrateAll &&
         typeof CalendarRemote !== 'undefined' && CalendarRemote.online()) {
       CalendarStore.hydrateAll().then(paint).catch(paint);
-      return;
     }
-    paint();
   },
 
   _welcome(user, childName, section, ageLabel, childCode) {
@@ -341,16 +359,18 @@ const ParentDashboard = {
         : '';
       const hasDonutData = donutDomains.some(function(d) { return d.percent != null; });
 
-      const tips = (approved.tips || []).map(t => '<li>' + t + '</li>').join('');
-      const comments = (approved.teacherComments || []).map(c =>
+      const tipList = Array.isArray(approved.tips) ? approved.tips : [];
+      const tips = tipList.map(t => '<li>' + t + '</li>').join('');
+      const commentList = Array.isArray(approved.teacherComments) ? approved.teacherComments : [];
+      const comments = commentList.map(c =>
         '<li><strong>' + (c.itemTitle || '') + '</strong>' +
         (c.present ? '' : ' <span class="text-muted">(still developing)</span>') +
         ': ' + (c.comment || '') + '</li>'
       ).join('');
-      const strengthsList = (approved.strengths || []).map(s =>
+      const strengthsList = (Array.isArray(approved.strengths) ? approved.strengths : []).map(s =>
         '<span style="display:inline-block;margin:0.2rem 0.35rem 0.2rem 0;padding:0.25rem 0.6rem;border-radius:999px;font-size:0.82rem;background:#e8f5e9;color:#1b5e20;border:1px solid #a5d6a7;">' + s + '</span>'
       ).join('');
-      const needsList = (approved.needs || []).map(n =>
+      const needsList = (Array.isArray(approved.needs) ? approved.needs : []).map(n =>
         '<span style="display:inline-block;margin:0.2rem 0.35rem 0.2rem 0;padding:0.25rem 0.6rem;border-radius:999px;font-size:0.82rem;background:#fff3e0;color:#e65100;border:1px solid #ffcc80;">' + n + '</span>'
       ).join('');
       const approvedDate = approved.approvedAt

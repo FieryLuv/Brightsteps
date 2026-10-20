@@ -465,11 +465,19 @@ const BrightSteps = (() => {
   function selectChild(childId) {
     if (!currentUser || currentUser.role !== 'parent') return;
     const child = (currentUser.children || []).find(c => String(c.id) === String(childId));
-    if (!child) return;
+    if (!child) {
+      console.warn('[BrightSteps] selectChild: child not found', childId);
+      return;
+    }
     currentUser.activeChildId = child.id;
-    currentUser.childName = child.name;
-    if (typeof ParentLayout !== 'undefined' && ParentLayout.render) {
-      ParentLayout.render(currentUser);
+    currentUser.childName = child.name || '';
+    try {
+      if (typeof ParentLayout !== 'undefined' && ParentLayout.render) {
+        ParentLayout.render(currentUser);
+      }
+    } catch (e) {
+      console.error('[BrightSteps] selectChild render failed', e);
+      alert('Could not switch child. Try Refresh or log in again.');
     }
   }
 
