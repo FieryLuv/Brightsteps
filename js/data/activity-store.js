@@ -43,9 +43,10 @@ const ActivityStore = {
     return !!(cur && String(cur) === String(p.toId));
   },
 
-  /** Always mirrors actual pending applications. */
+  /** Always mirrors actual pending applications (0 = no red dot). */
   childrenBadge() {
-    return this.pendingApplications();
+    const n = this.pendingApplications();
+    return n > 0 ? n : 0;
   },
 
   transferBadge() {

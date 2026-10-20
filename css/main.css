@@ -3420,7 +3420,7 @@ th.eccd-period-head-active {
   position: relative;
 }
 .nav-badge {
-  display: inline-flex;
+  display: none; /* shown only when count > 0 via JS */
   align-items: center;
   justify-content: center;
   min-width: 1.15rem;
@@ -3435,18 +3435,32 @@ th.eccd-period-head-active {
   line-height: 1;
   vertical-align: middle;
 }
-.nav-item.active .nav-badge {
+.nav-badge:not([hidden]) {
+  display: inline-flex;
+}
+.nav-item.active .nav-badge:not([hidden]) {
   background: #fff;
   color: #c62828;
+}
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 .header-refresh-btn {
   border: none;
   background: transparent;
   cursor: pointer;
-  font-size: 1.1rem;
-  padding: 0.25rem 0.4rem;
-  border-radius: 8px;
+  font-size: 1.45rem;
+  line-height: 1;
+  padding: 0.35rem 0.5rem;
+  border-radius: 10px;
+  margin-left: 0.15rem;
+  flex-shrink: 0;
 }
 .header-refresh-btn:hover {
-  background: rgba(0,0,0,0.06);
+  background: rgba(0,0,0,0.08);
+}
+.header-refresh-btn:active {
+  transform: scale(0.96);
 }

@@ -15,8 +15,9 @@ const TeacherLayout = {
           <button type="button" class="nav-toggle no-print" aria-label="Open menu"
             onclick="TeacherLayout.toggleNav()">☰</button>
           <div class="logo">🌱 BrightSteps</div>
+          <button type="button" class="header-refresh-btn no-print" title="Refresh data"
+            aria-label="Refresh data" onclick="TeacherLayout.refreshNow()">🔄</button>
         </div>
-        <button type="button" class="header-refresh-btn no-print" title="Refresh data" onclick="TeacherLayout.refreshNow()">🔄</button>
         <div class="user-info" style="position:relative;">
           <span class="user-info-text">${displayName} · ${roleTag}</span>
           <button type="button" class="btn-header-menu no-print" aria-label="Menu"
@@ -626,16 +627,24 @@ const TeacherLayout = {
     const setBadge = function (key, n) {
       const el = document.querySelector('.nav-badge[data-badge="' + key + '"]');
       if (!el) return;
-      if (n > 0) {
+      const count = Number(n) || 0;
+      if (count > 0) {
         el.hidden = false;
-        el.textContent = n > 9 ? '9+' : String(n);
+        el.style.display = 'inline-flex';
+        el.textContent = count > 9 ? '9+' : String(count);
+        el.setAttribute('aria-hidden', 'false');
       } else {
         el.hidden = true;
+        el.style.display = 'none';
         el.textContent = '';
+        el.setAttribute('aria-hidden', 'true');
       }
     };
-    setBadge('children', badges.children || 0);
-    setBadge('dashboard', (badges.children || 0) + (badges.transfer || 0));
+    const pendingApps = Number(badges.children) || 0;
+    const transfer = Number(badges.transfer) || 0;
+    setBadge('children', pendingApps);
+    // Dashboard: only applications + transfer; never show empty pill
+    setBadge('dashboard', pendingApps + transfer);
     // Header dot for pending transfer
     const headDot = document.getElementById('teacher-notify-dot');
     if (headDot) {
