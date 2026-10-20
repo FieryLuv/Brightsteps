@@ -326,9 +326,11 @@ const BrightSteps = (() => {
   }
 
   function findChildrenForGuardian(guardianName, childCode) {
-    const list = typeof SampleChildren !== 'undefined' ? SampleChildren : [];
+    const list = (typeof SampleChildren !== 'undefined' ? SampleChildren : [])
+      .filter(c => c && c.archived !== true);
     const code = _norm(childCode).toUpperCase().replace(/\s+/g, '');
 
+    // Child ID verifies access; then load ALL siblings under the same guardian family.
     if (code) {
       const byCode = list.find(c => {
         const cc = _norm(c.childCode).toUpperCase().replace(/\s+/g, '');
@@ -341,7 +343,12 @@ const BrightSteps = (() => {
           children: []
         };
       }
-      return { error: null, children: [byCode] };
+      const family = list.filter(c =>
+        _guardianMatches(c, guardianName) || _sameParentFamily(c, byCode)
+      );
+      // Prefer verified child first in the list
+      const ordered = [byCode].concat(family.filter(c => String(c.id) !== String(byCode.id)));
+      return { error: null, children: ordered };
     }
 
     const matches = list.filter(c => _guardianMatches(c, guardianName));
@@ -352,6 +359,18 @@ const BrightSteps = (() => {
       };
     }
     return { error: null, children: matches };
+  }
+
+  /** Siblings may share parentLoginName / parentName / mother / father even if login typed form differs slightly. */
+  function _sameParentFamily(a, b) {
+    if (!a || !b) return false;
+    const keys = ['parentLoginName', 'parentName', 'motherName', 'fatherName'];
+    for (let i = 0; i < keys.length; i++) {
+      const ka = _norm(a[keys[i]]);
+      const kb = _norm(b[keys[i]]);
+      if (ka && kb && ka === kb) return true;
+    }
+    return false;
   }
 
   async function submitParentLogin() {
@@ -377,15 +396,25 @@ const BrightSteps = (() => {
         showErr('No enrolled children found for those credentials.');
         return;
       }
-      const displayName = (children[0].parentLoginName || children[0].parentName || guardianName || '').trim();
+      // Prefer the Child ID entered at login as the active child when present
+      const codeNorm = (childCode || '').trim().toUpperCase().replace(/\s+/g, '');
+      let active = children[0];
+      if (codeNorm) {
+        const hit = children.find(c => {
+          const cc = String(c.childCode || '').trim().toUpperCase().replace(/\s+/g, '');
+          return cc === codeNorm;
+        });
+        if (hit) active = hit;
+      }
+      const displayName = (active.parentLoginName || active.parentName || guardianName || '').trim();
       currentRole = 'parent';
       currentUser = {
         name: displayName || guardianName,
         role: 'parent',
         center: 'NCDC Medina',
         children: children,
-        activeChildId: children[0].id,
-        childName: children[0].name
+        activeChildId: active.id,
+        childName: active.name
       };
       ParentLayout.render(currentUser);
     }
@@ -585,7 +614,7 @@ const BrightSteps = (() => {
   function getActiveChild() {
     if (!currentUser || currentUser.role !== 'parent') return null;
     const list = currentUser.children || [];
-    return list.find(c => c.id === currentUser.activeChildId) || list[0] || null;
+    return list.find(c => String(c.id) === String(currentUser.activeChildId)) || list[0] || null;
   }
 
   return {
