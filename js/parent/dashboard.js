@@ -443,7 +443,7 @@ const ParentDashboard = {
       : null;
     let waitMsg = 'No approved progress report yet. Once the teacher completes and approves an ECCD assessment report, it will appear here.';
     if (latestAssess) {
-      waitMsg = 'Your child’s teacher has recorded the <strong>' + latestAssess.period +
+      waitMsg = 'Your child’s teacher has recorded the <strong>' + String(latestAssess.period || '') +
         '</strong> evaluation' +
         (latestAssess.finalized ? ' (finalized)' : '') +
         '. It will appear here after the teacher reviews and <strong>approves</strong> the parent progress report.';
@@ -465,8 +465,8 @@ const ParentDashboard = {
     }
 
     const latest = HealthStore.getLatest(child.id);
-    const profile = HealthStore.getProfile(child.id);
-    const history = HealthStore.listForChild(child.id);
+    const profile = HealthStore.getProfile(child.id) || {};
+    const history = (HealthStore.listForChild && HealthStore.listForChild(child.id)) || [];
 
     if (!latest && !profile.allergies && !profile.medicalConditions && !profile.immunizations) {
       return (
@@ -476,7 +476,14 @@ const ParentDashboard = {
       );
     }
 
-    const statusText = (latest && (latest.status || latest.nutritionStatus || '')).trim() || '—';
+    const statusText = (function () {
+      if (!latest) return '—';
+      const raw = latest.status != null && latest.status !== ''
+        ? latest.status
+        : (latest.nutritionStatus != null && latest.nutritionStatus !== '' ? latest.nutritionStatus : '');
+      const s = String(raw == null ? '' : raw).trim();
+      return s || '—';
+    })();
     const statusLower = statusText.toLowerCase();
     const statusColor = statusLower.includes('normal')
       ? 'var(--success)'
@@ -891,7 +898,7 @@ const ParentDashboard = {
       const firstTitle = labels.length ? String(labels[0]).replace(/</g, '&lt;') : '';
 
       cells +=
-        '<div class="cal-cell ' + stateClass.trim() + '" role="button" tabindex="0" ' +
+        '<div class="cal-cell ' + String(stateClass || '').trim() + '" role="button" tabindex="0" ' +
         "onclick=\"ParentDashboard.onDayClick('" + dateStr + "')\">" +
         '<span class="cal-daynum">' + day + '</span>' +
         (hasEvent || holiday ? '<span class="cal-dot"></span>' : '') +
