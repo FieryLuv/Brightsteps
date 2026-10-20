@@ -306,6 +306,25 @@ const ChildRegistry = {
     }
 
     this.ensureMerged();
+    if (child.applicationId && typeof SampleChildren !== 'undefined') {
+      const already = SampleChildren.find(c => c.applicationId && String(c.applicationId) === String(child.applicationId));
+      if (already) {
+        return { ok: false, error: 'Already enrolled from this application: ' + (already.childCode || already.name) };
+      }
+    }
+    if (typeof SampleChildren !== 'undefined' && child.name && child.birthDate) {
+      const dup = SampleChildren.find(c =>
+        !c.archived &&
+        String(c.name || '').trim().toLowerCase() === String(child.name).trim().toLowerCase() &&
+        String(c.birthDate || '') === String(child.birthDate)
+      );
+      if (dup) {
+        return {
+          ok: false,
+          error: 'A child with the same name and birth date already exists (' + (dup.childCode || dup.name) + ').'
+        };
+      }
+    }
     // avoid duplicate childCode
     if (SampleChildren.some(c => c.childCode === child.childCode && c.id !== child.id)) {
       child.childCode = this.nextChildCode();
@@ -770,6 +789,32 @@ const ChildRegistry = {
     if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online()) {
       const built = this.buildChildRecord(data, opts);
       if (!built.name) return { ok: false, error: 'Child name is required.' };
+      // Prevent second child for same online application
+      const appId = built.applicationId || (opts && opts.applicationId);
+      if (appId && typeof SampleChildren !== 'undefined') {
+        const already = SampleChildren.find(c => c.applicationId && String(c.applicationId) === String(appId));
+        if (already) {
+          return {
+            ok: false,
+            error: 'Already enrolled from this application: ' + (already.childCode || already.name)
+          };
+        }
+      }
+      // Soft duplicate check: same name + birth date still active
+      if (typeof SampleChildren !== 'undefined' && built.name && built.birthDate) {
+        const dup = SampleChildren.find(c =>
+          !c.archived &&
+          String(c.name || '').trim().toLowerCase() === String(built.name).trim().toLowerCase() &&
+          String(c.birthDate || '') === String(built.birthDate)
+        );
+        if (dup) {
+          return {
+            ok: false,
+            error: 'A child with the same name and birth date already exists (' +
+              (dup.childCode || dup.name) + '). Open that record instead of enrolling again.'
+          };
+        }
+      }
       // Let DB generate UUID — strip numeric local id
       delete built.id;
       const remote = await ChildrenRemote.insert(built);

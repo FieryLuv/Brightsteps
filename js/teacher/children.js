@@ -1188,6 +1188,25 @@ const TeacherChildren = {
       showErr('Date of birth is required.');
       return;
     }
+    const editIdEarly = (document.getElementById('enroll-edit-id') || {}).value || '';
+    const isEditSave = !!(editIdEarly);
+    if (!isEditSave && data.applicationId && typeof ApplicationStore !== 'undefined') {
+      const app = ApplicationStore.get(data.applicationId);
+      if (app && app.status === 'enrolled') {
+        showErr('This application is already enrolled (Child ID: ' + (app.enrolledChildCode || '—') + '). Use the existing child instead of saving again.');
+        return;
+      }
+    }
+    if (!isEditSave && data.applicationId && typeof SampleChildren !== 'undefined') {
+      const existingAppChild = SampleChildren.find(c =>
+        c.applicationId && String(c.applicationId) === String(data.applicationId)
+      );
+      if (existingAppChild) {
+        showErr('A child was already created from this application: ' +
+          (existingAppChild.name || '') + ' (' + (existingAppChild.childCode || '') + ').');
+        return;
+      }
+    }
     if (typeof ChildRegistry !== 'undefined' && ChildRegistry.ageFromBirthDate) {
       const age = ChildRegistry.ageFromBirthDate(data.birthDate);
       data.ageMonths = age.ageMonths;
@@ -1212,6 +1231,9 @@ const TeacherChildren = {
     if (photoCleared) data.photo = null;
 
     let result;
+    this._enrollSaving = true;
+    const saveBtns = document.querySelectorAll('#bs-modal-overlay button.btn-blue');
+    saveBtns.forEach(function (b) { b.disabled = true; b.dataset._prevLabel = b.textContent; b.textContent = 'Saving…'; });
     try {
       if (isEdit) {
         result = ChildRegistry.updateFromForm(editId, data, {
@@ -1232,14 +1254,19 @@ const TeacherChildren = {
       }
     } catch (err) {
       console.error('saveEnrollment', err);
+      this._enrollSaving = false;
+      saveBtns.forEach(function (b) { b.disabled = false; b.textContent = b.dataset._prevLabel || 'Save'; });
       showErr((err && err.message) ? err.message : 'Unexpected error while saving.');
       return;
     }
 
     if (!result || !result.ok) {
+      this._enrollSaving = false;
+      saveBtns.forEach(function (b) { b.disabled = false; b.textContent = b.dataset._prevLabel || 'Save'; });
       showErr((result && result.error) || (isEdit ? 'Could not save changes.' : 'Could not save enrollment.'));
       return;
     }
+    this._enrollSaving = false;
 
     const child = result.child;
 
@@ -1288,6 +1315,7 @@ const TeacherChildren = {
     setTimeout(() => toast.remove(), 3200);
 
     // Complete online application → enrolled + show parent login credentials
+    if (typeof ActivityStore !== 'undefined') ActivityStore.notifyChanged();
     if (!isEdit && data.applicationId && typeof ApplicationStore !== 'undefined') {
       ApplicationStore.updateStatus(data.applicationId, 'enrolled', {
         reviewedBy: 'Teacher Irish',

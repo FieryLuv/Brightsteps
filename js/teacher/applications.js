@@ -149,6 +149,7 @@ const TeacherApplications = {
 
   approve(id) {
     ApplicationStore.updateStatus(id, 'approved', { reviewedBy: 'Teacher Irish' });
+    if (typeof ActivityStore !== 'undefined') ActivityStore.notifyChanged();
     this.closeReview();
     this.continueEnroll(id);
   },
@@ -190,6 +191,7 @@ const TeacherApplications = {
           enrolledChildId: added.id,
           enrolledChildCode: added.childCode
         });
+        if (typeof ActivityStore !== 'undefined') ActivityStore.notifyChanged();
         window._pendingApplicationEnroll = null;
         setTimeout(() => TeacherApplications.showCredentials(pendingId), 400);
       }
@@ -203,6 +205,7 @@ const TeacherApplications = {
       reviewedBy: 'Teacher Irish',
       rejectReason: reason
     });
+    if (typeof ActivityStore !== 'undefined') ActivityStore.notifyChanged();
     this.closeReview();
     if (typeof TeacherChildren !== 'undefined' && TeacherChildren.container) {
       TeacherChildren._draw();

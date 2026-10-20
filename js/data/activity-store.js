@@ -1,6 +1,6 @@
 /**
- * Teacher activity badges — pending applications, role transfers, etc.
- * Red dots clear when the module is opened (seen count stored).
+ * Teacher activity badges — red dots track real pending work.
+ * Children / Dashboard: number of pending applications (0 = no dot).
  */
 const ActivityStore = {
   KEY: 'brightsteps_activity_seen_v1',
@@ -19,19 +19,10 @@ const ActivityStore = {
     } catch (e) { /* ignore */ }
   },
 
-  /**
-   * Mark a module as seen. For children/dashboard, stores the current pending
-   * application count so the badge stays clear until NEW pending apps arrive.
-   */
+  /** Kept for API compatibility; badges use live pending counts. */
   markSeen(key) {
     const s = this._read();
     s[key] = new Date().toISOString();
-    if (key === 'children' || key === 'dashboard') {
-      s.seenPendingApps = this.pendingApplications();
-    }
-    if (key === 'transfer') {
-      s.seenTransferAt = new Date().toISOString();
-    }
     this._write(s);
   },
 
@@ -52,24 +43,13 @@ const ActivityStore = {
     return !!(cur && String(cur) === String(p.toId));
   },
 
-  /**
-   * Badge count for Children: only NEW pending apps since last visit to Children/Dashboard.
-   */
+  /** Always mirrors actual pending applications. */
   childrenBadge() {
-    const pending = this.pendingApplications();
-    const seen = this._read();
-    const dismissed = typeof seen.seenPendingApps === 'number' ? seen.seenPendingApps : -1;
-    // Never visited → show all pending; after visit → only growth in count
-    if (dismissed < 0) return pending;
-    return Math.max(0, pending - dismissed);
+    return this.pendingApplications();
   },
 
   transferBadge() {
-    if (!this.pendingTransferForMe()) return 0;
-    const seen = this._read();
-    // Hide until a new proposal (clear seenTransfer when propose sets pending)
-    if (seen.seenTransferAt) return 0;
-    return 1;
+    return this.pendingTransferForMe() ? 1 : 0;
   },
 
   badges() {
@@ -77,6 +57,13 @@ const ActivityStore = {
       children: this.childrenBadge(),
       transfer: this.transferBadge()
     };
+  },
+
+  /** Call after approve / reject / enroll so dots refresh immediately. */
+  notifyChanged() {
+    if (typeof TeacherLayout !== 'undefined' && TeacherLayout.updateBadges) {
+      TeacherLayout.updateBadges();
+    }
   }
 };
 
