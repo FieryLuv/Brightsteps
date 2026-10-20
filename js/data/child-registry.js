@@ -82,14 +82,48 @@ const ChildRegistry = {
     this._merged = true;
   },
 
+  /**
+   * Remove duplicate rows (same id, or same childCode). Keeps first occurrence.
+   */
+  dedupeList(list) {
+    const arr = list || [];
+    const seenId = new Set();
+    const seenCode = new Set();
+    const out = [];
+    for (let i = 0; i < arr.length; i++) {
+      const c = arr[i];
+      if (!c) continue;
+      const id = String(c.id);
+      if (seenId.has(id)) continue;
+      const code = String(c.childCode || '').trim().toLowerCase();
+      if (code && seenCode.has(code)) continue;
+      seenId.add(id);
+      if (code) seenCode.add(code);
+      out.push(c);
+    }
+    return out;
+  },
+
+  /** Dedupe SampleChildren in place (online/offline). */
+  dedupeInPlace() {
+    if (typeof SampleChildren === 'undefined') return;
+    const clean = this.dedupeList(SampleChildren);
+    if (clean.length !== SampleChildren.length) {
+      SampleChildren.length = 0;
+      clean.forEach(c => SampleChildren.push(c));
+      console.info('[ChildRegistry] removed', clean.length ? (clean.length) : 0, 'after dedupe; was longer');
+    }
+  },
+
   all() {
     this.ensureMerged();
+    this.dedupeInPlace();
     return typeof SampleChildren !== 'undefined' ? SampleChildren : [];
   },
 
   /** Enrolled children who are not archived (default working set). */
   activeList() {
-    return this.all().filter(c => c.archived !== true);
+    return this.dedupeList(this.all().filter(c => c.archived !== true));
   },
 
   /** Soft-deleted / inactive children. */
@@ -310,20 +344,27 @@ const ChildRegistry = {
     if (typeof SampleChildren === 'undefined') return { ok: false, error: 'No children list.' };
     const idx = SampleChildren.findIndex(c => c.id === id || String(c.id) === String(id));
     if (idx < 0) return { ok: false, error: 'Child not found.' };
-    SampleChildren[idx] = { ...SampleChildren[idx], ...patch };
+    SampleChildren[idx] = { ...SampleChildren[idx], ...patch, updatedAt: new Date().toISOString() };
     const enrolled = this._readEnrolled();
     const eIdx = enrolled.findIndex(c => c.id === id || String(c.id) === String(id));
     let write;
     if (eIdx >= 0) {
-      enrolled[eIdx] = { ...enrolled[eIdx], ...patch };
+      enrolled[eIdx] = { ...enrolled[eIdx], ...SampleChildren[idx] };
       write = this._writeEnrolled(enrolled);
     } else {
-      // Persist sample-child edits so transfer/delete survives refresh
+      // Persist so transfer/delete survives refresh
       enrolled.push(SampleChildren[idx]);
       write = this._writeEnrolled(enrolled);
     }
     if (write && write.ok === false) {
       return { ok: false, error: write.error || 'Could not save.' };
+    }
+    // Dual-write full child so partial patches (e.g. class transfer) do not wipe server fields
+    if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online() && ChildrenRemote.update) {
+      const full = SampleChildren[idx];
+      ChildrenRemote.update(full.id, full).then(function (r) {
+        if (!r.ok) console.warn('[ChildRegistry] remote update failed', r.error);
+      });
     }
     return { ok: true, child: SampleChildren[idx], strippedAttachments: !!(write && write.strippedAttachments) };
   },

@@ -166,8 +166,22 @@ window.ChildrenRemote = {
   _applyToSampleChildren(children) {
     if (typeof SampleChildren === 'undefined') return;
     // Replace in-memory list with remote rows when online mode is active
+    const list = children || [];
+    const seenId = new Set();
+    const seenCode = new Set();
+    const unique = [];
+    list.forEach(function (c) {
+      if (!c) return;
+      const id = String(c.id);
+      if (seenId.has(id)) return;
+      const code = String(c.childCode || '').trim().toLowerCase();
+      if (code && seenCode.has(code)) return;
+      seenId.add(id);
+      if (code) seenCode.add(code);
+      unique.push(c);
+    });
     SampleChildren.length = 0;
-    children.forEach(c => SampleChildren.push(c));
+    unique.forEach(c => SampleChildren.push(c));
   },
 
   async insert(child) {

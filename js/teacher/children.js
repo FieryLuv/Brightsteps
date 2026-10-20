@@ -170,7 +170,15 @@ const TeacherChildren = {
   _filtered() {
     const q = (this.filterText || '').trim().toLowerCase();
     const mode = this.listMode;
-    return SampleChildren.filter(c => {
+    let base = [];
+    if (typeof ChildRegistry !== 'undefined') {
+      if (mode === 'archived') base = ChildRegistry.archivedList();
+      else if (mode === 'credentials') base = ChildRegistry.dedupeList(ChildRegistry.all());
+      else base = ChildRegistry.activeList();
+    } else if (typeof SampleChildren !== 'undefined') {
+      base = SampleChildren.slice();
+    }
+    return base.filter(c => {
       const isArchived = c.archived === true;
       if (mode === 'active' && isArchived) return false;
       if (mode === 'archived' && !isArchived) return false;
@@ -1436,7 +1444,7 @@ const TeacherChildren = {
     this._bindModalDismiss();
   },
 
-  applyTransfer(ids) {
+  async applyTransfer(ids) {
     const sectionKey = (document.getElementById('transfer-section') || {}).value;
     const err = document.getElementById('transfer-error');
     if (!sectionKey) {
@@ -1448,14 +1456,33 @@ const TeacherChildren = {
       if (err) { err.style.display = 'block'; err.textContent = result.error || 'Transfer failed.'; }
       return;
     }
+    // Wait for server write so refresh/poll does not revert the class
+    if (typeof ChildrenRemote !== 'undefined' && ChildrenRemote.online() && ChildrenRemote.update) {
+      for (let i = 0; i < (ids || []).length; i++) {
+        const id = ids[i];
+        const child = (typeof SampleChildren !== 'undefined')
+          ? SampleChildren.find(c => String(c.id) === String(id))
+          : null;
+        if (child) {
+          try {
+            const r = await ChildrenRemote.update(child.id, child);
+            if (!r.ok) console.warn('[Transfer] remote failed', r.error);
+          } catch (e) {
+            console.warn('[Transfer] remote error', e);
+          }
+        }
+      }
+    }
     this.selectedIds = [];
     this.closeModal();
     this._draw();
+    const label = (typeof ChildRegistry !== 'undefined' && ChildRegistry.sectionFromKey)
+      ? ChildRegistry.sectionFromKey(sectionKey) : sectionKey;
     const toast = document.createElement('div');
     toast.className = 'ecc-toast';
-    toast.textContent = `Transferred ${result.count} child(ren) to ${ChildRegistry.sectionFromKey(sectionKey)}`;
+    toast.textContent = 'Transferred ' + result.count + ' child(ren) to ' + label;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 2800);
+    setTimeout(function () { toast.remove(); }, 2800);
   },
 
   confirmArchive(ids) {

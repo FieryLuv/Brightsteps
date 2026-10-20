@@ -513,6 +513,7 @@ const TeacherLayout = {
         TeacherLayout._toast('You are now Head Teacher / Admin');
         const b = document.getElementById('head-transfer-banner');
         if (b) b.remove();
+        if (typeof ActivityStore !== 'undefined') ActivityStore.markSeen('transfer');
         TeacherLayout._rebuildShellAfterRoleChange();
       }
     });
@@ -599,15 +600,14 @@ const TeacherLayout = {
   },
 
   nav(route) {
-    if (route === 'children' && typeof ActivityStore !== 'undefined') {
-      ActivityStore.markSeen('children');
-    }
-    if (route === 'dashboard' && typeof ActivityStore !== 'undefined') {
-      ActivityStore.markSeen('dashboard');
+    if (typeof ActivityStore !== 'undefined') {
+      if (route === 'children') ActivityStore.markSeen('children');
+      if (route === 'dashboard') ActivityStore.markSeen('dashboard');
     }
     this.closeNav();
     this.closeSettingsMenu();
     if (typeof BrightSteps !== 'undefined') BrightSteps.navigate(route);
+    this.updateBadges();
   },
 
   toggleNav() {
