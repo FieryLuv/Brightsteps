@@ -435,11 +435,13 @@ const BrightSteps = (() => {
 
   function selectChild(childId) {
     if (!currentUser || currentUser.role !== 'parent') return;
-    const child = (currentUser.children || []).find(c => c.id === childId);
+    const child = (currentUser.children || []).find(c => String(c.id) === String(childId));
     if (!child) return;
     currentUser.activeChildId = child.id;
     currentUser.childName = child.name;
-    ParentLayout.render(currentUser);
+    if (typeof ParentLayout !== 'undefined' && ParentLayout.render) {
+      ParentLayout.render(currentUser);
+    }
   }
 
   function login(role) {

@@ -7,18 +7,19 @@ const ParentLayout = {
   render(user) {
     const app = document.getElementById('app');
     const children = user.children || [];
-    const active = children.find(c => c.id === user.activeChildId) || children[0];
+    const active = children.find(c => String(c.id) === String(user.activeChildId)) || children[0];
     const activeCode = active && active.childCode ? active.childCode : '';
 
     let switcher = '';
     if (children.length > 1) {
       const chips = children.map(c => {
-        const isActive = active && c.id === active.id;
-        return `<button type="button"
-          class="btn child-chip ${isActive ? 'btn-blue' : ''}"
-          onclick="BrightSteps.selectChild(${c.id})">${c.name}
-          <span class="child-chip-code">${c.childCode ? ' · ' + c.childCode : ''}</span>
-        </button>`;
+        const isActive = active && String(c.id) === String(active.id);
+        const idAttr = String(c.id).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const name = this._esc(c.name || 'Child');
+        const code = c.childCode ? ' · ' + this._esc(c.childCode) : '';
+        return '<button type="button" class="btn child-chip' + (isActive ? ' btn-blue' : '') + '"' +
+          ' onclick="BrightSteps.selectChild(\'' + idAttr + '\')">' + name +
+          '<span class="child-chip-code">' + code + '</span></button>';
       }).join('');
       switcher = `
         <div class="parent-child-switcher no-print">
@@ -91,7 +92,7 @@ const ParentLayout = {
     const user = typeof BrightSteps !== 'undefined' ? BrightSteps.getUser() : null;
     if (!user || user.role !== 'parent') return;
     const children = user.children || [];
-    const active = children.find(c => c.id === user.activeChildId) || children[0];
+    const active = children.find(c => String(c.id) === String(user.activeChildId)) || children[0];
     if (!active) return;
 
     const loginName = active.parentLoginName || active.parentName || user.name || '';
@@ -171,7 +172,7 @@ const ParentLayout = {
     const user = typeof BrightSteps !== 'undefined' ? BrightSteps.getUser() : null;
     if (!user || user.role !== 'parent') return;
     const children = user.children || [];
-    const active = children.find(c => c.id === user.activeChildId) || children[0];
+    const active = children.find(c => String(c.id) === String(user.activeChildId)) || children[0];
     if (!active) return;
 
     const existing = document.getElementById('parent-attach-overlay');
@@ -241,7 +242,7 @@ const ParentLayout = {
       }
     }
 
-    const active = children.find(c => c.id === user.activeChildId) || children[0];
+    const active = children.find(c => String(c.id) === String(user.activeChildId)) || children[0];
     const photoCleared = typeof FileAttach !== 'undefined' && FileAttach.wasPhotoCleared('parent-settings');
     const photo = typeof FileAttach !== 'undefined' ? FileAttach.getPhoto('parent-settings') : null;
 
@@ -277,7 +278,7 @@ const ParentLayout = {
       const ids = new Set(children.map(c => String(c.id)));
       user.children = SampleChildren.filter(c => ids.has(String(c.id)));
       user.name = loginName;
-      const still = user.children.find(c => c.id === user.activeChildId) || user.children[0];
+      const still = user.children.find(c => String(c.id) === String(user.activeChildId)) || user.children[0];
       if (still) {
         user.activeChildId = still.id;
         user.childName = still.name;

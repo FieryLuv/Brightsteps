@@ -20,7 +20,7 @@ const ParentDashboard = {
     const paint = function () {
       let child = null;
       if (user && user.children && user.children.length) {
-        child = user.children.find(c => c.id === user.activeChildId) || user.children[0];
+        child = user.children.find(c => String(c.id) === String(user.activeChildId)) || user.children[0];
       } else if (typeof SampleChildren !== 'undefined') {
         const childName = user.childName || '';
         child = SampleChildren.find(c => c.name === childName) || SampleChildren[0];
