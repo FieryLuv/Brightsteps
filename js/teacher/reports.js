@@ -1374,25 +1374,10 @@ const TeacherReports = {
     tips.forEach(line => {
       if (!seenTips.has(line)) { seenTips.add(line); uniqueTips.push(line); }
     });
-    while (uniqueTips.length < 3) {
-      const filler = [
-        'Read or tell stories together for 10–15 minutes daily.',
-        'Encourage outdoor play and movement games.',
-        'Praise effort and practice everyday self-help skills (dressing, feeding).'
-      ];
-      filler.forEach(f => { if (uniqueTips.length < 4 && uniqueTips.indexOf(f) < 0) uniqueTips.push(f); });
-      break;
-    }
+    // No generic filler tips — only engine tips for incomplete domains
 
-    // Prefer engine narrative draft (domain advice). Only rebuild if empty.
-    let parentDraft = insight.parentFriendlyDraft || '';
-    if (!parentDraft) {
-      parentDraft = [
-        'This note is based on the ' + assessment.period + ' ECCD developmental checklist evaluation.',
-        overallLabel !== '—' ? overallLabel + '.' : '',
-        'Continue playful learning at home—reading, outdoor play, and everyday self-help—and ask the teacher which skills to practice next.'
-      ].filter(Boolean).join(' ');
-    }
+    // Parent-friendly summary removed — tips list is the parent-facing guidance
+    const parentDraft = '';
 
     // Teacher's note stays blank by default — optional for the teacher to write
     const teacherNote = '';
@@ -1441,9 +1426,7 @@ const TeacherReports = {
     const hasSaved = !!(existing && (existing.teacherNote || existing.parentDraft || existingTips.length));
     // Optional field — blank for new reports; keep only if teacher already typed one
     const teacherNote = (existing && existing.teacherNote) ? existing.teacherNote : '';
-    const parentDraft = hasSaved && existing.parentDraft
-      ? existing.parentDraft
-      : draft.parentDraft;
+    const parentDraft = '';
     const tipsText = existingTips.length
       ? existingTips.join('\n')
       : (draft.tips || []).join('\n');
@@ -1489,8 +1472,7 @@ const TeacherReports = {
       draft.overallLabel + '</div></div></div></div>' +
       '<div class="card" style="margin-bottom:1rem;"><label style="font-weight:600;display:block;margin-bottom:0.35rem;">👩‍🏫 Teacher’s note (shown to parent)</label>' +
       '<textarea id="report-teacher-note" rows="3" class="ecc-report-textarea">' + this._esc(teacherNote) + '</textarea></div>' +
-      '<div class="card" style="margin-bottom:1rem;"><label style="font-weight:600;display:block;margin-bottom:0.35rem;">📝 Parent-friendly summary</label>' +
-      '<textarea id="report-parent-draft" rows="4" class="ecc-report-textarea">' + this._esc(parentDraft) + '</textarea></div>' +
+      
       '<div class="card" style="margin-bottom:1rem;"><label style="font-weight:600;display:block;margin-bottom:0.35rem;">💡 Tips & activities (one per line — from checklist gaps + teacher comments)</label>' +
       '<textarea id="report-tips" rows="8" class="ecc-report-textarea">' + this._esc(tipsText) + '</textarea></div>' +
       (draft.teacherComments && draft.teacherComments.length
@@ -1500,7 +1482,7 @@ const TeacherReports = {
               (c.present ? '' : ' <span class="text-muted">(not yet present)</span>') +
               ': ' + c.comment + '</li>';
           }).join('') +
-          '</ul><p class="text-muted" style="font-size:0.8rem;margin:0.5rem 0 0;">These feed the parent tips and summary. Edit tips/notes above if needed before approve.</p></div>'
+          '</ul><p class="text-muted" style="font-size:0.8rem;margin:0.5rem 0 0;">These feed the parent tips. Edit tips/notes above if needed before approve.</p></div>'
         : '<div class="card" style="margin-bottom:1rem;"><p class="text-muted" style="margin:0;font-size:0.88rem;">No checklist comments found for this period. Add comments on unchecked items in Development Tracking, then re-save the assessment for richer parent tips.</p></div>') +
       '</div><div class="bs-modal-footer" style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;">' +
       '<button class="btn" style="background:#e0e0e0;color:#333;" onclick="TeacherReports.closeEditor()">Cancel</button>' +
@@ -1527,7 +1509,7 @@ const TeacherReports = {
     const assessment = this._pendingAssessment;
     const base = this._pendingDraft || this._buildDraft(child, assessment);
     const teacherNote = (document.getElementById('report-teacher-note') || {}).value || '';
-    const parentDraft = (document.getElementById('report-parent-draft') || {}).value || '';
+    const parentDraft = '';
     const tipsRaw = (document.getElementById('report-tips') || {}).value || '';
     const tips = tipsRaw.split('\n').map(t => t.trim()).filter(Boolean);
     return {

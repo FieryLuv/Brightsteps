@@ -348,6 +348,19 @@ const ProgressEngine = {
           .sort((a, b) => (a.percent != null ? a.percent : 100) - (b.percent != null ? b.percent : 100))
           .slice(0, 2);
 
+    // Domains at 100% (or all items present) must never receive parent tips
+    const completeDomainCodes = new Set(
+      domainResults
+        .filter(d =>
+          (d.percent != null && d.percent >= 100) ||
+          (d.total > 0 && d.present != null && d.present >= d.total)
+        )
+        .map(d => d.code)
+    );
+    // Only gaps in incomplete domains drive tips
+    const tipFocusItems = focusItems.filter(fi => fi && fi.domainCode && !completeDomainCodes.has(fi.domainCode));
+    const tipGuidanceTargets = guidanceTargets.filter(d => !completeDomainCodes.has(d.code));
+
     const parentActivities = [];
     const teacherPriorities = [];
     const tipLines = [];
@@ -360,13 +373,14 @@ const ProgressEngine = {
       ? ParentActivityTips
       : (typeof window !== 'undefined' && window.ParentActivityTips ? window.ParentActivityTips : null);
 
-    guidanceTargets.forEach(d => {
+    tipGuidanceTargets.forEach(d => {
       const g = this.DOMAIN_GUIDANCE[d.code];
       if (!g || seen.has(d.code)) return;
       // Safety: no tips for fully achieved domains
-      const domainGaps = focusItems.filter(fi => fi.domainCode === d.code).slice(0, 4);
-      if (d.percent != null && d.percent >= 100 && !domainGaps.length) return;
-      if (d.total > 0 && d.present >= d.total && !domainGaps.length) return;
+      if (completeDomainCodes.has(d.code)) return;
+      if (d.percent != null && d.percent >= 100) return;
+      if (d.total > 0 && d.present != null && d.present >= d.total) return;
+      const domainGaps = tipFocusItems.filter(fi => fi.domainCode === d.code).slice(0, 4);
 
       seen.add(d.code);
       const why = d.interpretation
@@ -419,8 +433,8 @@ const ProgressEngine = {
     // More parent tips from remaining missing items (still age-filtered, parent-friendly)
     if (Tips) {
       const more = Tips.buildTipLines(
-        focusItems.filter(fi => !seen.has(fi.domainCode)),
-        focusItems.map(fi => fi.domainCode).filter((c, i, arr) => c && arr.indexOf(c) === i),
+        tipFocusItems.filter(fi => !seen.has(fi.domainCode)),
+        tipGuidanceTargets.map(d => d.code),
         tipAgeMonths,
         10 - tipLines.length
       );
@@ -428,8 +442,8 @@ const ProgressEngine = {
         if (tipLines.length < 10) tipLines.push(line);
       });
     } else {
-      focusItems.forEach(fi => {
-        if (seen.has(fi.domainCode)) return;
+      tipFocusItems.forEach(fi => {
+        if (seen.has(fi.domainCode) || completeDomainCodes.has(fi.domainCode)) return;
         const g = this.DOMAIN_GUIDANCE[fi.domainCode];
         const act = g && g.parentActivities ? g.parentActivities[0] : null;
         if (act && tipLines.length < 8) {
@@ -449,9 +463,29 @@ const ProgressEngine = {
     if (!tipLines.length && !notPresent.length) {
       tipLines.push('All checklist items marked Present for this evaluation — keep encouraging daily practice at home.');
     }
-    if (!tipLines.length && notPresent.length && Tips) {
-      Tips.buildTipLines(focusItems, guidanceTargets.map(d => d.code), tipAgeMonths, 6)
+    if (!tipLines.length && tipFocusItems.length && Tips) {
+      Tips.buildTipLines(tipFocusItems, tipGuidanceTargets.map(d => d.code), tipAgeMonths, 6)
         .forEach(line => tipLines.push(line));
+    }
+
+    // Final safety: drop any tip labeled with a completed domain
+    const completeNames = new Set();
+    domainResults.forEach(d => {
+      if (completeDomainCodes.has(d.code)) {
+        completeNames.add((d.name || '').toLowerCase());
+        const g = this.DOMAIN_GUIDANCE[d.code];
+        if (g && g.name) completeNames.add(String(g.name).toLowerCase());
+      }
+    });
+    for (let i = tipLines.length - 1; i >= 0; i--) {
+      const line = String(tipLines[i] || '');
+      const colon = line.indexOf(':');
+      if (colon > 0) {
+        const label = line.slice(0, colon).trim().toLowerCase();
+        if (completeNames.has(label) || completeDomainCodes.has(label.toUpperCase())) {
+          tipLines.splice(i, 1);
+        }
+      }
     }
 
     if (overallInterpretation.level === 'needs_support' || overallInterpretation.level === 'emerging') {
@@ -468,14 +502,13 @@ const ProgressEngine = {
       });
     }
 
-    // Ensure maintenance tips if still thin
-    if (tipLines.length < 3) {
+    // Mild fillers only when there are still incomplete domains (never pad for completed GM etc.)
+    if (tipLines.length < 2 && tipFocusItems.length) {
       const filler = [
         'Read or tell stories together for 10–15 minutes daily.',
-        'Encourage outdoor play and movement games.',
-        'Praise effort and practice everyday self-help skills (dressing, feeding).'
+        'Praise effort during everyday routines (meals, dressing, play).'
       ];
-      filler.forEach(f => { if (tipLines.length < 4) tipLines.push(f); });
+      filler.forEach(f => { if (tipLines.length < 3) tipLines.push(f); });
     }
 
     // Domain-level parent summary (checklist-based advice, not a raw list of gaps)
@@ -530,28 +563,8 @@ const ProgressEngine = {
       });
     }
 
-    const parentFriendlyDraft = [
-      assessment.period
-        ? `This note is based on the ${assessment.period} ECCD developmental checklist evaluation.`
-        : 'This note is based on the ECCD developmental checklist evaluation.',
-      overallInterpretation && overallInterpretation.description
-        ? overallInterpretation.description
-        : '',
-      strengthAdvice.length
-        ? 'What is going well: ' + strengthAdvice.slice(0, 2).join(' ')
-        : (strengths.length
-          ? 'Your child shows solid progress in some developmental areas on the checklist.'
-          : ''),
-      supportAdvice.length
-        ? 'How you can help at home: ' + supportAdvice.slice(0, 3).join(' ')
-        : 'Continue warm, playful routines at home—reading, outdoor play, and everyday self-help—with guidance from the teacher.',
-      focusComments.length
-        ? 'Your child’s teacher also noted: ' + focusComments.slice(0, 2).map(c => c.comment).join(' ')
-        : '',
-      'The teacher will review this summary before it appears on your parent portal.'
-    ]
-      .filter(Boolean)
-      .join(' ');
+    // Parent-friendly narrative summary removed (tips + domain scores only)
+    const parentFriendlyDraft = '';
 
     const stdTable = this.tables && this.tables.standardScoreTables && this.tables.standardScoreTables[recordKey];
     return {

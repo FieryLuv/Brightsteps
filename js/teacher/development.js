@@ -831,13 +831,7 @@ const TeacherDevelopment = {
         </div>`;
     }
 
-    const draft = insight && insight.parentFriendlyDraft
-      ? `<div class="card" style="margin-top:1rem;background:#e3f2fd;border:1px solid #90caf9;">
-          <h3 style="margin:0 0 0.35rem;font-size:1rem;">Parent-friendly report draft</h3>
-          <p class="text-muted" style="margin:0 0 0.5rem;font-size:0.82rem;">Editable later when you approve the parent report. Written in plain language.</p>
-          <p style="margin:0;font-size:0.95rem;line-height:1.5;">${insight.parentFriendlyDraft}</p>
-        </div>`
-      : '';
+    const draft = '';
 
     const persistNote =
       `<p class="text-muted" style="font-size:0.85rem;margin-bottom:0.75rem;">✓ Saved evaluation column(s): <strong>${savedPeriods.join(', ')}</strong>. Reopen the checklist to edit; marks restore from these columns.</p>`;
