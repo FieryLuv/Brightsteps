@@ -426,11 +426,6 @@ const ParentDashboard = {
             '<h4 style="margin:0 0 0.5rem;color:#f57f17;">📝 Teacher comments on skills</h4>' +
             '<ul style="padding-left:1.1rem;margin:0;line-height:1.7;font-size:0.95rem;">' + comments + '</ul></div>'
           : '') +
-        (approved.parentDraft
-          ? '<div style="margin-top:1.25rem;padding:1rem;background:#e3f2fd;border-radius:12px;border:1px solid #90caf9;">' +
-            '<h4 style="margin:0 0 0.5rem;color:var(--primary-dark);">Summary for the family</h4>' +
-            '<p style="margin:0;font-size:0.95rem;line-height:1.5;">' + approved.parentDraft + '</p></div>'
-          : '') +
         (approvedDate
           ? '<p class="text-muted" style="text-align:center;margin-top:1rem;font-size:0.85rem;">Approved by teacher on ' + approvedDate + '</p>'
           : '') +

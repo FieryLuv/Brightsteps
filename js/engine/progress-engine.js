@@ -373,7 +373,7 @@ const ProgressEngine = {
         ? d.interpretation.label
         : (d.percent != null ? `${d.percent}% items present` : 'focus area');
 
-      // Parent-friendly activities (age-aware), not technical checklist procedures
+      // Parent-friendly activities: item-specific first, then at most 1 domain fallback
       let activities = [];
       if (Tips) {
         domainGaps.forEach(fi => {
@@ -381,16 +381,16 @@ const ProgressEngine = {
             if (activities.indexOf(tip) < 0) activities.push(tip);
           });
         });
-        if (activities.length < 2) {
-          Tips.tipsForDomain(d.code, tipAgeMonths, 3).forEach(tip => {
+        if (!activities.length) {
+          Tips.tipsForDomain(d.code, tipAgeMonths, 1).forEach(tip => {
             if (activities.indexOf(tip) < 0) activities.push(tip);
           });
         }
       }
       if (!activities.length && domainGaps.length) {
-        activities = (g.parentActivities || []).slice(0, 2);
+        activities = (g.parentActivities || []).slice(0, 1);
       }
-      activities = activities.slice(0, 4);
+      activities = activities.slice(0, 3);
       if (!activities.length) return;
 
       parentActivities.push({

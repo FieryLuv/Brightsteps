@@ -10,10 +10,11 @@
 var ParentActivityTips = {
   ageBand(ageMonths) {
     const m = Number(ageMonths);
-    if (m == null || isNaN(m) || m < 0) return 'toddler';
+    if (m == null || isNaN(m) || m < 0) return 'earlyToddler';
     if (m < 12) return 'infant';
-    if (m < 36) return 'toddler';
-    return 'preschool';
+    if (m < 24) return 'earlyToddler';  // 12–23 mo
+    if (m < 36) return 'lateToddler';   // 24–35 mo
+    return 'preschool';                 // 36+ mo
   },
 
   /** Soft domain activities when no item-specific match (still age-filtered). */
@@ -25,11 +26,17 @@ var ParentActivityTips = {
         'Place a favorite toy just out of reach during tummy time to encourage reaching and rolling.',
         'Support your baby under the arms and gently bounce or sway while you sing.'
       ],
-      toddler: [
-        'Play “stand and clap” or hold both hands while they take steps between furniture.',
-        'Roll a soft ball back and forth on the floor to practice bending and balancing.',
-        'Let them climb a low, safe step or sofa cushion with you close by.',
-        'Dance together to music—marching, swaying, and stomping in place.'
+      earlyToddler: [
+        'Hold both hands and practice standing or a few supported steps indoors.',
+        'Roll a soft ball back and forth while they sit or kneel.',
+        'Cruise along a low sofa or table with toys placed a step apart.',
+        'Sway and bounce to music while you support them under the arms.'
+      ],
+      lateToddler: [
+        'Play “stand and clap” or walk a short clear path holding one finger.',
+        'Kick or roll a soft ball outdoors for a few minutes.',
+        'Practice 2–3 low steps while you hold their hand.',
+        'Dance together—march, stomp, and freeze when the music stops.'
       ],
       preschool: [
         'Play outdoor games: run to a tree, hop to a mark, or kick a soft ball.',
@@ -45,11 +52,17 @@ var ParentActivityTips = {
         'Let them bat at hanging toys while lying on their back.',
         'Give finger foods (when ready) so they can practice picking up small pieces.'
       ],
-      toddler: [
-        'Stack large blocks or plastic cups together.',
-        'Scribble with thick crayons on big paper.',
-        'Play with playdough—squeeze, pinch, and roll simple shapes.',
-        'Put large beads or pasta on a thick string with your help.'
+      earlyToddler: [
+        'Put large blocks into a box and dump them out again.',
+        'Scribble freely with thick crayons on big paper.',
+        'Stack 2–3 large cups or soft blocks together.',
+        'Turn the pages of a board book with your help.'
+      ],
+      lateToddler: [
+        'Stack 4–6 blocks or plastic cups into a short tower.',
+        'Draw simple lines and circles with crayons.',
+        'Play with playdough—squeeze, pinch, and roll snakes.',
+        'String large beads or pasta on a thick lace with help.'
       ],
       preschool: [
         'Draw, color, and cut simple shapes with child scissors (with supervision).',
@@ -65,11 +78,17 @@ var ParentActivityTips = {
         'Talk through diaper and dressing steps so routines feel familiar.',
         'Praise any try at wiping hands or face with a soft cloth.'
       ],
-      toddler: [
-        'Let them try feeding themselves with a spoon—even if it is messy.',
-        'Practice pulling off socks or a loose hat after outdoor play.',
-        'Wash hands together: soap, rinse, dry—count the steps out loud.',
-        'Offer choices of two outfits so they can help with dressing.'
+      earlyToddler: [
+        'Let them hold a spoon or cup during meals even if you still feed them.',
+        'Practice pulling off socks or a loose hat after going outside.',
+        'Wash hands together and sing a short scrubbing song.',
+        'Help them push arms through sleeves; finish buttons yourself.'
+      ],
+      lateToddler: [
+        'Encourage self-feeding with a spoon for part of the meal.',
+        'Practice taking off shoes and socks after outdoor play.',
+        'Wash hands with less help: soap, rinse, dry.',
+        'Offer two outfit choices and let them try putting on a shirt.'
       ],
       preschool: [
         'Encourage putting on shoes, shirt, or shorts with less help each week.',
@@ -85,11 +104,17 @@ var ParentActivityTips = {
         'Play peek-a-boo and pause so they can watch and respond.',
         'Read simple board books and point to pictures together.'
       ],
-      toddler: [
-        'Give one simple direction at a time (“Please bring the ball”).',
-        'Read a short picture book and ask them to point to animals or colors.',
-        'Play “show me” games: show me your nose, show me the cup.',
-        'Sing action songs (“Head, shoulders…”) and do the movements together.'
+      earlyToddler: [
+        'Give one short direction in play (“Give me the ball”).',
+        'Point to pictures in a book and name them together.',
+        'Play “show me”: show me your nose, show me the cup.',
+        'Sing action songs and guide their hands through the moves.'
+      ],
+      lateToddler: [
+        'Give one clear direction at a time (“Please bring your shoes”).',
+        'Read a short book and ask them to point to animals or colors.',
+        'Play Simon Says with easy actions (clap, sit, wave).',
+        'Ask them to fetch a familiar object from another room.'
       ],
       preschool: [
         'Give two-step directions in play (“Get the book and sit on the mat”).',
@@ -105,11 +130,17 @@ var ParentActivityTips = {
         'Sing short songs and leave a pause for them to fill with sounds.',
         'Celebrate any new sound or word with smiles and clapping.'
       ],
-      toddler: [
-        'Ask simple questions and wait patiently for a word or gesture.',
-        'Expand what they say: if they say “ball,” you say “Yes, red ball!”',
-        'Sing nursery rhymes and encourage them to join familiar words.',
-        'Talk about pictures in books—ask “What’s that?” and listen.'
+      earlyToddler: [
+        'Name objects they hand you and wait for any sound or word back.',
+        'Expand one-word tries: if they say “ball,” reply “Yes, big ball!”',
+        'Sing short rhymes and leave a pause for them to fill a sound.',
+        'Talk about pictures—ask “What’s that?” and accept gestures.'
+      ],
+      lateToddler: [
+        'Ask simple questions and wait for a word or short phrase.',
+        'Expand their words into a short sentence without correcting harshly.',
+        'Invite them to finish lines in familiar songs.',
+        'Encourage “more,” “help,” and “please” during daily routines.'
       ],
       preschool: [
         'Invite them to tell a short story about their drawing or day.',
@@ -125,11 +156,17 @@ var ParentActivityTips = {
         'Stack two soft blocks and let them knock them down.',
         'Explore safe household objects (wooden spoon, plastic bowl) with you watching.'
       ],
-      toddler: [
+      earlyToddler: [
+        'Hide a toy under a cloth and find it together.',
+        'Put lids on containers and take them off again.',
+        'Match two identical toys or picture cards.',
+        'Count “one, two” while stacking blocks.'
+      ],
+      lateToddler: [
         'Sort spoons and cups by size during clean-up.',
-        'Match two picture cards or identical toys.',
-        'Complete a simple 2–4 piece puzzle together.',
-        'Count steps as you walk (“One, two, three…”)'
+        'Match pairs of picture cards or socks.',
+        'Complete a simple 3–6 piece puzzle together.',
+        'Count steps or snacks up to three or four.'
       ],
       preschool: [
         'Sort objects by color, shape, or size in a game.',
@@ -145,11 +182,17 @@ var ParentActivityTips = {
         'Keep a short, predictable daily routine so they feel secure.',
         'Introduce new people slowly while you stay close.'
       ],
-      toddler: [
+      earlyToddler: [
+        'Stay close during new situations so they can check in with you.',
+        'Name feelings simply: happy, sad, tired.',
+        'Practice short turn-taking with one toy (“My turn, your turn”).',
+        'Praise gentle touches and sharing tries.'
+      ],
+      lateToddler: [
         'Name feelings: “You look frustrated; let’s take a breath.”',
-        'Practice short turn-taking with a toy (“My turn, your turn”).',
-        'Praise kind acts: sharing a toy or hugging a sibling.',
-        'Stay nearby during playdates so they can check in with you.'
+        'Practice waiting for a turn in a short game.',
+        'Role-play saying hello and bye to familiar people.',
+        'Praise kind acts like sharing a toy with a sibling.'
       ],
       preschool: [
         'Role-play saying “please,” “thank you,” and “I’m sorry.”',
@@ -444,7 +487,7 @@ var ParentActivityTips = {
     const band = this.ageBand(ageMonths);
     const block = this.domainTips[domainCode] || this.domainTips[String(domainCode).toUpperCase()];
     if (!block) return [];
-    const list = block[band] || block.toddler || [];
+    const list = block[band] || block.earlyToddler || block.lateToddler || block.infant || block.preschool || [];
     return list.slice(0, limit == null ? 3 : limit);
   },
 
@@ -464,26 +507,31 @@ var ParentActivityTips = {
     };
 
     const items = Array.isArray(focusItems) ? focusItems : [];
+    // 1) Item-specific tips first (tied to unchecked skills)
     items.forEach(fi => {
       if (lines.length >= max) return;
-      const tips = this.tipsForItem(fi, ageMonths);
+      const itemTips = this.tipsForItem(fi, ageMonths);
       const dName = fi.domainName || fi.domainCode || '';
-      if (tips.length) {
-        push(dName, tips[0]);
-        if (tips[1] && lines.length < max) push(dName, tips[1]);
-      }
+      itemTips.slice(0, 2).forEach(tip => push(dName, tip));
     });
 
-    (domainCodes || []).forEach(code => {
-      if (lines.length >= max) return;
+    // 2) Domain fallback only for domains that still need a tip (max 1 each)
+    if (lines.length < Math.min(4, max)) {
       const nameMap = {
         GM: 'Gross Motor', FM: 'Fine Motor', SH: 'Self-Help',
         RL: 'Receptive Language', EL: 'Expressive Language',
         COG: 'Cognitive', SE: 'Social-Emotional'
       };
-      const dName = nameMap[code] || code;
-      this.tipsForDomain(code, ageMonths, 2).forEach(tip => push(dName, tip));
-    });
+      const codes = (domainCodes || []).filter((c, i, arr) => c && arr.indexOf(c) === i);
+      codes.forEach(code => {
+        if (lines.length >= max) return;
+        const already = lines.some(l => l.indexOf((nameMap[code] || code) + ':') === 0);
+        if (already) return;
+        const dName = nameMap[code] || code;
+        const one = this.tipsForDomain(code, ageMonths, 1);
+        if (one[0]) push(dName, one[0]);
+      });
+    }
 
     return lines;
   }
