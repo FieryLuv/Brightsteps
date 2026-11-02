@@ -123,8 +123,8 @@ const VisitorEnrollment = {
                 oninput="this.value=this.value.replace(/[^0-9]/g,'').slice(0,11)" />
             </div>
             <div>
-              <label class="ecc-field-label">Email <span class="text-muted">(optional)</span></label>
-              <input type="email" id="v-email" class="ecc-field-input" />
+              <label class="ecc-field-label">Email / Facebook <span class="text-muted">(optional)</span></label>
+              <input type="text" id="v-email" class="ecc-field-input" placeholder="Email or Facebook name / profile" />
             </div>
           </div>
         </div>
@@ -444,7 +444,6 @@ const VisitorEnrollment = {
 
       <div class="v-enroll-wizard-bar" id="v-enroll-wizard-bar">
         <p id="v-error" class="v-enroll-error" style="display:none;"></p>
-        <p class="v-enroll-progress" id="v-enroll-progress">Step 1 of 10 — fill required fields (*) before continuing</p>
         <div class="v-enroll-wizard-nav">
           <button type="button" class="btn v-enroll-nav-btn" id="v-enroll-prev"
             style="background:#e8e8e8;color:#333;" onclick="VisitorEnrollment.prevPage()">← Previous</button>
@@ -705,11 +704,6 @@ const VisitorEnrollment = {
       btn.classList.toggle('is-active', s === n);
       btn.classList.toggle('is-done', s < n);
     });
-    const prog = document.getElementById('v-enroll-progress');
-    if (prog) {
-      prog.textContent = 'Step ' + n + ' of ' + this.totalPages +
-        (n <= 2 ? ' — required fields (*) must be filled to continue' : '');
-    }
     const prev = document.getElementById('v-enroll-prev');
     const next = document.getElementById('v-enroll-next');
     const submitBtn = document.getElementById('v-enroll-submit');

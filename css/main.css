@@ -3632,11 +3632,13 @@ th.eccd-period-head-active {
   right: 0;
   bottom: 0;
   z-index: 50;
-  background: #fff;
-  border-top: 1px solid #dce3e8;
-  box-shadow: 0 -6px 24px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.5);
+  border-top: 1px solid rgba(220, 227, 232, 0.6);
+  box-shadow: none;
   padding: 0.55rem 0.85rem 0.75rem;
   max-width: 100%;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 .v-enroll-error {
   color: #d32f2f;
@@ -3646,7 +3648,7 @@ th.eccd-period-head-active {
   font-weight: 600;
 }
 .v-enroll-wizard-bar .v-enroll-progress {
-  margin: 0 0 0.45rem;
+  display: none;
 }
 .v-enroll-wizard-bar .v-enroll-wizard-nav {
   margin: 0;
