@@ -23,13 +23,16 @@ const VisitorEnrollment = {
 
     this._container.innerHTML = `
       <div class="v-enroll-form-wrap" style="max-width:800px;margin:0 auto;">
-        <div style="text-align:center;margin-bottom:1.5rem;">
-          <h1 style="margin:0 0 0.35rem;">🌱 Online Enrollment Application</h1>
-          <p class="text-muted" style="margin:0;">National Child Development Center — Medina</p>
-          <p class="text-muted" style="margin:0.5rem 0 0;font-size:0.9rem;">
-            Submit this form to apply. Your application stays <strong>on hold</strong> until a teacher reviews and approves it.
-            In-person steps may still be required at the center.
-          </p>
+        <div class="v-enroll-topbar">
+          <div class="v-enroll-topbar-title">
+            <h1 style="margin:0 0 0.35rem;">🌱 Online Enrollment Application</h1>
+            <p class="text-muted" style="margin:0;">National Child Development Center — Medina</p>
+            <p class="text-muted" style="margin:0.5rem 0 0;font-size:0.9rem;">
+              Submit this form to apply. Your application stays <strong>on hold</strong> until a teacher reviews and approves it.
+              In-person steps may still be required at the center.
+            </p>
+          </div>
+          <button type="button" class="btn v-enroll-home-btn" onclick="BrightSteps.logout()">← Back to home</button>
         </div>
 
         <div class="card v-enroll-page is-active" data-page="1">
@@ -436,10 +439,6 @@ const VisitorEnrollment = {
           <textarea id="v-notes" class="ecc-report-textarea" rows="2" placeholder="Anything the center should know…"></textarea>
         </div>
 
-        <p style="text-align:center;margin:1.5rem 0 0.5rem;">
-          <button type="button" class="btn" style="background:transparent;color:var(--muted);font-size:0.85rem;"
-            onclick="BrightSteps.logout()">← Back to home</button>
-        </p>
       </div>
 
       <div class="v-enroll-wizard-bar" id="v-enroll-wizard-bar">
