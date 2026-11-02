@@ -434,7 +434,7 @@ const VisitorEnrollment = {
         <p id="v-error" style="color:#d32f2f;display:none;margin:0 0 0.75rem;"></p>
         <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;margin-bottom:2rem;">
           <button class="btn btn-blue" onclick="VisitorEnrollment.submit()">Submit application</button>
-          <button class="btn" style="background:#e8e8e8;color:#333;" onclick="BrightSteps.logout()">← Back to login</button>
+          <button class="btn" style="background:#e8e8e8;color:#333;" onclick="BrightSteps.logout()">← Back to home</button>
         </div>
       </div>
     `;
@@ -702,7 +702,7 @@ const VisitorEnrollment = {
           <p class="text-muted" style="font-size:0.9rem;">
             You may still need to complete in-person requirements at NCDC Medina.
           </p>
-          <button class="btn btn-blue" style="margin-top:1rem;" onclick="BrightSteps.logout()">Back to login</button>
+          <button class="btn btn-blue" style="margin-top:1rem;" onclick="BrightSteps.logout()">Back to home</button>
         </div>
       </div>
     `;

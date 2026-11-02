@@ -77,6 +77,19 @@ const VisitorAbout = {
           <div class="visitor-dots" id="visitor-dots">${dotsHtml}</div>
         </section>
 
+        <!-- Portal access (Parent / Teacher) -->
+        <section class="visitor-portal-strip" aria-label="Portal login">
+          <div class="visitor-portal-strip-inner">
+            <p class="visitor-portal-strip-label">Already part of the center?</p>
+            <div class="visitor-portal-strip-actions">
+              <button type="button" class="btn visitor-portal-page-btn parent"
+                onclick="BrightSteps.showParentLogin()">👨‍👧 Parent / Guardian login</button>
+              <button type="button" class="btn visitor-portal-page-btn teacher"
+                onclick="BrightSteps.showTeacherLogin()">👩‍🏫 Teacher login</button>
+            </div>
+          </div>
+        </section>
+
         <!-- About NCDC -->
         <section class="visitor-section" id="visitor-about-ncdc">
           <div class="visitor-section-inner">

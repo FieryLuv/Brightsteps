@@ -487,17 +487,11 @@ const BrightSteps = (() => {
       : { name: 'Visitor', role: 'visitor', center: 'NCDC Medina' };
     const app = document.getElementById('app');
     app.innerHTML = `
-      <header class="parent-header visitor-header app-header">
+      <header class="parent-header visitor-header app-header visitor-header-minimal">
         <div class="header-left">
-          <div class="logo">🌱 BrightSteps</div>
-        </div>
-        <nav class="visitor-nav" aria-label="Visitor">
-          <button type="button" class="visitor-nav-btn is-active" id="visitor-nav-about" onclick="BrightSteps.showVisitorAbout()">About NCDC</button>
-          <button type="button" class="visitor-nav-btn" id="visitor-nav-enroll" onclick="BrightSteps.showVisitorEnrollment()">Enrollment</button>
-        </nav>
-        <div class="user-info visitor-portal-links">
-          <button type="button" class="btn visitor-portal-btn" onclick="BrightSteps.showParentLogin()">👨‍👧 Parent / Guardian</button>
-          <button type="button" class="btn visitor-portal-btn visitor-portal-teacher" onclick="BrightSteps.showTeacherLogin()">👩‍🏫 Teacher</button>
+          <div class="logo" role="button" tabindex="0" title="BrightSteps home"
+            onclick="BrightSteps.showLogin()"
+            onkeydown="if(event.key==='Enter')BrightSteps.showLogin()">🌱 BrightSteps</div>
         </div>
       </header>
       <div class="visitor-main" id="main-content"></div>
@@ -505,17 +499,9 @@ const BrightSteps = (() => {
     showVisitorAbout();
   }
 
-  function _setVisitorNav(page) {
-    const about = document.getElementById('visitor-nav-about');
-    const enroll = document.getElementById('visitor-nav-enroll');
-    if (about) about.classList.toggle('is-active', page === 'about');
-    if (enroll) enroll.classList.toggle('is-active', page === 'enrollment');
-  }
-
   function showVisitorAbout() {
     const main = document.getElementById('main-content');
     if (!main) return;
-    _setVisitorNav('about');
     main.className = 'visitor-main';
     if (typeof VisitorAbout !== 'undefined') {
       VisitorAbout.render(main);
@@ -527,7 +513,6 @@ const BrightSteps = (() => {
   function showVisitorEnrollment() {
     const main = document.getElementById('main-content');
     if (!main) return;
-    _setVisitorNav('enrollment');
     if (typeof VisitorAbout !== 'undefined' && VisitorAbout.destroy) VisitorAbout.destroy();
     main.className = 'visitor-main visitor-main-form';
     if (typeof VisitorEnrollment !== 'undefined') {

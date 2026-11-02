@@ -3503,3 +3503,71 @@ th.eccd-period-head-active {
     padding: 0.35rem 0.65rem;
   }
 }
+
+/* Minimal visitor header — logo only */
+.visitor-header-minimal {
+  justify-content: flex-start;
+}
+.visitor-header-minimal .logo {
+  cursor: pointer;
+}
+
+/* Portal login strip between hero slideshow and About section */
+.visitor-portal-strip {
+  background: linear-gradient(180deg, #e8f4fc 0%, #f5f9fc 100%);
+  border-bottom: 1px solid #d0e4f2;
+  padding: 1rem 1.25rem;
+}
+.visitor-portal-strip-inner {
+  max-width: 960px;
+  margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem 1.25rem;
+}
+.visitor-portal-strip-label {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text, #333);
+  font-weight: 600;
+}
+.visitor-portal-strip-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  justify-content: center;
+}
+.visitor-portal-page-btn {
+  border-radius: 999px;
+  padding: 0.55rem 1.15rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}
+.visitor-portal-page-btn.parent {
+  background: #e3f2fd;
+  color: #1565c0;
+  border: 1px solid #90caf9;
+}
+.visitor-portal-page-btn.parent:hover {
+  background: #bbdefb;
+}
+.visitor-portal-page-btn.teacher {
+  background: var(--primary, #1976d2);
+  color: #fff;
+}
+.visitor-portal-page-btn.teacher:hover {
+  filter: brightness(1.05);
+}
+@media (max-width: 600px) {
+  .visitor-portal-strip-inner {
+    flex-direction: column;
+  }
+  .visitor-portal-page-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
