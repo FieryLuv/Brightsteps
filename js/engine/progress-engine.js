@@ -9,7 +9,7 @@
  */
 
 const ProgressEngine = {
-  version: '0.7.0-item-guidance',
+  version: '0.8.0-parent-activity-tips',
   tables: null,
 
   /**
@@ -352,12 +352,19 @@ const ProgressEngine = {
     const teacherPriorities = [];
     const tipLines = [];
     const seen = new Set();
+    // Age for parent tips (reuse assessment age; never suggest preschool skills to infants)
+    const tipAgeMonths = ageMonths != null
+      ? Number(ageMonths)
+      : (child && child.ageMonths != null ? Number(child.ageMonths) : null);
+    const Tips = (typeof ParentActivityTips !== 'undefined')
+      ? ParentActivityTips
+      : (typeof window !== 'undefined' && window.ParentActivityTips ? window.ParentActivityTips : null);
 
     guidanceTargets.forEach(d => {
       const g = this.DOMAIN_GUIDANCE[d.code];
       if (!g || seen.has(d.code)) return;
       // Safety: no tips for fully achieved domains
-      const domainGaps = focusItems.filter(fi => fi.domainCode === d.code).slice(0, 3);
+      const domainGaps = focusItems.filter(fi => fi.domainCode === d.code).slice(0, 4);
       if (d.percent != null && d.percent >= 100 && !domainGaps.length) return;
       if (d.total > 0 && d.present >= d.total && !domainGaps.length) return;
 
@@ -366,12 +373,24 @@ const ProgressEngine = {
         ? d.interpretation.label
         : (d.percent != null ? `${d.percent}% items present` : 'focus area');
 
-      const itemTips = domainGaps.map(fi =>
-        'Practice: “' + fi.itemTitle + '” (' + (fi.domainName || d.name) + ').'
-      );
-      // Generic domain advice only when there are still gaps
-      const generic = domainGaps.length ? (g.parentActivities || []).slice(0, 2) : [];
-      const activities = itemTips.concat(generic).slice(0, 4);
+      // Parent-friendly activities (age-aware), not technical checklist procedures
+      let activities = [];
+      if (Tips) {
+        domainGaps.forEach(fi => {
+          Tips.tipsForItem(fi, tipAgeMonths).slice(0, 2).forEach(tip => {
+            if (activities.indexOf(tip) < 0) activities.push(tip);
+          });
+        });
+        if (activities.length < 2) {
+          Tips.tipsForDomain(d.code, tipAgeMonths, 3).forEach(tip => {
+            if (activities.indexOf(tip) < 0) activities.push(tip);
+          });
+        }
+      }
+      if (!activities.length && domainGaps.length) {
+        activities = (g.parentActivities || []).slice(0, 2);
+      }
+      activities = activities.slice(0, 4);
       if (!activities.length) return;
 
       parentActivities.push({
@@ -382,6 +401,7 @@ const ProgressEngine = {
         activities
       });
 
+      // Teacher side keeps checklist item titles (professional language OK)
       const gapPriorities = domainGaps.map(fi =>
         'Target checklist item: ' + fi.itemTitle
       );
@@ -396,23 +416,42 @@ const ProgressEngine = {
       activities.slice(0, 2).forEach(a => tipLines.push((d.name || g.name) + ': ' + a));
     });
 
-    // Tips from remaining not-present items outside priority domains
-    focusItems.forEach(fi => {
-      if (seen.has(fi.domainCode)) return;
-      const line = 'Practice: “' + fi.itemTitle + '” (' + fi.domainName + ').';
-      if (tipLines.length < 8) tipLines.push(line);
-      seen.add(fi.domainCode);
-    });
+    // More parent tips from remaining missing items (still age-filtered, parent-friendly)
+    if (Tips) {
+      const more = Tips.buildTipLines(
+        focusItems.filter(fi => !seen.has(fi.domainCode)),
+        focusItems.map(fi => fi.domainCode).filter((c, i, arr) => c && arr.indexOf(c) === i),
+        tipAgeMonths,
+        10 - tipLines.length
+      );
+      more.forEach(line => {
+        if (tipLines.length < 10) tipLines.push(line);
+      });
+    } else {
+      focusItems.forEach(fi => {
+        if (seen.has(fi.domainCode)) return;
+        const g = this.DOMAIN_GUIDANCE[fi.domainCode];
+        const act = g && g.parentActivities ? g.parentActivities[0] : null;
+        if (act && tipLines.length < 8) {
+          tipLines.push((fi.domainName || fi.domainCode) + ': ' + act);
+        }
+        seen.add(fi.domainCode);
+      });
+    }
 
-    // Teacher comment tips for parents (when teacher wrote on an item)
+    // Teacher comments stay (human notes) — useful for parents
     focusComments.forEach(c => {
-      if (c.present) return; // skip notes on already-achieved items for tip list
+      if (c.present) return;
       const line = 'Teacher note on “' + c.itemTitle + '”: ' + c.comment;
       if (tipLines.length < 10) tipLines.push(line);
     });
 
     if (!tipLines.length && !notPresent.length) {
       tipLines.push('All checklist items marked Present for this evaluation — keep encouraging daily practice at home.');
+    }
+    if (!tipLines.length && notPresent.length && Tips) {
+      Tips.buildTipLines(focusItems, guidanceTargets.map(d => d.code), tipAgeMonths, 6)
+        .forEach(line => tipLines.push(line));
     }
 
     if (overallInterpretation.level === 'needs_support' || overallInterpretation.level === 'emerging') {
