@@ -22,7 +22,7 @@ const VisitorEnrollment = {
     ]).map(s => `<option value="${s.key}">${s.label}</option>`).join('');
 
     this._container.innerHTML = `
-      <div style="max-width:800px;margin:0 auto;">
+      <div class="v-enroll-form-wrap" style="max-width:800px;margin:0 auto;">
         <div style="text-align:center;margin-bottom:1.5rem;">
           <h1 style="margin:0 0 0.35rem;">🌱 Online Enrollment Application</h1>
           <p class="text-muted" style="margin:0;">National Child Development Center — Medina</p>
@@ -436,8 +436,15 @@ const VisitorEnrollment = {
           <textarea id="v-notes" class="ecc-report-textarea" rows="2" placeholder="Anything the center should know…"></textarea>
         </div>
 
-        <p id="v-error" style="color:#d32f2f;display:none;margin:0 0 0.75rem;"></p>
-        <p class="v-enroll-progress" id="v-enroll-progress">Step 1 of 10</p>
+        <p style="text-align:center;margin:1.5rem 0 0.5rem;">
+          <button type="button" class="btn" style="background:transparent;color:var(--muted);font-size:0.85rem;"
+            onclick="BrightSteps.logout()">← Back to home</button>
+        </p>
+      </div>
+
+      <div class="v-enroll-wizard-bar" id="v-enroll-wizard-bar">
+        <p id="v-error" class="v-enroll-error" style="display:none;"></p>
+        <p class="v-enroll-progress" id="v-enroll-progress">Step 1 of 10 — fill required fields (*) before continuing</p>
         <div class="v-enroll-wizard-nav">
           <button type="button" class="btn v-enroll-nav-btn" id="v-enroll-prev"
             style="background:#e8e8e8;color:#333;" onclick="VisitorEnrollment.prevPage()">← Previous</button>
@@ -449,15 +456,9 @@ const VisitorEnrollment = {
           </div>
           <button type="button" class="btn btn-blue v-enroll-nav-btn" id="v-enroll-next"
             onclick="VisitorEnrollment.nextPage()">Next →</button>
+          <button type="button" class="btn btn-blue v-enroll-nav-btn" id="v-enroll-submit"
+            style="display:none;" onclick="VisitorEnrollment.submit()">Submit application</button>
         </div>
-        <div id="v-enroll-submit-row" style="display:none;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;margin-bottom:2rem;">
-          <button class="btn btn-blue" onclick="VisitorEnrollment.submit()">Submit application</button>
-          <button class="btn" style="background:#e8e8e8;color:#333;" onclick="BrightSteps.logout()">← Back to home</button>
-        </div>
-        <p style="text-align:center;margin:0 0 2rem;">
-          <button type="button" class="btn" style="background:transparent;color:var(--muted);font-size:0.85rem;"
-            onclick="BrightSteps.logout()">← Back to home</button>
-        </p>
       </div>
     `;
   },
@@ -589,32 +590,135 @@ const VisitorEnrollment = {
   },
 
 
+  /** Required fields per page (empty = optional page). */
+  _pageRules() {
+    return {
+      1: [
+        { id: 'v-child-last', label: 'Child last name', or: 'v-child-first' },
+        { id: 'v-child-first', label: 'Child first name', or: 'v-child-last' },
+        { id: 'v-birth', label: 'Date of birth' },
+        { id: 'v-sex', label: 'Sex' }
+      ],
+      2: [
+        { id: 'v-guardian', label: 'Primary guardian name' },
+        { id: 'v-phone', label: 'Mobile number', phone11: true }
+      ]
+      // pages 3–10 optional for progression
+    };
+  },
+
+  _val(id) {
+    const el = document.getElementById(id);
+    if (!el) return '';
+    return String(el.value || '').trim();
+  },
+
+  /**
+   * Validate one page. Returns { ok, message }.
+   */
+  validatePage(page) {
+    const rules = this._pageRules()[page] || [];
+    if (!rules.length) return { ok: true };
+    const missing = [];
+    const checkedOr = new Set();
+    for (let i = 0; i < rules.length; i++) {
+      const r = rules[i];
+      if (r.or) {
+        const key = [r.id, r.or].sort().join('|');
+        if (checkedOr.has(key)) continue;
+        checkedOr.add(key);
+        const a = this._val(r.id);
+        const b = this._val(r.or);
+        if (!a && !b) {
+          missing.push('Child first or last name');
+        }
+        continue;
+      }
+      const v = this._val(r.id);
+      if (!v) {
+        missing.push(r.label);
+        continue;
+      }
+      if (r.phone11) {
+        const digits = v.replace(/\D/g, '');
+        if (digits.length !== 11) {
+          return { ok: false, message: 'Mobile number must be exactly 11 digits (e.g. 09171234567).' };
+        }
+      }
+    }
+    if (missing.length) {
+      return {
+        ok: false,
+        message: 'Please complete: ' + missing.join(', ') + ' before continuing.'
+      };
+    }
+    return { ok: true };
+  },
+
+  _showPageError(msg) {
+    const err = document.getElementById('v-error');
+    if (!err) return;
+    if (msg) {
+      err.style.display = 'block';
+      err.textContent = msg;
+    } else {
+      err.style.display = 'none';
+      err.textContent = '';
+    }
+  },
+
+  /**
+   * Go to page n. Forward moves require validating current (and intermediate) pages.
+   * Previous pages are always allowed.
+   */
   goToPage(n) {
     n = Math.max(1, Math.min(this.totalPages, Number(n) || 1));
+    const from = this.currentPage || 1;
+
+    if (n > from) {
+      for (let p = from; p < n; p++) {
+        const check = this.validatePage(p);
+        if (!check.ok) {
+          this._showPageError(check.message);
+          // Stay on first invalid page in the range
+          if (p !== from) this._applyPage(p);
+          return false;
+        }
+      }
+    }
+
+    this._showPageError('');
+    this._applyPage(n);
+    return true;
+  },
+
+  _applyPage(n) {
     this.currentPage = n;
     if (!this._container) return;
     this._container.querySelectorAll('.v-enroll-page').forEach(el => {
       const p = Number(el.getAttribute('data-page'));
       el.classList.toggle('is-active', p === n);
     });
-    this._container.querySelectorAll('.v-enroll-step').forEach(btn => {
+    // steps may be outside _container (fixed bar)
+    document.querySelectorAll('.v-enroll-step').forEach(btn => {
       const s = Number(btn.getAttribute('data-step'));
       btn.classList.toggle('is-active', s === n);
       btn.classList.toggle('is-done', s < n);
     });
     const prog = document.getElementById('v-enroll-progress');
-    if (prog) prog.textContent = 'Step ' + n + ' of ' + this.totalPages;
+    if (prog) {
+      prog.textContent = 'Step ' + n + ' of ' + this.totalPages +
+        (n <= 2 ? ' — required fields (*) must be filled to continue' : '');
+    }
     const prev = document.getElementById('v-enroll-prev');
     const next = document.getElementById('v-enroll-next');
+    const submitBtn = document.getElementById('v-enroll-submit');
     if (prev) {
       prev.disabled = n <= 1;
-      prev.style.opacity = n <= 1 ? '0.5' : '1';
+      prev.style.opacity = n <= 1 ? '0.45' : '1';
     }
-    if (next) {
-      next.style.display = n >= this.totalPages ? 'none' : '';
-    }
-    const submitRow = document.getElementById('v-enroll-submit-row');
-    if (submitRow) submitRow.style.display = n >= this.totalPages ? 'flex' : 'none';
+    if (next) next.style.display = n >= this.totalPages ? 'none' : '';
+    if (submitBtn) submitBtn.style.display = n >= this.totalPages ? '' : 'none';
     try {
       const top = this._container.querySelector('.v-enroll-page.is-active') || this._container;
       top.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -626,7 +730,10 @@ const VisitorEnrollment = {
   },
 
   prevPage() {
-    if (this.currentPage > 1) this.goToPage(this.currentPage - 1);
+    if (this.currentPage > 1) {
+      this._showPageError('');
+      this._applyPage(this.currentPage - 1);
+    }
   },
 
   async submit() {
