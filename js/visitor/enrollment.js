@@ -4,9 +4,14 @@
  */
 
 const VisitorEnrollment = {
+  currentPage: 1,
+  totalPages: 10,
+
   render(container) {
     this._container = container;
+    this.currentPage = 1;
     this._drawForm();
+    this.goToPage(1);
   },
 
   _drawForm() {
@@ -27,7 +32,7 @@ const VisitorEnrollment = {
           </p>
         </div>
 
-        <div class="card">
+        <div class="card v-enroll-page is-active" data-page="1">
           <h3 style="margin-top:0;">1. Child information</h3>
           <div class="profile-grid">
             <div>
@@ -104,7 +109,7 @@ const VisitorEnrollment = {
           </div>
         </div>
 
-        <div class="card">
+        <div class="card v-enroll-page" data-page="2">
           <h3 style="margin-top:0;">2. Parent / Guardian &amp; contact</h3>
           <div class="profile-grid">
             <div style="grid-column:1 / -1;">
@@ -124,7 +129,7 @@ const VisitorEnrollment = {
           </div>
         </div>
 
-        <div class="card">
+        <div class="card v-enroll-page" data-page="3">
           <h3 style="margin-top:0;">3. Mother’s profile</h3>
           <div class="profile-grid">
             <div>
@@ -204,7 +209,7 @@ const VisitorEnrollment = {
           </div>
         </div>
 
-        <div class="card">
+        <div class="card v-enroll-page" data-page="4">
           <h3 style="margin-top:0;">4. Father’s profile</h3>
           <div class="profile-grid">
             <div>
@@ -277,7 +282,7 @@ const VisitorEnrollment = {
           </div>
         </div>
 
-        <div class="card">
+        <div class="card v-enroll-page" data-page="4" style="margin-top:0.75rem;">
           <h3 style="margin-top:0;">4b. Siblings detail</h3>
           <p class="text-muted" style="font-size:0.85rem;margin-top:0;">Age, sex, and whether in school or out of school (up to 6 rows).</p>
           <div style="overflow-x:auto;">
@@ -310,7 +315,7 @@ const VisitorEnrollment = {
           </div>
         </div>
 
-        <div class="card">
+        <div class="card v-enroll-page" data-page="5">
           <h3 style="margin-top:0;">5. Address</h3>
           <div class="profile-grid">
             <div>
@@ -332,7 +337,7 @@ const VisitorEnrollment = {
           </div>
         </div>
 
-        <div class="card">
+        <div class="card v-enroll-page" data-page="6">
           <h3 style="margin-top:0;">6. Documents &amp; health</h3>
           <div style="margin-bottom:0.75rem;">
             <label class="ecc-field-label">Does the child have:</label>
@@ -376,7 +381,7 @@ const VisitorEnrollment = {
           </table>
         </div>
 
-        <div class="card">
+        <div class="card v-enroll-page" data-page="7">
           <h3 style="margin-top:0;">7. Physical attributes</h3>
           <p class="text-muted" style="font-size:0.85rem;margin-top:0;">12.1 Physical deformity (check all that apply)</p>
           <div style="display:flex;flex-wrap:wrap;gap:0.65rem 1rem;margin-bottom:1rem;font-size:0.9rem;">
@@ -397,7 +402,7 @@ const VisitorEnrollment = {
           </div>
         </div>
 
-        <div class="card">
+        <div class="card v-enroll-page" data-page="8">
           <h3 style="margin-top:0;">8. Prior early childhood experience</h3>
           ${['Nursery','Kindergarten','Preparatory'].map(level => {
             const key = level.toLowerCase();
@@ -410,7 +415,7 @@ const VisitorEnrollment = {
           }).join('')}
         </div>
 
-        <div class="card">
+        <div class="card v-enroll-page" data-page="9">
           <h3 style="margin-top:0;">9. Transport &amp; who accompanies <span class="text-muted" style="font-weight:500;">(optional)</span></h3>
           <p class="text-muted" style="font-size:0.85rem;margin-top:0;">Public transportation</p>
           <div style="display:flex;flex-wrap:wrap;gap:0.5rem 1rem;margin-bottom:1rem;font-size:0.88rem;">
@@ -426,16 +431,33 @@ const VisitorEnrollment = {
           </div>
         </div>
 
-        <div class="card">
+        <div class="card v-enroll-page" data-page="10">
           <h3 style="margin-top:0;">10. Notes</h3>
           <textarea id="v-notes" class="ecc-report-textarea" rows="2" placeholder="Anything the center should know…"></textarea>
         </div>
 
         <p id="v-error" style="color:#d32f2f;display:none;margin:0 0 0.75rem;"></p>
-        <div style="display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;margin-bottom:2rem;">
+        <p class="v-enroll-progress" id="v-enroll-progress">Step 1 of 10</p>
+        <div class="v-enroll-wizard-nav">
+          <button type="button" class="btn v-enroll-nav-btn" id="v-enroll-prev"
+            style="background:#e8e8e8;color:#333;" onclick="VisitorEnrollment.prevPage()">← Previous</button>
+          <div class="v-enroll-steps" id="v-enroll-steps">
+            ${[1,2,3,4,5,6,7,8,9,10].map(n =>
+              `<button type="button" class="v-enroll-step${n === 1 ? ' is-active' : ''}" data-step="${n}"
+                onclick="VisitorEnrollment.goToPage(${n})">${n}</button>`
+            ).join('')}
+          </div>
+          <button type="button" class="btn btn-blue v-enroll-nav-btn" id="v-enroll-next"
+            onclick="VisitorEnrollment.nextPage()">Next →</button>
+        </div>
+        <div id="v-enroll-submit-row" style="display:none;flex-wrap:wrap;gap:0.5rem;justify-content:flex-end;margin-bottom:2rem;">
           <button class="btn btn-blue" onclick="VisitorEnrollment.submit()">Submit application</button>
           <button class="btn" style="background:#e8e8e8;color:#333;" onclick="BrightSteps.logout()">← Back to home</button>
         </div>
+        <p style="text-align:center;margin:0 0 2rem;">
+          <button type="button" class="btn" style="background:transparent;color:var(--muted);font-size:0.85rem;"
+            onclick="BrightSteps.logout()">← Back to home</button>
+        </p>
       </div>
     `;
   },
@@ -564,6 +586,47 @@ const VisitorEnrollment = {
       district: g('district'),
       purok: g('purok')
     };
+  },
+
+
+  goToPage(n) {
+    n = Math.max(1, Math.min(this.totalPages, Number(n) || 1));
+    this.currentPage = n;
+    if (!this._container) return;
+    this._container.querySelectorAll('.v-enroll-page').forEach(el => {
+      const p = Number(el.getAttribute('data-page'));
+      el.classList.toggle('is-active', p === n);
+    });
+    this._container.querySelectorAll('.v-enroll-step').forEach(btn => {
+      const s = Number(btn.getAttribute('data-step'));
+      btn.classList.toggle('is-active', s === n);
+      btn.classList.toggle('is-done', s < n);
+    });
+    const prog = document.getElementById('v-enroll-progress');
+    if (prog) prog.textContent = 'Step ' + n + ' of ' + this.totalPages;
+    const prev = document.getElementById('v-enroll-prev');
+    const next = document.getElementById('v-enroll-next');
+    if (prev) {
+      prev.disabled = n <= 1;
+      prev.style.opacity = n <= 1 ? '0.5' : '1';
+    }
+    if (next) {
+      next.style.display = n >= this.totalPages ? 'none' : '';
+    }
+    const submitRow = document.getElementById('v-enroll-submit-row');
+    if (submitRow) submitRow.style.display = n >= this.totalPages ? 'flex' : 'none';
+    try {
+      const top = this._container.querySelector('.v-enroll-page.is-active') || this._container;
+      top.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) { /* ignore */ }
+  },
+
+  nextPage() {
+    if (this.currentPage < this.totalPages) this.goToPage(this.currentPage + 1);
+  },
+
+  prevPage() {
+    if (this.currentPage > 1) this.goToPage(this.currentPage - 1);
   },
 
   async submit() {
