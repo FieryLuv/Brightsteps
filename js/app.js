@@ -16,29 +16,14 @@ const BrightSteps = (() => {
     showLogin();
   }
 
+  /**
+   * Public landing page = Visitor About / Enrollment.
+   * Teacher and Parent logins are available from the visitor header.
+   */
   function showLogin() {
-    const app = document.getElementById('app');
-    app.innerHTML = `
-      <div class="login-screen">
-        <div class="login-card login-card-roles">
-          <div class="login-identity login-identity-simple">
-            <div class="login-identity-text" style="text-align:center;width:100%;">
-              <div class="brand">🌱 BrightSteps</div>
-              <p class="login-ncdc-line">National Child Development Center — Medina</p>
-              <p class="login-place-line">Misamis Oriental</p>
-            </div>
-          </div>
-          <p class="tagline">Child Development Monitoring System<br>Choose how you want to continue</p>
-          <div class="role-buttons">
-            <button class="role-btn teacher" onclick="BrightSteps.showTeacherLogin()">👩‍🏫  Login as Teacher / Head</button>
-            <button class="role-btn parent"  onclick="BrightSteps.showParentLogin()">👨‍👧  Login as Parent / Guardian</button>
-            <button class="role-btn role-btn-visitor"
-              onclick="BrightSteps.login('visitor')">👋  Visitor — About &amp; Enrollment</button>
-          </div>
-          <p class="login-footnote">Community-based early learning for children ages 0–4</p>
-        </div>
-      </div>
-    `;
+    currentRole = 'visitor';
+    currentUser = { name: 'Visitor', role: 'visitor', center: 'NCDC Medina' };
+    showVisitorShell();
   }
 
   /**
@@ -491,13 +476,15 @@ const BrightSteps = (() => {
       return;
     }
     if (role === 'visitor') {
-      currentRole = 'visitor';
-      currentUser = { name: 'Visitor', role: 'visitor', center: 'NCDC Medina' };
-      showVisitorShell();
+      showLogin();
     }
   }
 
   function showVisitorShell() {
+    currentRole = 'visitor';
+    currentUser = currentUser && currentUser.role === 'visitor'
+      ? currentUser
+      : { name: 'Visitor', role: 'visitor', center: 'NCDC Medina' };
     const app = document.getElementById('app');
     app.innerHTML = `
       <header class="parent-header visitor-header app-header">
@@ -508,9 +495,9 @@ const BrightSteps = (() => {
           <button type="button" class="visitor-nav-btn is-active" id="visitor-nav-about" onclick="BrightSteps.showVisitorAbout()">About NCDC</button>
           <button type="button" class="visitor-nav-btn" id="visitor-nav-enroll" onclick="BrightSteps.showVisitorEnrollment()">Enrollment</button>
         </nav>
-        <div class="user-info">
-          <span class="user-info-text">Visitor</span>
-          <button class="btn btn-header-logout" onclick="BrightSteps.logout()">Exit</button>
+        <div class="user-info visitor-portal-links">
+          <button type="button" class="btn visitor-portal-btn" onclick="BrightSteps.showParentLogin()">👨‍👧 Parent / Guardian</button>
+          <button type="button" class="btn visitor-portal-btn visitor-portal-teacher" onclick="BrightSteps.showTeacherLogin()">👩‍🏫 Teacher</button>
         </div>
       </header>
       <div class="visitor-main" id="main-content"></div>

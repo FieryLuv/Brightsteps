@@ -3464,3 +3464,42 @@ th.eccd-period-head-active {
 .header-refresh-btn:active {
   transform: scale(0.96);
 }
+
+/* Visitor landing — portal login links in header */
+.visitor-portal-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+.visitor-portal-btn {
+  background: rgba(255,255,255,0.18);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.35);
+  font-size: 0.82rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.visitor-portal-btn:hover {
+  background: rgba(255,255,255,0.28);
+}
+.visitor-portal-teacher {
+  background: rgba(255,255,255,0.28);
+  font-weight: 600;
+}
+@media (max-width: 768px) {
+  .visitor-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .visitor-portal-links {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  .visitor-portal-btn {
+    font-size: 0.78rem;
+    padding: 0.35rem 0.65rem;
+  }
+}
