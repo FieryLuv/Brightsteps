@@ -315,7 +315,7 @@ var ParentActivityTips = {
     // --- Fine motor ---
     {
       domain: 'FM',
-      match: /grasp|hold|reach|rattle|grasp/i,
+      match: /reaches for and grasps|reaches for and holds|rattle|dangling object/i,
       minMonths: 0,
       maxMonths: 18,
       tips: [
@@ -325,7 +325,7 @@ var ParentActivityTips = {
     },
     {
       domain: 'FM',
-      match: /pincer|pick up|small object|crumb|pellet/i,
+      match: /pincer grasp|thumb and index|pads of his thumb|neat pincer|picks up objects with thumb/i,
       minMonths: 7,
       maxMonths: 36,
       tips: [
@@ -436,6 +436,191 @@ var ParentActivityTips = {
         'Match pairs of socks or picture cards as a quick game.'
       ]
     },
+
+    // --- More Gross Motor (checklist titles) ---
+    {
+      domain: 'GM',
+      match: /bounces? when held standing|bearing weight on legs/i,
+      minMonths: 4,
+      maxMonths: 18,
+      tips: [
+        'Hold your baby under the arms and let their feet touch your lap—gentle bounces while you sing.',
+        'Support them standing on your thighs for short moments during play.'
+      ]
+    },
+    {
+      domain: 'GM',
+      match: /walks? sideways|holds furniture with both hands/i,
+      minMonths: 8,
+      maxMonths: 24,
+      tips: [
+        'Place toys along a low sofa so they side-step (cruise) while holding on.',
+        'Put sturdy chairs a step apart so they move sideways between them with support.'
+      ]
+    },
+    {
+      domain: 'GM',
+      match: /walks? backwards|backward/i,
+      minMonths: 12,
+      maxMonths: 36,
+      tips: [
+        'Hold both hands and take a few steps backward together in an open room.',
+        'Play “come to me” then gently guide one step back while facing you.'
+      ]
+    },
+    {
+      domain: 'GM',
+      match: /walks? (up|down) stairs|handrail|alternate feet/i,
+      minMonths: 14,
+      maxMonths: 72,
+      tips: [
+        'Practice 2–3 home steps: hold one hand and go slowly, same foot or alternating.',
+        'Use a safe stair with a rail and stay one step below them.'
+      ]
+    },
+    {
+      domain: 'GM',
+      match: /climbs? on chair|elevated furniture/i,
+      minMonths: 12,
+      maxMonths: 48,
+      tips: [
+        'With you beside them, let them climb onto a low sturdy chair or sofa cushion.',
+        'Make a “mountain” of firm floor pillows to climb up and down.'
+      ]
+    },
+    // --- More Fine Motor (checklist titles) ---
+    {
+      domain: 'FM',
+      match: /hands? .* open|predominantly open/i,
+      minMonths: 0,
+      maxMonths: 12,
+      tips: [
+        'Stroke open palms with a soft cloth or rattle so hands stay relaxed and open.',
+        'Offer lightweight toys that fit easily into an open hand.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /midline|hands together/i,
+      minMonths: 2,
+      maxMonths: 12,
+      tips: [
+        'Hold a soft toy at the center of their chest so both hands meet on it.',
+        'During dressing, gently bring both hands together on a button or zipper for a moment.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /transfers? object|one hand to the other/i,
+      minMonths: 4,
+      maxMonths: 18,
+      tips: [
+        'Give a toy to one hand, then offer a second toy so they pass or switch hands.',
+        'Play “give and take”: they hand you a block, you hand it back to the other hand.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /raking grasp|all five fingers to get/i,
+      minMonths: 5,
+      maxMonths: 18,
+      tips: [
+        'Scatter a few large soft pieces of food or toys on a tray so they rake them toward themselves.',
+        'Use a shallow bowl of safe toys and let them scoop with the whole hand.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /neat pincer|thumb and index|pincer grasp/i,
+      minMonths: 8,
+      maxMonths: 36,
+      tips: [
+        'Offer small soft finger foods so they pinch with thumb and pointer finger.',
+        'Put large buttons or bottle caps in a muffin tray—pick up one at a time.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /pulls? toy with string|string/i,
+      minMonths: 10,
+      maxMonths: 36,
+      tips: [
+        'Tie a short soft string to a favorite toy and show how to pull it toward them.',
+        'Play “pull the duck” across a smooth floor for a few steps.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /hand preference|definite hand/i,
+      minMonths: 12,
+      maxMonths: 48,
+      tips: [
+        'Place crayons or spoons at the middle of the table and notice which hand they choose.',
+        'Offer toys at the center so they can freely pick a preferred hand—no forcing.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /puts? small objects into a container|into a container/i,
+      minMonths: 10,
+      maxMonths: 36,
+      tips: [
+        'Give a plastic container and large bottle caps to drop in and dump out.',
+        'Use a clean empty bottle and drop clothespins or large beads in together.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /pushes? or pulls a wheeled|wheeled toy/i,
+      minMonths: 12,
+      maxMonths: 36,
+      tips: [
+        'Offer a small push car or toy with wheels on a clear floor path.',
+        'Sit facing them and roll a wheeled toy back and forth.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /holds? crayon with fingers|not fist|tripod|five fingers.*crayon/i,
+      minMonths: 18,
+      maxMonths: 60,
+      tips: [
+        'Offer short thick crayons so fingers naturally rest near the tip.',
+        'Scribble together on big paper; gently model a fingertip hold without forcing.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /unscrews?|lid of (a )?(bottle|jar|container)/i,
+      minMonths: 18,
+      maxMonths: 60,
+      tips: [
+        'Practice opening a large plastic jar lid together during snack clean-up.',
+        'Play “open the container” with a loosely screwed lid on a toy box.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /scribbles? spontaneously|scribbles? vertical|horizontal lines|draws? circle|human figure|draws? a house/i,
+      minMonths: 12,
+      maxMonths: 72,
+      tips: [
+        'Keep crayons and paper where they can scribble freely every day.',
+        'Draw big lines and circles; invite them to copy only if they want.',
+        'Talk about their marks: “You made a long line!” to keep drawing fun.'
+      ]
+    },
+    {
+      domain: 'FM',
+      match: /imitates drawing|builds? a tower|tower of/i,
+      minMonths: 12,
+      maxMonths: 60,
+      tips: [
+        'Stack large blocks together—start with 2–3, then try one more.',
+        'Take turns placing one block each to build a short tower.'
+      ]
+    },
+
     // --- Social-emotional ---
     {
       domain: 'SE',
@@ -458,7 +643,6 @@ var ParentActivityTips = {
   tipsForItem(item, ageMonths) {
     const title = String((item && (item.itemTitle || item.title || item.name)) || '');
     const domain = (item && (item.domainCode || item.domain_code)) || '';
-    const band = this.ageBand(ageMonths);
     const m = Number(ageMonths);
     const ageOk = (min, max) => {
       if (m == null || isNaN(m)) return true;
@@ -469,10 +653,11 @@ var ParentActivityTips = {
 
     const out = [];
     const seen = new Set();
+    // Prefer more specific matches: longer pattern sources first by scanning all, keep order in array (specific patterns listed before broad ones)
     this.skillPatterns.forEach(p => {
       if (domain && p.domain && p.domain !== domain) return;
       if (!ageOk(p.minMonths, p.maxMonths)) return;
-      if (!p.match.test(title)) return;
+      if (!title || !p.match.test(title)) return;
       (p.tips || []).forEach(tip => {
         if (!seen.has(tip)) {
           seen.add(tip);
